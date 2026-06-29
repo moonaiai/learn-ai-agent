@@ -47,9 +47,8 @@
 | 9 | Production Engineering | 成本、延迟、缓存、限流、错误恢复、部署和运维如何落地。 | 待沉淀 |
 | 10 | 项目复盘与面试表达 | 如何把 agent 项目讲成架构设计、工程取舍和业务结果。 | 待沉淀 |
 
-### 已沉淀主题的阅读顺序
+### 已沉淀
 
-当前可以先从两篇已完成文档开始：
 
 1. [12-Factor Agents 设计原则](docs/12-factor-agents/12-factor-agents-principles.md)：先建立 Agent 工程模型，理解 prompt、context、tool call、state、control flow 和 human-in-the-loop 的关系。
 2. [Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md)：再理解上下文工程，明确上下文不是越多越好，而是要围绕当前任务做选择、压缩、隔离和复用。
