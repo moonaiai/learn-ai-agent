@@ -32,46 +32,31 @@
 
 ## 学习路径
 
-建议按以下顺序阅读：
+这个仓库会按 AI Agent 工程能力的成长路线持续补齐内容。当前只沉淀了其中两个关键主题，后续新增文档后，会把对应节点回填到这张路线图中。
 
-### 1. 先建立 Agent 工程模型
+| 阶段 | 学习主题 | 需要掌握的问题 | 当前状态 |
+|---:|---|---|---|
+| 1 | LLM 应用基础 | LLM、Prompt、Token、结构化输出、Function Calling 分别解决什么问题。 | 待沉淀 |
+| 2 | Agent 基础模型 | Agent loop 如何运转，模型、工具、状态和控制流如何配合。 | 已沉淀：[12-Factor Agents 设计原则](docs/12-factor-agents/12-factor-agents-principles.md) |
+| 3 | Tool Calling 与工具系统 | Tool schema 如何设计，工具权限、失败、重试和审计如何处理。 | 待沉淀 |
+| 4 | Context Engineering | 什么信息应该进入上下文，如何压缩、隔离、检索和复用上下文。 | 已沉淀：[Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md) |
+| 5 | Memory 与 RAG | 短期记忆、长期记忆、RAG、向量检索和知识库如何支撑 agent。 | 待沉淀 |
+| 6 | Workflow 与 Multi-Agent | 什么时候用 workflow，什么时候拆 multi-agent，角色边界如何划分。 | 待沉淀 |
+| 7 | Eval 与 Observability | 如何构建评测集、trace、回放、LLM-as-judge 和线上质量指标。 | 待沉淀 |
+| 8 | Safety 与 Human-in-the-loop | 权限、审批、敏感操作、人工介入和安全边界如何设计。 | 待沉淀 |
+| 9 | Production Engineering | 成本、延迟、缓存、限流、错误恢复、部署和运维如何落地。 | 待沉淀 |
+| 10 | 项目复盘与面试表达 | 如何把 agent 项目讲成架构设计、工程取舍和业务结果。 | 待沉淀 |
 
-阅读 [12-Factor Agents 设计原则](docs/12-factor-agents/12-factor-agents-principles.md)。
+### 已沉淀主题的阅读顺序
 
-重点关注：
+当前可以先从两篇已完成文档开始：
 
-- Agent 仍然是软件，不是脱离工程约束的黑盒。
-- LLM 的核心职责是把上下文转换成结构化下一步。
-- Tool call 是结构化输出，不等于必须立即执行函数。
-- 生产系统要拥有 prompt、context、control flow 和 state。
-- 小而聚焦的 agent 比大而全的 agent 更容易进入生产。
+1. [12-Factor Agents 设计原则](docs/12-factor-agents/12-factor-agents-principles.md)：先建立 Agent 工程模型，理解 prompt、context、tool call、state、control flow 和 human-in-the-loop 的关系。
+2. [Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md)：再理解上下文工程，明确上下文不是越多越好，而是要围绕当前任务做选择、压缩、隔离和复用。
 
-读完后应该能回答：
+### 项目迁移检查
 
-- 一个 agent 最小由哪些组件组成？
-- 为什么不能把控制流完全交给框架？
-- 为什么暂停恢复、人类审批和事件线程是生产系统的关键能力？
-
-### 2. 再理解上下文工程
-
-阅读 [Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md)。
-
-重点关注：
-
-- 上下文工程不是 prompt engineering 的同义词。
-- 上下文的本质是帮助机器缩小与人类意图之间的信息差。
-- 长上下文不等于好效果，关键是最小充分和语义连续。
-- Agent memory、RAG、tool result、multi-agent context sharing 都是上下文工程的一部分。
-
-读完后应该能回答：
-
-- 什么信息应该进入模型上下文？
-- 哪些信息应该留在外部状态、数据库或记忆系统中？
-- 为什么 context isolation 和 self-baking 对长任务 agent 很重要？
-
-### 3. 最后结合自己的项目做迁移
-
-结合自己的业务场景，尝试把文档中的概念映射到实际系统：
+读完任何一个主题后，都可以结合自己的业务场景做一次迁移检查：
 
 | 问题 | 思考方向 |
 |---|---|
