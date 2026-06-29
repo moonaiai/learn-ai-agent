@@ -1,0 +1,10 @@
+title: Learn AI Agent
+description: AI Agent engineering notes, principles, and context engineering resources.
+theme: minima
+markdown: kramdown
+plugins:
+  - jekyll-feed
+
+header_pages:
+  - index.md
+  - README.md
