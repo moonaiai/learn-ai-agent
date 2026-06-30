@@ -1,5 +1,7 @@
 # 长文深度解析：大模型的"上下文陷阱"与6大修复技巧
 
+> 资料来源：https://github.com/adongwanai/AgentGuide/blob/main/docs/02-tech-stack/14-context-engineering.md
+
 ## 引言
 
 随着 GPT-4.5、Claude 4.5、Gemini 2.5 等大模型相继推出百万级上下文窗口，整个AI圈都沸腾了。很多人认为：只要上下文窗口够大，就可以把所有工具、文档、历史记录统统塞进去，让模型自己处理——这不就是我们梦寐以求的超级智能助手吗？
@@ -805,9 +807,3 @@ Karpathy 的金句：
 8. Anthropic - [Claude Think Tool](https://www.anthropic.com/engineering/claude-think-tool)
 
 ---
-
-**关于作者**
-
-我是阿东，大模型算法工程师，专注于大模型应用落地和知识分享。如果这篇文章对你有帮助，欢迎点赞、在看、转发，让更多人看到！
-
-有任何问题或想深入交流的话题，欢迎在评论区留言～
