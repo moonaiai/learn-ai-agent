@@ -28,18 +28,20 @@
 | 主题 | 文档 | 核心内容 |
 |---|---|---|
 | 12-Factor Agents | [12-Factor Agents 设计原则](docs/12-factor-agents/12-factor-agents-principles.md) | 从 agent loop、上下文窗口、工具调用、控制流、暂停恢复、人类介入和无状态 reducer 等角度，总结可靠 Agent 的 12 条工程原则。 |
+| Context Engineering 实践技巧 | [长文深度解析：大模型的上下文陷阱与 6 大修复技巧](docs/context-engineering/context-engineering.md) | 梳理上下文中毒、干扰、混淆、冲突等失效模式，以及 offload、pruning、summarization、quarantine 等修复技巧。 |
 | Context Engineering 2.0 | [Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md) | 基于论文梳理上下文工程的发展脉络、关键概念、阶段框架、上下文采集/管理/使用方法，以及对 Agent 系统的启发。 |
+| Build Agent Context Engineering | [Agent 架构综述：从 Prompt 到上下文工程构建 AI Agent](docs/build-agent-context-engineering/build-agent-context-engineering.md) | 原文资源本地化，覆盖结构化提示词、上下文工程、RAG、工具函数、Agent 规划与多 Agent。 |
 
 ## 学习路径
 
-这个仓库会按 AI Agent 工程能力的成长路线持续补齐内容。当前只沉淀了其中两个关键主题，后续新增文档后，会把对应节点回填到这张路线图中。
+这个仓库会按 AI Agent 工程能力的成长路线持续补齐内容。当前已沉淀四份文档，后续新增文档后，会把对应节点回填到这张路线图中。
 
 | 阶段 | 学习主题 | 需要掌握的问题 | 当前状态 |
 |---:|---|---|---|
 | 1 | LLM 应用基础 | LLM、Prompt、Token、结构化输出、Function Calling 分别解决什么问题。 | 待沉淀 |
 | 2 | Agent 基础模型 | Agent loop 如何运转，模型、工具、状态和控制流如何配合。 | 已沉淀：[12-Factor Agents 设计原则](docs/12-factor-agents/12-factor-agents-principles.md) |
 | 3 | Tool Calling 与工具系统 | Tool schema 如何设计，工具权限、失败、重试和审计如何处理。 | 待沉淀 |
-| 4 | Context Engineering | 什么信息应该进入上下文，如何压缩、隔离、检索和复用上下文。 | 已沉淀：[Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md) |
+| 4 | Context Engineering | 什么信息应该进入上下文，如何压缩、隔离、检索和复用上下文。 | 已沉淀：[长文深度解析：大模型的上下文陷阱与 6 大修复技巧](docs/context-engineering/context-engineering.md)、[Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md)、[Agent 架构综述：从 Prompt 到上下文工程构建 AI Agent](docs/build-agent-context-engineering/build-agent-context-engineering.md) |
 | 5 | Memory 与 RAG | 短期记忆、长期记忆、RAG、向量检索和知识库如何支撑 agent。 | 待沉淀 |
 | 6 | Workflow 与 Multi-Agent | 什么时候用 workflow，什么时候拆 multi-agent，角色边界如何划分。 | 待沉淀 |
 | 7 | Eval 与 Observability | 如何构建评测集、trace、回放、LLM-as-judge 和线上质量指标。 | 待沉淀 |
@@ -51,7 +53,9 @@
 
 
 1. [12-Factor Agents 设计原则](docs/12-factor-agents/12-factor-agents-principles.md)：先建立 Agent 工程模型，理解 prompt、context、tool call、state、control flow 和 human-in-the-loop 的关系。
-2. [Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md)：再理解上下文工程，明确上下文不是越多越好，而是要围绕当前任务做选择、压缩、隔离和复用。
+2. [长文深度解析：大模型的上下文陷阱与 6 大修复技巧](docs/context-engineering/context-engineering.md)：理解长上下文并不天然可靠，重点关注上下文失效模式和修复手段。
+3. [Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md)：再理解上下文工程，明确上下文不是越多越好，而是要围绕当前任务做选择、压缩、隔离和复用。
+4. [Agent 架构综述：从 Prompt 到上下文工程构建 AI Agent](docs/build-agent-context-engineering/build-agent-context-engineering.md)：保留原文和本地图片资源，作为从提示词、上下文工程到 Agent 规划的外部资料入口。
 
 ### 项目迁移检查
 
@@ -68,7 +72,7 @@
 
 ## 内容特色
 
-- **中文系统整理**：不是逐句翻译，而是按工程理解重新组织结构。
+- **中文系统整理与原文归档并存**：既有按工程理解重新组织的中文资料，也保留外部优质原文和本地图片资源。
 - **保留原图与关键结构**：重要图示已本地化保存，方便离线阅读和长期维护。
 - **强调工程落地**：每篇文档都尽量包含设计背景、核心概念、实现含义、风险边界和检查表。
 - **面向长期复盘**：文档结构适合反复查阅，也适合后续扩展成面试材料、项目设计文档或内部分享。
@@ -83,9 +87,15 @@ learn-ai-agent/
 │   ├── 12-factor-agents/
 │   │   ├── 12-factor-agents-principles.md
 │   │   └── figures/
-│   └── context-engineering-2.0-pdf/
-│       ├── context_engineering_2_cn_notes.md
-│       └── context_engineering_2_figures/
+│   ├── context-engineering/
+│   │   ├── context-engineering.md
+│   │   └── figures/
+│   ├── context-engineering-2.0-pdf/
+│   │   ├── context_engineering_2_cn_notes.md
+│   │   └── context_engineering_2_figures/
+│   └── build-agent-context-engineering/
+│       ├── build-agent-context-engineering.md
+│       └── images/
 └── agents/
     └── writing-skill/
 ```
