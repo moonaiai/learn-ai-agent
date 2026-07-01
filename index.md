@@ -11,6 +11,7 @@
 | OpenAI Agent 实用指南 | [OpenAI 实用指南：构建 AI Agents](docs/practical-guide-building-ai-agents/practical-guide-building-ai-agents.md) | 梳理 agent 适用场景、model/tools/instructions/orchestration/guardrails 构件、human intervention 和生产落地检查项。 |
 | ReAct 框架 | [ReAct 框架：从推理行动循环到可控 Agent](docs/react-framework/react-framework.md) | 梳理 ReAct 的推理行动循环、最小实现、prompt 结构、失败模式、评测指标和生产控制点。 |
 | Tool Card 模板 | [Tool Card 模板](docs/react-framework/tool-card-template.md) | 提供工具描述模板，覆盖适用边界、输入输出 schema、错误类型、安全要求和调用示例。 |
+| Agent Evaluation Harness | [Agent Evaluation Harness：从感觉评估到可复现评估](docs/agent-evaluation-harness/agent-evaluation-harness-guide.md) | 梳理 Agent 评估中的 task、trial、transcript、grader、report、工具选型、CI 集成和落地检查项。 |
 | Context Engineering 2.0 | [Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md) | 从论文视角梳理上下文工程的定义、历史阶段、设计框架和 agent 系统中的实践意义。 |
 
 ## 写作规范

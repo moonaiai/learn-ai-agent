@@ -33,13 +33,14 @@
 | ReAct 框架 | [ReAct 框架：从推理行动循环到可控 Agent](docs/react-framework/react-framework.md) | 梳理 ReAct 的推理行动循环、最小实现、prompt 结构、失败模式、评测指标和生产控制点。 |
 | Tool Card 模板 | [Tool Card 模板](docs/react-framework/tool-card-template.md) | 提供工具描述模板，覆盖 Use When、Do Not Use When、输入输出 schema、错误类型、安全边界和示例。 |
 | Agent 工具设计 | [Writing Effective Tools for Agents：Agent 工具设计原则](docs/writing-tools-for-agents/writing-tools-for-agents.md) | 基于 Anthropic 工程文章，梳理面向 agent 的工具粒度、命名空间、返回上下文、工具说明和 eval 迭代方法。 |
+| Agent Evaluation Harness | [Agent Evaluation Harness：从感觉评估到可复现评估](docs/agent-evaluation-harness/agent-evaluation-harness-guide.md) | 基于 AgentGuide 原文沉淀 Agent 评估基础设施，梳理 task、trial、transcript、grader、report、工具选型、CI 集成和落地检查项。 |
 | Context Engineering 实践技巧 | [长文深度解析：大模型的上下文陷阱与 6 大修复技巧](docs/context-engineering/context-engineering.md) | 梳理上下文中毒、干扰、混淆、冲突等失效模式，以及 offload、pruning、summarization、quarantine 等修复技巧。 |
 | Context Engineering 2.0 | [Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md) | 基于论文梳理上下文工程的发展脉络、关键概念、阶段框架、上下文采集/管理/使用方法，以及对 Agent 系统的启发。 |
 | Build Agent Context Engineering | [Agent 架构综述：从 Prompt 到上下文工程构建 AI Agent](docs/build-agent-context-engineering/build-agent-context-engineering.md) | 原文资源本地化，覆盖结构化提示词、上下文工程、RAG、工具函数、Agent 规划与多 Agent。 |
 
 ## 学习路径
 
-这个仓库会按 AI Agent 工程能力的成长路线持续补齐内容。当前已沉淀九份文档，后续新增文档后，会把对应节点回填到这张路线图中。
+这个仓库会按 AI Agent 工程能力的成长路线持续补齐内容。当前已沉淀十份文档，后续新增文档后，会把对应节点回填到这张路线图中。
 
 | 阶段 | 学习主题 | 需要掌握的问题 | 当前状态 |
 |---:|---|---|---|
@@ -49,7 +50,7 @@
 | 4 | Context Engineering | 什么信息应该进入上下文，如何压缩、隔离、检索和复用上下文。 | 已沉淀：[长文深度解析：大模型的上下文陷阱与 6 大修复技巧](docs/context-engineering/context-engineering.md)、[Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md)、[Agent 架构综述：从 Prompt 到上下文工程构建 AI Agent](docs/build-agent-context-engineering/build-agent-context-engineering.md) |
 | 5 | Memory 与 RAG | 短期记忆、长期记忆、RAG、向量检索和知识库如何支撑 agent。 | 待沉淀 |
 | 6 | Workflow 与 Multi-Agent | 什么时候用 workflow，什么时候拆 multi-agent，角色边界如何划分。 | 已沉淀：[Building Effective Agents：从简单模式到可控 Agent](docs/building-effective-agents/building-effective-agents.md) |
-| 7 | Eval 与 Observability | 如何构建评测集、trace、回放、LLM-as-judge 和线上质量指标。 | 待沉淀 |
+| 7 | Eval 与 Observability | 如何构建评测集、trace、回放、LLM-as-judge 和线上质量指标。 | 已沉淀：[Agent Evaluation Harness：从感觉评估到可复现评估](docs/agent-evaluation-harness/agent-evaluation-harness-guide.md) |
 | 8 | Safety 与 Human-in-the-loop | 权限、审批、敏感操作、人工介入和安全边界如何设计。 | 已沉淀：[OpenAI 实用指南：构建 AI Agents](docs/practical-guide-building-ai-agents/practical-guide-building-ai-agents.md) |
 | 9 | Production Engineering | 成本、延迟、缓存、限流、错误恢复、部署和运维如何落地。 | 已沉淀：[OpenAI 实用指南：构建 AI Agents](docs/practical-guide-building-ai-agents/practical-guide-building-ai-agents.md) |
 | 10 | 项目复盘与面试表达 | 如何把 agent 项目讲成架构设计、工程取舍和业务结果。 | 待沉淀 |
@@ -66,6 +67,7 @@
 7. [Writing Effective Tools for Agents：Agent 工具设计原则](docs/writing-tools-for-agents/writing-tools-for-agents.md)：理解 tool 不是 API endpoint 的简单包装，而是需要围绕 agent 任务、上下文和 eval 持续迭代的接口。
 8. [Building Effective Agents：从简单模式到可控 Agent](docs/building-effective-agents/building-effective-agents.md)：理解 workflow 与 agent 的控制权差异，并掌握 prompt chaining、routing、parallelization、orchestrator-workers、evaluator-optimizer 等常见模式的适用边界。
 9. [OpenAI 实用指南：构建 AI Agents](docs/practical-guide-building-ai-agents/practical-guide-building-ai-agents.md)：从 OpenAI 官方实践视角理解 agent 的适用条件、基础构件、编排方式、guardrails、人类介入和生产检查项。
+10. [Agent Evaluation Harness：从感觉评估到可复现评估](docs/agent-evaluation-harness/agent-evaluation-harness-guide.md)：理解 Agent 评估如何从手动试用变成任务、环境、轨迹、评分器、报告和 CI 门禁组成的可复现流程。
 
 ### 项目迁移检查
 
@@ -114,6 +116,8 @@ learn-ai-agent/
 │   ├── practical-guide-building-ai-agents/
 │   │   ├── practical-guide-building-ai-agents.md
 │   │   └── figures/
+│   ├── agent-evaluation-harness/
+│   │   └── agent-evaluation-harness-guide.md
 │   └── build-agent-context-engineering/
 │       ├── build-agent-context-engineering.md
 │       └── images/
@@ -123,7 +127,7 @@ learn-ai-agent/
 
 ## 后续计划
 
-- 增加 Memory、RAG、Eval 等专题整理，并继续补充更细的 Multi-Agent 工程案例。
+- 增加 Memory、RAG 等专题整理，并继续补充更细的 Multi-Agent 工程案例。
 - 补充优秀开源 Agent 项目的架构阅读材料。
 - 沉淀 AI Agent 面试问答和项目表达材料。
 - 将学习资料逐步组织成“概念 -> 设计原则 -> 工程实践 -> 项目复盘”的完整路径。
