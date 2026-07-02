@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 280" font-family="-apple-system, Segoe UI, sans-serif">
+  <defs>
+    <style>
+      .box { fill: #f4f6fa; stroke: #2b3a55; stroke-width: 1.5; }
+      .box-active { fill: #dde7ff; stroke: #2b3a55; stroke-width: 1.5; }
+      .arrow { stroke: #2b3a55; stroke-width: 1.6; fill: none; marker-end: url(#tri); }
+      text { fill: #1f2937; font-size: 14px; }
+      .title { font-size: 16px; font-weight: 600; }
+      .sub { font-size: 12px; fill: #475569; }
+      .pill { fill: #fff; stroke: #2b3a55; }
+    </style>
+    <marker id="tri" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b3a55" />
+    </marker>
+  </defs>
+
+  <text x="20" y="28" class="title">Tokenization 流水线：从原文到模型输入</text>
+
+  <text x="20" y="70" class="sub">Raw text</text>
+  <rect class="box" x="20" y="80" width="160" height="60" rx="6"/>
+  <text x="100" y="115" text-anchor="middle">"I love NLP"</text>
+
+  <text x="210" y="70" class="sub">Normalization</text>
+  <rect class="box" x="210" y="80" width="160" height="60" rx="6"/>
+  <text x="290" y="110" text-anchor="middle" font-size="12">lowercase, unicode</text>
+  <text x="290" y="128" text-anchor="middle" font-size="12">NFKC, strip accents</text>
+
+  <text x="400" y="70" class="sub">Pre-tokenization</text>
+  <rect class="box" x="400" y="80" width="160" height="60" rx="6"/>
+  <text x="480" y="115" text-anchor="middle">whitespace / regex split</text>
+
+  <text x="590" y="70" class="sub">Subword (BPE/WP/Unigram)</text>
+  <rect class="box-active" x="590" y="80" width="200" height="60" rx="6"/>
+  <text x="690" y="110" text-anchor="middle" font-size="12">merge / Viterbi / EM</text>
+  <text x="690" y="128" text-anchor="middle" font-size="12">produce subword ids</text>
+
+  <text x="820" y="70" class="sub">Post-processing</text>
+  <rect class="box" x="820" y="80" width="160" height="60" rx="6"/>
+  <text x="900" y="110" text-anchor="middle" font-size="12">add [CLS]/[SEP],</text>
+  <text x="900" y="128" text-anchor="middle" font-size="12">attention mask</text>
+
+  <line class="arrow" x1="180" y1="110" x2="208" y2="110"/>
+  <line class="arrow" x1="370" y1="110" x2="398" y2="110"/>
+  <line class="arrow" x1="560" y1="110" x2="588" y2="110"/>
+  <line class="arrow" x1="790" y1="110" x2="818" y2="110"/>
+
+  <text x="20" y="180" class="sub">Token IDs (input to model)</text>
+  <g transform="translate(20,200)">
+    <rect class="pill" x="0" y="0" width="60" height="40" rx="4"/>
+    <text x="30" y="25" text-anchor="middle">101</text>
+    <rect class="pill" x="70" y="0" width="60" height="40" rx="4"/>
+    <text x="100" y="25" text-anchor="middle">1045</text>
+    <rect class="pill" x="140" y="0" width="60" height="40" rx="4"/>
+    <text x="170" y="25" text-anchor="middle">2293</text>
+    <rect class="pill" x="210" y="0" width="100" height="40" rx="4"/>
+    <text x="260" y="25" text-anchor="middle">17953</text>
+    <rect class="pill" x="320" y="0" width="60" height="40" rx="4"/>
+    <text x="350" y="25" text-anchor="middle">102</text>
+    <rect class="pill" x="390" y="0" width="80" height="40" rx="4"/>
+    <text x="430" y="25" text-anchor="middle">0 [PAD]</text>
+    <rect class="pill" x="480" y="0" width="80" height="40" rx="4"/>
+    <text x="520" y="25" text-anchor="middle">0 [PAD]</text>
+  </g>
+  <text x="20" y="262" class="sub" font-style="italic">本图改写自 HuggingFace tokenization pipeline 说明；BPE / WordPiece / Unigram 在"Subword" 这一步选不同算法</text>
+</svg>

@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 460" font-family="-apple-system, Segoe UI, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 16px; font-weight: 600; fill: #1f2937; }
+      .step-label { font-size: 13px; font-weight: 600; fill: #1f2937; }
+      .sub { font-size: 12px; fill: #475569; }
+      .tok { fill: #dde7ff; stroke: #2b3a55; stroke-width: 1; }
+      .merged { fill: #fde68a; stroke: #2b3a55; stroke-width: 1.5; }
+      .vocab { fill: #d1fae5; stroke: #065f46; stroke-width: 1; }
+      text { font-size: 12px; fill: #1f2937; }
+      .count { fill: #475569; font-size: 11px; }
+      .arrow { stroke: #2b3a55; stroke-width: 1.5; fill: none; marker-end: url(#tri); }
+    </style>
+    <marker id="tri" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b3a55" />
+    </marker>
+  </defs>
+
+  <text x="20" y="28" class="title">BPE 训练过程：逐轮合并最高频相邻对</text>
+  <text x="20" y="48" class="sub">语料: ("hug",10) ("pug",5) ("pun",12) ("bun",4) ("hugs",5)</text>
+
+  <text x="20" y="80" class="step-label">Step 0：初始 base vocab = 字符集</text>
+  <text x="20" y="98" class="sub">vocab = [b, g, h, n, p, s, u]</text>
+  <g transform="translate(560,60)">
+    <rect class="vocab" x="0" y="0" width="40" height="22" rx="3"/>
+    <text x="20" y="15" text-anchor="middle">b</text>
+    <rect class="vocab" x="45" y="0" width="40" height="22" rx="3"/>
+    <text x="65" y="15" text-anchor="middle">g</text>
+    <rect class="vocab" x="90" y="0" width="40" height="22" rx="3"/>
+    <text x="110" y="15" text-anchor="middle">h</text>
+    <rect class="vocab" x="135" y="0" width="40" height="22" rx="3"/>
+    <text x="155" y="15" text-anchor="middle">n</text>
+    <rect class="vocab" x="180" y="0" width="40" height="22" rx="3"/>
+    <text x="200" y="15" text-anchor="middle">p</text>
+    <rect class="vocab" x="225" y="0" width="40" height="22" rx="3"/>
+    <text x="245" y="15" text-anchor="middle">s</text>
+    <rect class="vocab" x="270" y="0" width="40" height="22" rx="3"/>
+    <text x="290" y="15" text-anchor="middle">u</text>
+  </g>
+
+  <text x="20" y="130" class="step-label">Step 1：合并最高频相邻对 (u,g) → ug (20次)</text>
+  <g transform="translate(20,140)">
+    <rect class="tok" x="0" y="0" width="22" height="22" rx="3"/>
+    <text x="11" y="15" text-anchor="middle">h</text>
+    <rect class="merged" x="22" y="0" width="40" height="22" rx="3"/>
+    <text x="42" y="15" text-anchor="middle">ug</text>
+    <text x="48" y="38" class="count">10</text>
+
+    <rect class="tok" x="100" y="0" width="22" height="22" rx="3"/>
+    <text x="111" y="15" text-anchor="middle">p</text>
+    <rect class="merged" x="122" y="0" width="40" height="22" rx="3"/>
+    <text x="142" y="15" text-anchor="middle">ug</text>
+    <text x="148" y="38" class="count">5</text>
+
+    <rect class="tok" x="200" y="0" width="22" height="22" rx="3"/>
+    <text x="211" y="15" text-anchor="middle">p</text>
+    <rect class="tok" x="222" y="0" width="22" height="22" rx="3"/>
+    <text x="233" y="15" text-anchor="middle">u</text>
+    <rect class="tok" x="244" y="0" width="22" height="22" rx="3"/>
+    <text x="255" y="15" text-anchor="middle">n</text>
+    <text x="270" y="38" class="count">12</text>
+
+    <rect class="tok" x="320" y="0" width="22" height="22" rx="3"/>
+    <text x="331" y="15" text-anchor="middle">b</text>
+    <rect class="tok" x="342" y="0" width="22" height="22" rx="3"/>
+    <text x="353" y="15" text-anchor="middle">u</text>
+    <rect class="tok" x="364" y="0" width="22" height="22" rx="3"/>
+    <text x="375" y="15" text-anchor="middle">n</text>
+    <text x="386" y="38" class="count">4</text>
+
+    <rect class="tok" x="420" y="0" width="22" height="22" rx="3"/>
+    <text x="431" y="15" text-anchor="middle">h</text>
+    <rect class="merged" x="442" y="0" width="40" height="22" rx="3"/>
+    <text x="462" y="15" text-anchor="middle">ug</text>
+    <rect class="tok" x="482" y="0" width="22" height="22" rx="3"/>
+    <text x="493" y="15" text-anchor="middle">s</text>
+    <text x="510" y="38" class="count">5</text>
+  </g>
+
+  <text x="20" y="225" class="step-label">Step 2：合并次高频对 (u,n) → un (16次)</text>
+  <g transform="translate(20,235)">
+    <rect class="tok" x="0" y="0" width="22" height="22" rx="3"/>
+    <text x="11" y="15" text-anchor="middle">h</text>
+    <rect class="merged" x="22" y="0" width="40" height="22" rx="3"/>
+    <text x="42" y="15" text-anchor="middle">ug</text>
+
+    <rect class="tok" x="100" y="0" width="22" height="22" rx="3"/>
+    <text x="111" y="15" text-anchor="middle">p</text>
+    <rect class="merged" x="122" y="0" width="40" height="22" rx="3"/>
+    <text x="142" y="15" text-anchor="middle">ug</text>
+
+    <rect class="tok" x="200" y="0" width="22" height="22" rx="3"/>
+    <text x="211" y="15" text-anchor="middle">p</text>
+    <rect class="merged" x="222" y="0" width="40" height="22" rx="3"/>
+    <text x="242" y="15" text-anchor="middle">un</text>
+
+    <rect class="tok" x="300" y="0" width="22" height="22" rx="3"/>
+    <text x="311" y="15" text-anchor="middle">b</text>
+    <rect class="merged" x="322" y="0" width="40" height="22" rx="3"/>
+    <text x="342" y="15" text-anchor="middle">un</text>
+
+    <rect class="tok" x="400" y="0" width="22" height="22" rx="3"/>
+    <text x="411" y="15" text-anchor="middle">h</text>
+    <rect class="merged" x="422" y="0" width="40" height="22" rx="3"/>
+    <text x="442" y="15" text-anchor="middle">ug</text>
+    <rect class="tok" x="462" y="0" width="22" height="22" rx="3"/>
+    <text x="473" y="15" text-anchor="middle">s</text>
+  </g>
+
+  <text x="20" y="320" class="step-label">Step N：vocab 增长到目标大小</text>
+  <text x="20" y="340" class="sub">vocab = [b, g, h, n, p, s, u, ug, un, hug, pug, pun, bun, hugs, ...]</text>
+  <g transform="translate(20,360)">
+    <rect class="vocab" x="0" y="0" width="40" height="22" rx="3"/>
+    <text x="20" y="15" text-anchor="middle">ug</text>
+    <rect class="vocab" x="45" y="0" width="40" height="22" rx="3"/>
+    <text x="65" y="15" text-anchor="middle">un</text>
+    <rect class="vocab" x="90" y="0" width="40" height="22" rx="3"/>
+    <text x="110" y="15" text-anchor="middle">hug</text>
+    <rect class="vocab" x="135" y="0" width="40" height="22" rx="3"/>
+    <text x="155" y="15" text-anchor="middle">pug</text>
+    <rect class="vocab" x="180" y="0" width="40" height="22" rx="3"/>
+    <text x="200" y="15" text-anchor="middle">pun</text>
+    <rect class="vocab" x="225" y="0" width="40" height="22" rx="3"/>
+    <text x="245" y="15" text-anchor="middle">bun</text>
+    <rect class="vocab" x="270" y="0" width="60" height="22" rx="3"/>
+    <text x="300" y="15" text-anchor="middle">hugs</text>
+    <text x="350" y="15" fill="#475569">...</text>
+  </g>
+
+  <text x="20" y="420" class="sub" font-style="italic">GPT-2 = 256 base byte tokens + 50,000 merges + 1 special = 50,257；GPT = 478 base + 40,000 merges</text>
+  <text x="20" y="442" class="sub" font-style="italic">合并规则按出现频次排序；推理时按 merge 优先级从左到右贪心合并</text>
+</svg>

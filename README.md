@@ -37,6 +37,16 @@
 | Context Engineering 实践技巧 | [长文深度解析：大模型的上下文陷阱与 6 大修复技巧](docs/context-engineering/context-engineering.md) | 梳理上下文中毒、干扰、混淆、冲突等失效模式，以及 offload、pruning、summarization、quarantine 等修复技巧。 |
 | Context Engineering 2.0 | [Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md) | 基于论文梳理上下文工程的发展脉络、关键概念、阶段框架、上下文采集/管理/使用方法，以及对 Agent 系统的启发。 |
 | Build Agent Context Engineering | [Agent 架构综述：从 Prompt 到上下文工程构建 AI Agent](docs/build-agent-context-engineering/build-agent-context-engineering.md) | 原文资源本地化，覆盖结构化提示词、上下文工程、RAG、工具函数、Agent 规划与多 Agent。 |
+| Transformer Self-Attention | [Transformer Self-Attention：Q/K/V 与注意力怎么算](docs/transformer/01-transformer-self-attention.md) | 基于 The Illustrated Transformer 沉淀，拆解 Self-Attention 公式、Q/K/V 工程含义、Multi-Head、Masked、位置编码、复杂度与面试速答卡；原文图片已本地化。 |
+| Decoder-Only 与 GPT | [GPT vs BERT：为什么 LLM 都用 Decoder-Only](docs/gpt/01-decoder-only-vs-encoder-decoder.md) | 基于 The Illustrated GPT-2 沉淀，对比 Encoder-Only / Decoder-Only / Encoder-Decoder 三种拓扑，解释 BERT 的 MLM 与 GPT 的 Next Token Prediction 分歧，并梳理 Decoder-Only 成为主流 LLM 的工程原因。 |
+| Tokenization | [Tokenization：BPE / WordPiece / Unigram 怎么选](docs/tokenization/01-bpe-wordpiece-unigram.md) | 梳理 tokenization 动机、词级/字符级/子词级粒度取舍、BPE 自底向上合并、WordPiece 似然比合并、Unigram 自顶向下剪枝、SentencePiece 统一接口、tiktoken / rustbpe 工业实现、特殊 token 与词表大小权衡。 |
+| 推理采样参数 | [推理采样参数：temperature / top_p / top_k](docs/sampling/01-temperature-top-p-top-k.md) | 拆解 Greedy、Beam Search、Sampling、Temperature 缩放、Top-k 硬截断、Top-p Nucleus 自适应集合、min_p / typical_p / contrastive 等变体、Repetition Penalty、HF generate 与 vLLM logits processor、Speculative Decoding 与 sampling 的严格对齐。 |
+| KV Cache | [KV Cache：自回归推理的工程加速](docs/kv-cache/01-kv-cache-inference.md) | 从自回归推理逐步展开推导 KV Cache 可复用性，给出 QK^T 增量计算与显存公式，对比 MHA / MQA / GQA 显存，详解 PagedAttention（vLLM）的分页与 prefix sharing、FlashAttention 兼容、Quantized KV Cache / Offload 等进阶优化。 |
+| LoRA | [LoRA：低秩适配微调](docs/lora/01-lora-low-rank-adaptation.md) | 拆解全量微调成本、低秩假设与内在维度、LoRA 数学形式 W' = W + α/r · B·A、初始化约定、target_modules / alpha / rank 选择、merge 推理、与 Adapter / Prefix Tuning 的对比、AdaLoRA / DoRA 变体与 Hugging Face PEFT 工业实践。 |
+| QLoRA | [QLoRA：把 65B 微调压进单张 24GB 显卡](docs/qlora/01-qlora-quantized-lora.md) | 基于 QLoRA 论文沉淀 4-bit NormalFloat + Double Quantization + Paged Optimizers + LoRA 的完整方案，对比 FP16/LoRA/QLoRA 的显存与质量，覆盖 bitsandbytes 4-bit 加载配置、Unsloth/Axolotl 工程实践与面试速答卡。 |
+| RoPE 旋转位置编码 | [RoPE：旋转位置编码与相对注意力](docs/positional-encoding/01-rope-relative-position.md) | 基于 RoFormer 论文沉淀，拆解旋转角度与位置成正比、复数/旋转矩阵公式、相对注意力内积构造、远程衰减性质、长度外推（PI / NTK-aware / YaRN）、与 Flash Attention / KV Cache 的兼容性，以及 Sinusoidal / Learned / ALiBi / RoPE 的对比。 |
+| Embedding 选型 | [Embedding 模型选型：从 MTEB 排名到工程落地](docs/embedding/01-embedding-model-selection.md) | 梳理 Embedding 模型输入输出、Bi-Encoder vs Cross-Encoder、对称 vs 非对称检索、MTEB 8 类任务、闭源/开源模型分层、维度选择、Matryoshka 压缩、指令调优 Embedding、中文场景、自家评测方法与工程落地清单。 |
+| Karpathy Zero to Hero | [Karpathy Zero to Hero：讲座列表与学习顺序](docs/zero-to-hero/01-karpathy-zero-to-hero-learning-path.md) | 整理 Andrej Karpathy "Neural Networks: Zero to Hero" 视频系列 8 讲的标题、时长、YouTube 链接、原文简介、配套代码仓库（micrograd / makemore / ng-video-lecture / minbpe），以及按页面原样标注的依赖关系。 |
 
 ## 学习路径
 
@@ -44,7 +54,8 @@
 
 | 阶段 | 学习主题 | 需要掌握的问题 | 当前状态 |
 |---:|---|---|---|
-| 1 | LLM 应用基础 | LLM、Prompt、Token、结构化输出、Function Calling 分别解决什么问题。 | 待沉淀 |
+| 1 | 大模型基础原理 | Transformer Self-Attention、Decoder-Only、Tokenization、位置编码、KV Cache、LoRA/QLoRA、Embedding 选型等开发岗面试常考点的工程化梳理。 | 已沉淀：[Transformer Self-Attention：Q/K/V 与注意力怎么算](docs/transformer/01-transformer-self-attention.md)、[GPT vs BERT：为什么 LLM 都用 Decoder-Only](docs/gpt/01-decoder-only-vs-encoder-decoder.md)、[Tokenization：BPE / WordPiece / Unigram 怎么选](docs/tokenization/01-bpe-wordpiece-unigram.md)、[RoPE：旋转位置编码与相对注意力](docs/positional-encoding/01-rope-relative-position.md)、[推理采样参数：temperature / top_p / top_k](docs/sampling/01-temperature-top-p-top-k.md)、[KV Cache：自回归推理的工程加速](docs/kv-cache/01-kv-cache-inference.md)、[LoRA：低秩适配微调](docs/lora/01-lora-low-rank-adaptation.md)、[QLoRA：把 65B 微调压进单张 24GB 显卡](docs/qlora/01-qlora-quantized-lora.md)、[Embedding 模型选型：从 MTEB 排名到工程落地](docs/embedding/01-embedding-model-selection.md) |
+| 1.x | 大模型基础代码路径 | 跟着 Karpathy "Zero to Hero" 视频系列从零手写 micrograd / makemore / nanoGPT / minbpe。 | 已沉淀：[Karpathy Zero to Hero：讲座列表与学习顺序](docs/zero-to-hero/01-karpathy-zero-to-hero-learning-path.md) |
 | 2 | Agent 基础模型 | Agent loop 如何运转，模型、工具、状态和控制流如何配合。 | 已沉淀：[12-Factor Agents 设计原则](docs/12-factor-agents/12-factor-agents-principles.md)、[ReAct 框架：从推理行动循环到可控 Agent](docs/react-framework/react-framework.md) |
 | 3 | Tool Calling 与工具系统 | Tool schema 如何设计，工具权限、失败、重试和审计如何处理。 | 已沉淀：[Tool Card 模板](docs/react-framework/tool-card-template.md)、[Writing Effective Tools for Agents：Agent 工具设计原则](docs/writing-tools-for-agents/writing-tools-for-agents.md) |
 | 4 | Context Engineering | 什么信息应该进入上下文，如何压缩、隔离、检索和复用上下文。 | 已沉淀：[长文深度解析：大模型的上下文陷阱与 6 大修复技巧](docs/context-engineering/context-engineering.md)、[Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md)、[Agent 架构综述：从 Prompt 到上下文工程构建 AI Agent](docs/build-agent-context-engineering/build-agent-context-engineering.md) |
@@ -68,6 +79,16 @@
 8. [Building Effective Agents：从简单模式到可控 Agent](docs/building-effective-agents/building-effective-agents.md)：理解 workflow 与 agent 的控制权差异，并掌握 prompt chaining、routing、parallelization、orchestrator-workers、evaluator-optimizer 等常见模式的适用边界。
 9. [OpenAI 实用指南：构建 AI Agents](docs/practical-guide-building-ai-agents/practical-guide-building-ai-agents.md)：从 OpenAI 官方实践视角理解 agent 的适用条件、基础构件、编排方式、guardrails、人类介入和生产检查项。
 10. [Agent Evaluation Harness：从感觉评估到可复现评估](docs/agent-evaluation-harness/agent-evaluation-harness-guide.md)：理解 Agent 评估如何从手动试用变成任务、环境、轨迹、评分器、报告和 CI 门禁组成的可复现流程。
+11. [Transformer Self-Attention：Q/K/V 与注意力怎么算](docs/transformer/01-transformer-self-attention.md)：回到大模型基础，从 Q/K/V 投影、Scaled Dot-Product 公式、Multi-Head、Masked、位置编码到 KV Cache 的工程含义，建立后续所有 LLM 主题的共同地基。
+12. [GPT vs BERT：为什么 LLM 都用 Decoder-Only](docs/gpt/01-decoder-only-vs-encoder-decoder.md)：对比 Encoder-Only / Decoder-Only / Encoder-Decoder 三种拓扑，解释 BERT 的 MLM 与 GPT 的 Next Token Prediction 的本质分歧，并梳理 Decoder-Only 成为主流 LLM 事实标准的工程原因。
+13. [Tokenization：BPE / WordPiece / Unigram 怎么选](docs/tokenization/01-bpe-wordpiece-unigram.md)：拆解子词切分的三种主流算法——BPE 自底向上合并、WordPiece 似然比合并、Unigram 自顶向下剪枝，掌握 SentencePiece 统一接口、tiktoken / rustbpe 工业实现、特殊 token 与词表大小对模型表现的权衡。
+14. [RoPE：旋转位置编码与相对注意力](docs/positional-encoding/01-rope-relative-position.md)：理解当前主流 LLM 使用的位置编码机制——通过对 Q/K 按位置做旋转，使 attention 内积天然依赖相对位置 m-n，并掌握远程衰减、长度外推（PI / NTK-aware / YaRN）以及与 Flash Attention / KV Cache 的工程兼容点。
+15. [推理采样参数：temperature / top_p / top_k](docs/sampling/01-temperature-top-p-top-k.md)：理解生成时的概率分布截断机制——Temperature 控锐度、Top-k 硬截断、Top-p Nucleus 自适应集合，并掌握 min_p / typical_p / contrastive、Repetition Penalty、Speculative Decoding 严格对齐等工程实践。
+16. [KV Cache：自回归推理的工程加速](docs/kv-cache/01-kv-cache-inference.md)：从自回归推理逐步展开推导 KV Cache 的可复用性，掌握 QK^T 增量计算与显存估算、Prefill / Decode 两阶段、MHA / MQA / GQA 显存对比、PagedAttention（vLLM）分页与 prefix sharing、FlashAttention 兼容、Quantized KV Cache 与 Offload 等进阶优化。
+17. [LoRA：低秩适配微调](docs/lora/01-lora-low-rank-adaptation.md)：理解全量微调的成本瓶颈与内在维度假设，掌握 W' = W + α/r · B·A 的低秩分解、target_modules / alpha / rank 工程选择、merge 推理，以及 AdaLoRA / DoRA 变体和 Hugging Face PEFT 工业框架。
+18. [QLoRA：把 65B 微调压进单张 24GB 显卡](docs/qlora/01-qlora-quantized-lora.md)：理解 4-bit NormalFloat 量化基座 + Double Quantization 节省量化常数 + Paged Optimizers 顶住 OOM 尖峰 + 16-bit LoRA 训练的整体方案，掌握 65B 模型在单卡上的微调工程路径。
+19. [Embedding 模型选型：从 MTEB 排名到工程落地](docs/embedding/01-embedding-model-selection.md)：建立 Embedding 模型的工程化认知，覆盖输入输出、Bi-Encoder vs Cross-Encoder、对称 vs 非对称检索、MTEB 8 类任务、闭源/开源模型分层、维度选择、Matryoshka 压缩、指令调优、中文场景、自家评测与 Sentence-Transformers / LangChain / LlamaIndex 工程集成。
+20. [Karpathy Zero to Hero：讲座列表与学习顺序](docs/zero-to-hero/01-karpathy-zero-to-hero-learning-path.md)：整理 Karpathy "Neural Networks: Zero to Hero" 视频系列 8 讲的标题、时长、YouTube 链接、原文简介与配套代码仓库，按页面原样标注依赖关系。
 
 ### 项目迁移检查
 
@@ -118,15 +139,44 @@ learn-ai-agent/
 │   │   └── figures/
 │   ├── agent-evaluation-harness/
 │   │   └── agent-evaluation-harness-guide.md
-│   └── build-agent-context-engineering/
-│       ├── build-agent-context-engineering.md
-│       └── images/
-└── agents/
-    └── writing-skill/
+│   ├── build-agent-context-engineering/
+│   │   ├── build-agent-context-engineering.md
+│   │   └── images/
+│   ├── transformer/
+│   │   ├── 01-transformer-self-attention.md
+│   │   └── figures/
+│   ├── gpt/
+│   │   ├── 01-decoder-only-vs-encoder-decoder.md
+│   │   └── figures/
+│   ├── tokenization/
+│   │   ├── 01-bpe-wordpiece-unigram.md
+│   │   └── figures/
+│   ├── positional-encoding/
+│   │   ├── 01-rope-relative-position.md
+│   │   └── figures/
+│   ├── sampling/
+│   │   ├── 01-temperature-top-p-top-k.md
+│   │   └── figures/
+│   ├── kv-cache/
+│   │   ├── 01-kv-cache-inference.md
+│   │   └── figures/
+│   ├── lora/
+│   │   ├── 01-lora-low-rank-adaptation.md
+│   │   └── figures/
+│   ├── qlora/
+│   │   ├── 01-qlora-quantized-lora.md
+│   │   └── figures/
+│   └── embedding/
+│       ├── 01-embedding-model-selection.md
+│       └── figures/
+│   └── zero-to-hero/
+│       ├── 01-karpathy-zero-to-hero-learning-path.md
+│       └── figures/
 ```
 
 ## 后续计划
 
+- 本轮 9 个 LLM 基础主题已全部沉淀，Q9（RLHF / DPO）、Q10（量化）、Q11（推理服务框架）按用户节奏延后启动。
 - 增加 Memory、RAG 等专题整理，并继续补充更细的 Multi-Agent 工程案例。
 - 补充优秀开源 Agent 项目的架构阅读材料。
 - 沉淀 AI Agent 面试问答和项目表达材料。

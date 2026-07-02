@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 460" font-family="-apple-system, Segoe UI, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 16px; font-weight: 600; fill: #1f2937; }
+      .step-label { font-size: 13px; font-weight: 600; fill: #1f2937; }
+      .sub { font-size: 12px; fill: #475569; }
+      .tok { fill: #dde7ff; stroke: #2b3a55; stroke-width: 1; }
+      .keep { fill: #bbf7d0; stroke: #065f46; stroke-width: 1.2; }
+      .drop { fill: #fee2e2; stroke: #991b1b; stroke-width: 1; text-decoration: line-through; }
+      .arrow { stroke: #2b3a55; stroke-width: 1.5; fill: none; marker-end: url(#tri); }
+      text { font-size: 12px; fill: #1f2937; }
+    </style>
+    <marker id="tri" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b3a55" />
+    </marker>
+  </defs>
+
+  <text x="20" y="28" class="title">Unigram 语言模型：从大词表自顶向下删 token</text>
+  <text x="20" y="48" class="sub">训练：EM 估计每个 token 的概率 p(x)；每轮去掉"对总 loss 贡献最小"的 10-20%</text>
+
+  <text x="20" y="78" class="step-label">Step 0：候选大词表 + EM 估概率</text>
+  <text x="20" y="96" class="sub">corpus: ("hug",10) ("pug",5) ("pun",12) ("bun",4) ("hugs",5)</text>
+  <g transform="translate(20,108)">
+    <rect class="tok" x="0" y="0" width="32" height="22" rx="3"/>
+    <text x="16" y="15" text-anchor="middle">b</text>
+    <rect class="tok" x="36" y="0" width="32" height="22" rx="3"/>
+    <text x="52" y="15" text-anchor="middle">g</text>
+    <rect class="tok" x="72" y="0" width="32" height="22" rx="3"/>
+    <text x="88" y="15" text-anchor="middle">h</text>
+    <rect class="tok" x="108" y="0" width="32" height="22" rx="3"/>
+    <text x="124" y="15" text-anchor="middle">n</text>
+    <rect class="tok" x="144" y="0" width="32" height="22" rx="3"/>
+    <text x="160" y="15" text-anchor="middle">p</text>
+    <rect class="tok" x="180" y="0" width="32" height="22" rx="3"/>
+    <text x="196" y="15" text-anchor="middle">s</text>
+    <rect class="tok" x="216" y="0" width="32" height="22" rx="3"/>
+    <text x="232" y="15" text-anchor="middle">u</text>
+    <rect class="tok" x="252" y="0" width="42" height="22" rx="3"/>
+    <text x="273" y="15" text-anchor="middle">hu</text>
+    <rect class="tok" x="298" y="0" width="42" height="22" rx="3"/>
+    <text x="319" y="15" text-anchor="middle">ug</text>
+    <rect class="tok" x="344" y="0" width="42" height="22" rx="3"/>
+    <text x="365" y="15" text-anchor="middle">un</text>
+    <rect class="tok" x="390" y="0" width="42" height="22" rx="3"/>
+    <text x="411" y="15" text-anchor="middle">pu</text>
+    <rect class="tok" x="436" y="0" width="42" height="22" rx="3"/>
+    <text x="457" y="15" text-anchor="middle">bu</text>
+    <rect class="tok" x="482" y="0" width="42" height="22" rx="3"/>
+    <text x="503" y="15" text-anchor="middle">gs</text>
+    <rect class="tok" x="528" y="0" width="50" height="22" rx="3"/>
+    <text x="553" y="15" text-anchor="middle">hug</text>
+    <rect class="tok" x="582" y="0" width="50" height="22" rx="3"/>
+    <text x="607" y="15" text-anchor="middle">pug</text>
+    <rect class="tok" x="636" y="0" width="50" height="22" rx="3"/>
+    <text x="661" y="15" text-anchor="middle">pun</text>
+    <rect class="tok" x="690" y="0" width="50" height="22" rx="3"/>
+    <text x="715" y="15" text-anchor="middle">bun</text>
+    <rect class="tok" x="744" y="0" width="50" height="22" rx="3"/>
+    <text x="769" y="15" text-anchor="middle">ugs</text>
+    <rect class="tok" x="798" y="0" width="60" height="22" rx="3"/>
+    <text x="828" y="15" text-anchor="middle">hugs</text>
+  </g>
+
+  <text x="20" y="160" class="step-label">Step 1：每个 token 算"删除后 loss 增量 ΔL"，按 ΔL 升序删除</text>
+
+  <text x="20" y="180" class="sub">ΔL 高 = 删除代价大（需要保留）</text>
+  <g transform="translate(20,190)">
+    <rect class="keep" x="0" y="0" width="50" height="22" rx="3"/>
+    <text x="25" y="15" text-anchor="middle">ug (高)</text>
+    <rect class="keep" x="55" y="0" width="50" height="22" rx="3"/>
+    <text x="80" y="15" text-anchor="middle">hug (高)</text>
+    <rect class="keep" x="110" y="0" width="50" height="22" rx="3"/>
+    <text x="135" y="15" text-anchor="middle">hugs (高)</text>
+  </g>
+
+  <text x="20" y="232" class="sub">ΔL 低 = 删除几乎无影响（可丢弃）</text>
+  <g transform="translate(20,242)">
+    <rect class="drop" x="0" y="0" width="40" height="22" rx="3"/>
+    <text x="20" y="15" text-anchor="middle">bu</text>
+    <rect class="drop" x="44" y="0" width="40" height="22" rx="3"/>
+    <text x="64" y="15" text-anchor="middle">pu</text>
+    <rect class="drop" x="88" y="0" width="40" height="22" rx="3"/>
+    <text x="108" y="15" text-anchor="middle">gs</text>
+    <rect class="drop" x="132" y="0" width="50" height="22" rx="3"/>
+    <text x="157" y="15" text-anchor="middle">pug</text>
+    <rect class="drop" x="186" y="0" width="50" height="22" rx="3"/>
+    <text x="211" y="15" text-anchor="middle">bun</text>
+  </g>
+
+  <text x="20" y="290" class="step-label">Step N：保留 base 字符 + 高 ΔL token，直到 vocab 达到目标</text>
+  <g transform="translate(20,302)">
+    <rect class="keep" x="0" y="0" width="32" height="22" rx="3"/>
+    <text x="16" y="15" text-anchor="middle">b</text>
+    <rect class="keep" x="36" y="0" width="32" height="22" rx="3"/>
+    <text x="52" y="15" text-anchor="middle">g</text>
+    <rect class="keep" x="72" y="0" width="32" height="22" rx="3"/>
+    <text x="88" y="15" text-anchor="middle">h</text>
+    <rect class="keep" x="108" y="0" width="32" height="22" rx="3"/>
+    <text x="124" y="15" text-anchor="middle">n</text>
+    <rect class="keep" x="144" y="0" width="32" height="22" rx="3"/>
+    <text x="160" y="15" text-anchor="middle">p</text>
+    <rect class="keep" x="180" y="0" width="32" height="22" rx="3"/>
+    <text x="196" y="15" text-anchor="middle">s</text>
+    <rect class="keep" x="216" y="0" width="32" height="22" rx="3"/>
+    <text x="232" y="15" text-anchor="middle">u</text>
+    <rect class="keep" x="252" y="0" width="42" height="22" rx="3"/>
+    <text x="273" y="15" text-anchor="middle">hu</text>
+    <rect class="keep" x="298" y="0" width="42" height="22" rx="3"/>
+    <text x="319" y="15" text-anchor="middle">ug</text>
+    <rect class="keep" x="344" y="0" width="42" height="22" rx="3"/>
+    <text x="365" y="15" text-anchor="middle">un</text>
+    <rect class="keep" x="390" y="0" width="50" height="22" rx="3"/>
+    <text x="415" y="15" text-anchor="middle">hug</text>
+    <rect class="keep" x="444" y="0" width="50" height="22" rx="3"/>
+    <text x="469" y="15" text-anchor="middle">pun</text>
+    <rect class="keep" x="498" y="0" width="50" height="22" rx="3"/>
+    <text x="523" y="15" text-anchor="middle">ugs</text>
+    <rect class="keep" x="552" y="0" width="60" height="22" rx="3"/>
+    <text x="582" y="15" text-anchor="middle">hugs</text>
+  </g>
+
+  <text x="20" y="350" class="step-label">推理：用 Viterbi 挑概率最大的切分</text>
+  <text x="20" y="370" class="sub">输入 "hugs" → 候选 ["hug","s"] vs ["h","ug","s"] vs ["h","u","g","s"]</text>
+  <text x="20" y="386" class="sub">argmax ∏ p(x_i) on segmentations → 选联合概率最大的方案</text>
+
+  <text x="20" y="425" class="sub" font-style="italic">Unigram 给同一词多种切分路径，训练时可做 sampling；BPE / WordPiece 切分是确定性的</text>
+  <text x="20" y="445" class="sub" font-style="italic">代表模型：T5、ALBERT、XLNet、Mistral（早期版本）、BigBird</text>
+</svg>

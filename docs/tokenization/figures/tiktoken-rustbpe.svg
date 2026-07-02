@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 280" font-family="-apple-system, Segoe UI, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 16px; font-weight: 600; fill: #1f2937; }
+      .sub { font-size: 12px; fill: #475569; }
+      .box { fill: #f4f6fa; stroke: #2b3a55; stroke-width: 1.5; }
+      .hl { fill: #dde7ff; stroke: #2b3a55; stroke-width: 1.5; }
+      text { font-size: 12px; fill: #1f2937; }
+      .arrow { stroke: #2b3a55; stroke-width: 1.5; fill: none; marker-end: url(#tri); }
+    </style>
+    <marker id="tri" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b3a55" />
+    </marker>
+  </defs>
+
+  <text x="20" y="28" class="title">tiktoken / rustbpe：工业级 BPE 编码器</text>
+  <text x="20" y="48" class="sub">目标：把 BPE merge 字典预编码成 rank 数组，编码时 O(n) 贪心合并</text>
+
+  <text x="20" y="78" class="sub">离线训练产物</text>
+  <g transform="translate(20,88)">
+    <rect class="box" x="0" y="0" width="160" height="40" rx="6"/>
+    <text x="80" y="25" text-anchor="middle">BPE merges (bpe.vocab)</text>
+    <rect class="box" x="180" y="0" width="160" height="40" rx="6"/>
+    <text x="260" y="25" text-anchor="middle">GPT-2-style encoder.json</text>
+    <rect class="box" x="360" y="0" width="160" height="40" rx="6"/>
+    <text x="440" y="25" text-anchor="middle">token → byte range</text>
+  </g>
+
+  <text x="20" y="160" class="sub">在线编码（tiktoken / rustbpe / sentencepiece）</text>
+  <g transform="translate(20,170)">
+    <rect class="box" x="0" y="0" width="120" height="50" rx="6"/>
+    <text x="60" y="22" text-anchor="middle">输入文本</text>
+    <text x="60" y="38" text-anchor="middle" font-size="11" fill="#475569">str</text>
+    <rect class="box" x="140" y="0" width="120" height="50" rx="6"/>
+    <text x="200" y="22" text-anchor="middle">pre-tokenize</text>
+    <text x="200" y="38" text-anchor="middle" font-size="11" fill="#475569">regex / GPT-2 pattern</text>
+    <rect class="hl" x="280" y="0" width="160" height="50" rx="6"/>
+    <text x="360" y="22" text-anchor="middle">BPE 贪心合并</text>
+    <text x="360" y="38" text-anchor="middle" font-size="11" fill="#475569">O(n) per word</text>
+    <rect class="box" x="460" y="0" width="160" height="50" rx="6"/>
+    <text x="540" y="22" text-anchor="middle">special tokens</text>
+    <text x="540" y="38" text-anchor="middle" font-size="11" fill="#475569">added last</text>
+    <rect class="box" x="640" y="0" width="120" height="50" rx="6"/>
+    <text x="700" y="22" text-anchor="middle">id list</text>
+  </g>
+
+  <text x="20" y="252" class="sub" font-style="italic">tiktoken (Rust → PyO3)：OpenAI 官方，比 sentencepiece / HuggingFace fast tokenizer 快 3-6x</text>
+  <text x="20" y="270" class="sub" font-style="italic">rustbpe / HuggingFace tokenizers：把 BPE 用 Rust 状态机实现，绑 Python</text>
+</svg>

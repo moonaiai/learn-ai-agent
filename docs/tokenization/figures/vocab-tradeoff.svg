@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 360" font-family="-apple-system, Segoe UI, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 16px; font-weight: 600; fill: #1f2937; }
+      .sub { font-size: 12px; fill: #475569; }
+      .axis { stroke: #1f2937; stroke-width: 1.5; }
+      .tick { stroke: #1f2937; stroke-width: 1; }
+      text { font-size: 11px; fill: #1f2937; }
+      .grid { stroke: #cbd5e1; stroke-width: 0.5; stroke-dasharray: 3,3; }
+      .l-char { stroke: #b91c1c; stroke-width: 2.5; fill: none; }
+      .l-word { stroke: #b45309; stroke-width: 2.5; fill: none; }
+      .l-bpe { stroke: #1d4ed8; stroke-width: 2.5; fill: none; }
+      .label-char { fill: #b91c1c; font-size: 12px; font-weight: 600; }
+      .label-word { fill: #b45309; font-size: 12px; font-weight: 600; }
+      .label-bpe { fill: #1d4ed8; font-size: 12px; font-weight: 600; }
+    </style>
+  </defs>
+
+  <text x="20" y="28" class="title">词表大小 vs 序列长度的权衡曲线</text>
+  <text x="20" y="46" class="sub">目标：相同语料下，vocab 越大序列越短、token embedding 表越大</text>
+
+  <g transform="translate(80,80)">
+    <line class="axis" x1="0" y1="240" x2="700" y2="240"/>
+    <line class="axis" x1="0" y1="0" x2="0" y2="240"/>
+    <text x="350" y="265" text-anchor="middle">vocab size →</text>
+    <text x="-60" y="120" transform="rotate(-90,-60,120)" text-anchor="middle">序列平均长度 / OOV 率</text>
+
+    <line class="grid" x1="100" y1="0" x2="100" y2="240"/>
+    <line class="grid" x1="200" y1="0" x2="200" y2="240"/>
+    <line class="grid" x1="300" y1="0" x2="300" y2="240"/>
+    <line class="grid" x1="400" y1="0" x2="400" y2="240"/>
+    <line class="grid" x1="500" y1="0" x2="500" y2="240"/>
+    <line class="grid" x1="600" y1="0" x2="600" y2="240"/>
+
+    <text x="50" y="255" text-anchor="middle">256</text>
+    <text x="150" y="255" text-anchor="middle">8K</text>
+    <text x="250" y="255" text-anchor="middle">32K</text>
+    <text x="350" y="255" text-anchor="middle">64K</text>
+    <text x="450" y="255" text-anchor="middle">128K</text>
+    <text x="550" y="255" text-anchor="middle">256K</text>
+    <text x="650" y="255" text-anchor="middle">vocab</text>
+
+    <text x="-10" y="244" text-anchor="end">low</text>
+    <text x="-10" y="4" text-anchor="end">high</text>
+
+    <path class="l-char" d="M40,60 C120,90 200,140 300,180 C400,210 500,225 620,232"/>
+    <text class="label-char" x="630" y="100">Character: vocab 极小，序列极长</text>
+
+    <path class="l-word" d="M40,220 C120,215 200,150 300,80 C400,40 500,20 620,12"/>
+    <text class="label-word" x="630" y="170">Word: vocab 巨大，OOV 严重</text>
+
+    <path class="l-bpe" d="M40,150 C120,120 200,80 300,55 C400,40 500,30 620,25"/>
+    <text class="label-bpe" x="630" y="60">BPE / WordPiece / Unigram: 取折中</text>
+  </g>
+
+  <text x="20" y="345" class="sub" font-style="italic">Llama-2 100K, GPT-2 50K, BERT 30K, T5 32K, Mistral 32K, Qwen 152K — 子词粒度让"小 vocab + 短序列"成为可能</text>
+</svg>

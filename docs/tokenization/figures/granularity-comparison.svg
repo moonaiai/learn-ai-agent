@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 360" font-family="-apple-system, Segoe UI, sans-serif">
+  <defs>
+    <style>
+      .row-label { font-size: 14px; font-weight: 600; fill: #1f2937; }
+      .token { fill: #dde7ff; stroke: #2b3a55; stroke-width: 1; }
+      .token-char { fill: #fef3c7; stroke: #2b3a55; stroke-width: 1; }
+      .token-word { fill: #d1fae5; stroke: #2b3a55; stroke-width: 1; }
+      .token-bpe { fill: #e0e7ff; stroke: #2b3a55; stroke-width: 1; }
+      .token-wordpiece { fill: #fce7f3; stroke: #2b3a55; stroke-width: 1; }
+      text { font-size: 13px; fill: #1f2937; }
+      .sub { font-size: 12px; fill: #475569; }
+      .title { font-size: 16px; font-weight: 600; }
+    </style>
+  </defs>
+
+  <text x="20" y="28" class="title">粒度对比：词级 / 字符级 / BPE / WordPiece</text>
+  <text x="20" y="48" class="sub">原句: "unfriendly"</text>
+
+  <text x="20" y="80" class="row-label">Word-level</text>
+  <rect class="token-word" x="160" y="62" width="140" height="30" rx="4"/>
+  <text x="230" y="82" text-anchor="middle">unfriendly</text>
+  <text x="320" y="82" class="sub">vocab 巨大，OOV 问题</text>
+
+  <text x="20" y="120" class="row-label">Character-level</text>
+  <g transform="translate(160,105)">
+    <rect class="token-char" x="0" y="0" width="20" height="26" rx="3"/>
+    <text x="10" y="18" text-anchor="middle">u</text>
+    <rect class="token-char" x="22" y="0" width="20" height="26" rx="3"/>
+    <text x="32" y="18" text-anchor="middle">n</text>
+    <rect class="token-char" x="44" y="0" width="20" height="26" rx="3"/>
+    <text x="54" y="18" text-anchor="middle">f</text>
+    <rect class="token-char" x="66" y="0" width="20" height="26" rx="3"/>
+    <text x="76" y="18" text-anchor="middle">r</text>
+    <rect class="token-char" x="88" y="0" width="20" height="26" rx="3"/>
+    <text x="98" y="18" text-anchor="middle">i</text>
+    <rect class="token-char" x="110" y="0" width="20" height="26" rx="3"/>
+    <text x="120" y="18" text-anchor="middle">e</text>
+    <rect class="token-char" x="132" y="0" width="20" height="26" rx="3"/>
+    <text x="142" y="18" text-anchor="middle">n</text>
+    <rect class="token-char" x="154" y="0" width="20" height="26" rx="3"/>
+    <text x="164" y="18" text-anchor="middle">d</text>
+    <rect class="token-char" x="176" y="0" width="20" height="26" rx="3"/>
+    <text x="186" y="18" text-anchor="middle">l</text>
+    <rect class="token-char" x="198" y="0" width="20" height="26" rx="3"/>
+    <text x="208" y="18" text-anchor="middle">y</text>
+  </g>
+  <text x="400" y="123" class="sub">序列变长 5-10 倍</text>
+
+  <text x="20" y="170" class="row-label">BPE (GPT-2 / Llama)</text>
+  <g transform="translate(160,152)">
+    <rect class="token-bpe" x="0" y="0" width="60" height="30" rx="4"/>
+    <text x="30" y="20" text-anchor="middle">un</text>
+    <rect class="token-bpe" x="65" y="0" width="80" height="30" rx="4"/>
+    <text x="105" y="20" text-anchor="middle">friend</text>
+    <rect class="token-bpe" x="150" y="0" width="40" height="30" rx="4"/>
+    <text x="170" y="20" text-anchor="middle">ly</text>
+  </g>
+  <text x="320" y="172" class="sub">3 个 token；merge 自底向上</text>
+
+  <text x="20" y="220" class="row-label">WordPiece (BERT)</text>
+  <g transform="translate(160,202)">
+    <rect class="token-wordpiece" x="0" y="0" width="60" height="30" rx="4"/>
+    <text x="30" y="20" text-anchor="middle">un</text>
+    <rect class="token-wordpiece" x="65" y="0" width="80" height="30" rx="4"/>
+    <text x="105" y="20" text-anchor="middle">friend</text>
+    <rect class="token-wordpiece" x="150" y="0" width="40" height="30" rx="4"/>
+    <text x="170" y="20" text-anchor="middle">##ly</text>
+  </g>
+  <text x="320" y="222" class="sub">## 前缀表示"非词首"</text>
+
+  <text x="20" y="270" class="row-label">Unigram (T5 / XLNet)</text>
+  <g transform="translate(160,252)">
+    <rect class="token" x="0" y="0" width="100" height="30" rx="4"/>
+    <text x="50" y="20" text-anchor="middle">unfriendly</text>
+    <text x="50" y="46" text-anchor="middle" class="sub" font-size="11">or</text>
+    <rect class="token" x="0" y="56" width="40" height="30" rx="4"/>
+    <text x="20" y="76" text-anchor="middle">un</text>
+    <rect class="token" x="44" y="56" width="60" height="30" rx="4"/>
+    <text x="74" y="76" text-anchor="middle">friend</text>
+    <rect class="token" x="108" y="56" width="40" height="30" rx="4"/>
+    <text x="128" y="76" text-anchor="middle">ly</text>
+  </g>
+  <text x="320" y="280" class="sub">多切分中挑概率最大的</text>
+
+  <text x="20" y="345" class="sub" font-style="italic">所有算法都把单词切成"词级 + 子词级"之间的中间粒度，兼顾 vocab 大小与未知词覆盖率</text>
+</svg>

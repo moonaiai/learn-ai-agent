@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 360" font-family="-apple-system, Segoe UI, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 16px; font-weight: 600; fill: #1f2937; }
+      .sub { font-size: 12px; fill: #475569; }
+      .tok { fill: #fce7f3; stroke: #2b3a55; stroke-width: 1; }
+      .merged { fill: #fbcfe8; stroke: #831843; stroke-width: 1.5; }
+      .col { fill: #f1f5f9; stroke: #2b3a55; stroke-width: 1; }
+      .header { fill: #1f2937; font-size: 13px; font-weight: 600; }
+      text { font-size: 12px; fill: #1f2937; }
+      .hl { fill: #fef08a; }
+    </style>
+  </defs>
+
+  <text x="20" y="28" class="title">WordPiece 合并准则：似然比而非频次</text>
+  <text x="20" y="48" class="sub">score(a,b) = freq(ab) / (freq(a) × freq(b))；挑最大 score 而非最大 freq</text>
+
+  <text x="20" y="80" class="header">候选 pair 的 score 表</text>
+  <g transform="translate(20,90)">
+    <rect class="col" x="0" y="0" width="180" height="32"/>
+    <text x="90" y="20" text-anchor="middle" font-weight="600">pair (a, b)</text>
+    <rect class="col" x="180" y="0" width="120" height="32"/>
+    <text x="240" y="20" text-anchor="middle" font-weight="600">freq(ab)</text>
+    <rect class="col" x="300" y="0" width="200" height="32"/>
+    <text x="400" y="20" text-anchor="middle" font-weight="600">score = freq(ab) / (freq(a)·freq(b))</text>
+    <rect class="col" x="500" y="0" width="120" height="32"/>
+    <text x="560" y="20" text-anchor="middle" font-weight="600">BPE 选?</text>
+    <rect class="col" x="620" y="0" width="120" height="32"/>
+    <text x="680" y="20" text-anchor="middle" font-weight="600">WordPiece 选?</text>
+  </g>
+
+  <g transform="translate(20,122)">
+    <rect class="col" x="0" y="0" width="180" height="28"/>
+    <text x="90" y="18" text-anchor="middle">(u, g)</text>
+    <rect class="col" x="180" y="0" width="120" height="28"/>
+    <text x="240" y="18" text-anchor="middle">20</text>
+    <rect class="col" x="300" y="0" width="200" height="28"/>
+    <text x="400" y="18" text-anchor="middle">20 / (36 × 20) = 0.0278</text>
+    <rect class="col" x="500" y="0" width="120" height="28"/>
+    <text x="560" y="18" text-anchor="middle">是（最高频）</text>
+    <rect class="col" x="620" y="0" width="120" height="28"/>
+    <text x="680" y="18" text-anchor="middle">否</text>
+  </g>
+
+  <g transform="translate(20,150)">
+    <rect class="col" x="0" y="0" width="180" height="28"/>
+    <text x="90" y="18" text-anchor="middle">(u, n)</text>
+    <rect class="col" x="180" y="0" width="120" height="28"/>
+    <text x="240" y="18" text-anchor="middle">16</text>
+    <rect class="col" x="300" y="0" width="200" height="28"/>
+    <text x="400" y="18" text-anchor="middle">16 / (36 × 16) = 0.0278</text>
+    <rect class="col" x="500" y="0" width="120" height="28"/>
+    <text x="560" y="18" text-anchor="middle">否</text>
+    <rect class="col" x="620" y="0" width="120" height="28"/>
+    <text x="680" y="18" text-anchor="middle">否</text>
+  </g>
+
+  <g transform="translate(20,178)">
+    <rect class="col" x="0" y="0" width="180" height="28"/>
+    <text x="90" y="18" text-anchor="middle">(h, u)</text>
+    <rect class="col" x="180" y="0" width="120" height="28"/>
+    <text x="240" y="18" text-anchor="middle">15</text>
+    <rect class="col" x="300" y="0" width="200" height="28"/>
+    <text x="400" y="18" text-anchor="middle">15 / (15 × 36) = 0.0278</text>
+    <rect class="col" x="500" y="0" width="120" height="28"/>
+    <text x="560" y="18" text-anchor="middle">否</text>
+    <rect class="col" x="620" y="0" width="120" height="28"/>
+    <text x="680" y="18" text-anchor="middle">否</text>
+  </g>
+
+  <g transform="translate(20,206)" class="hl">
+    <rect class="col" x="0" y="0" width="180" height="28"/>
+    <text x="90" y="18" text-anchor="middle">(g, s)</text>
+    <rect class="col" x="180" y="0" width="120" height="28"/>
+    <text x="240" y="18" text-anchor="middle">5</text>
+    <rect class="col" x="300" y="0" width="200" height="28"/>
+    <text x="400" y="18" text-anchor="middle">5 / (20 × 5) = 0.0500</text>
+    <rect class="col" x="500" y="0" width="120" height="28"/>
+    <text x="560" y="18" text-anchor="middle">否（频次低）</text>
+    <rect class="col" x="620" y="0" width="120" height="28"/>
+    <text x="680" y="18" text-anchor="middle">是（最高分）</text>
+  </g>
+
+  <text x="20" y="270" class="sub" font-style="italic">BPE 视角："ug" 出现 20 次最多，先合并 ug</text>
+  <text x="20" y="288" class="sub" font-style="italic">WordPiece 视角："g","s" 一起出现的概率远超独立预期，先合并 gs</text>
+  <text x="20" y="306" class="sub" font-style="italic">直觉：WordPiece 更在意"两个 token 是否强相关"，而非"两个 token 是否常见"</text>
+
+  <text x="20" y="335" class="sub">BERT 在 tokenizer 阶段实际用 greedy longest-match +  ## 前缀标记子词位置</text>
+</svg>
