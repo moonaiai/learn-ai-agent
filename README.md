@@ -47,6 +47,7 @@
 | RoPE 旋转位置编码 | [RoPE：旋转位置编码与相对注意力](docs/positional-encoding/01-rope-relative-position.md) | 基于 RoFormer 论文沉淀，拆解旋转角度与位置成正比、复数/旋转矩阵公式、相对注意力内积构造、远程衰减性质、长度外推（PI / NTK-aware / YaRN）、与 Flash Attention / KV Cache 的兼容性，以及 Sinusoidal / Learned / ALiBi / RoPE 的对比。 |
 | Embedding 选型 | [Embedding 模型选型：从 MTEB 排名到工程落地](docs/embedding/01-embedding-model-selection.md) | 梳理 Embedding 模型输入输出、Bi-Encoder vs Cross-Encoder、对称 vs 非对称检索、MTEB 8 类任务、闭源/开源模型分层、维度选择、Matryoshka 压缩、指令调优 Embedding、中文场景、自家评测方法与工程落地清单。 |
 | Karpathy Zero to Hero | [Karpathy Zero to Hero：讲座列表与学习顺序](docs/zero-to-hero/01-karpathy-zero-to-hero-learning-path.md) | 整理 Andrej Karpathy "Neural Networks: Zero to Hero" 视频系列 8 讲的标题、时长、YouTube 链接、原文简介、配套代码仓库（micrograd / makemore / ng-video-lecture / minbpe），以及按页面原样标注的依赖关系。 |
+| Loop Engineering | [Loop Engineering：Karpathy Loop 与让它快 5 倍的双层循环](docs/loop-engineering/loop-engineering-karpathy-method.md) | 基于 codila 文章沉淀 Loop Engineering，拆解 loop 的 verifier / state / stop condition 三要素、是否需要 loop 的四项检查、Karpathy AutoResearch 三文件约束、automation / skill / sub-agents / connectors / verifier 五个构件，以及 Bilevel Autoresearch 在外层套 loop 实现 5 倍提升的架构原因；并结合 AutoResearch 源码精读 `prepare.py` 不可篡改的 BPB 闸门、`train.py` 的现代基线与 MuonAdamW 优化器、`program.md` 作为 skill 的实验协议。 |
 
 ## 学习路径
 
@@ -60,7 +61,7 @@
 | 3 | Tool Calling 与工具系统 | Tool schema 如何设计，工具权限、失败、重试和审计如何处理。 | 已沉淀：[Tool Card 模板](docs/react-framework/tool-card-template.md)、[Writing Effective Tools for Agents：Agent 工具设计原则](docs/writing-tools-for-agents/writing-tools-for-agents.md) |
 | 4 | Context Engineering | 什么信息应该进入上下文，如何压缩、隔离、检索和复用上下文。 | 已沉淀：[长文深度解析：大模型的上下文陷阱与 6 大修复技巧](docs/context-engineering/context-engineering.md)、[Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md)、[Agent 架构综述：从 Prompt 到上下文工程构建 AI Agent](docs/build-agent-context-engineering/build-agent-context-engineering.md) |
 | 5 | Memory 与 RAG | 短期记忆、长期记忆、RAG、向量检索和知识库如何支撑 agent。 | 待沉淀 |
-| 6 | Workflow 与 Multi-Agent | 什么时候用 workflow，什么时候拆 multi-agent，角色边界如何划分。 | 已沉淀：[Building Effective Agents：从简单模式到可控 Agent](docs/building-effective-agents/building-effective-agents.md) |
+| 6 | Workflow 与 Multi-Agent | 什么时候用 workflow，什么时候拆 multi-agent，角色边界如何划分。 | 已沉淀：[Building Effective Agents：从简单模式到可控 Agent](docs/building-effective-agents/building-effective-agents.md)、[Loop Engineering：Karpathy Loop 与让它快 5 倍的双层循环](docs/loop-engineering/loop-engineering-karpathy-method.md) |
 | 7 | Eval 与 Observability | 如何构建评测集、trace、回放、LLM-as-judge 和线上质量指标。 | 已沉淀：[Agent Evaluation Harness：从感觉评估到可复现评估](docs/agent-evaluation-harness/agent-evaluation-harness-guide.md) |
 | 8 | Safety 与 Human-in-the-loop | 权限、审批、敏感操作、人工介入和安全边界如何设计。 | 已沉淀：[OpenAI 实用指南：构建 AI Agents](docs/practical-guide-building-ai-agents/practical-guide-building-ai-agents.md) |
 | 9 | Production Engineering | 成本、延迟、缓存、限流、错误恢复、部署和运维如何落地。 | 已沉淀：[OpenAI 实用指南：构建 AI Agents](docs/practical-guide-building-ai-agents/practical-guide-building-ai-agents.md) |
@@ -89,6 +90,7 @@
 18. [QLoRA：把 65B 微调压进单张 24GB 显卡](docs/qlora/01-qlora-quantized-lora.md)：理解 4-bit NormalFloat 量化基座 + Double Quantization 节省量化常数 + Paged Optimizers 顶住 OOM 尖峰 + 16-bit LoRA 训练的整体方案，掌握 65B 模型在单卡上的微调工程路径。
 19. [Embedding 模型选型：从 MTEB 排名到工程落地](docs/embedding/01-embedding-model-selection.md)：建立 Embedding 模型的工程化认知，覆盖输入输出、Bi-Encoder vs Cross-Encoder、对称 vs 非对称检索、MTEB 8 类任务、闭源/开源模型分层、维度选择、Matryoshka 压缩、指令调优、中文场景、自家评测与 Sentence-Transformers / LangChain / LlamaIndex 工程集成。
 20. [Karpathy Zero to Hero：讲座列表与学习顺序](docs/zero-to-hero/01-karpathy-zero-to-hero-learning-path.md)：整理 Karpathy "Neural Networks: Zero to Hero" 视频系列 8 讲的标题、时长、YouTube 链接、原文简介与配套代码仓库，按页面原样标注依赖关系。
+21. [Loop Engineering：Karpathy Loop 与让它快 5 倍的双层循环](docs/loop-engineering/loop-engineering-karpathy-method.md)：理解 loop 与 prompt 的本质差别，掌握 verifier / state / stop condition 三要素、是否需要 loop 的四项检查、Karpathy AutoResearch 的三文件约束、automation / skill / sub-agents / connectors / verifier 五个构件，以及 Bilevel Autoresearch 在外层套 loop 实现 5 倍提升的架构原因。
 
 ### 项目迁移检查
 
@@ -169,8 +171,11 @@ learn-ai-agent/
 │   └── embedding/
 │       ├── 01-embedding-model-selection.md
 │       └── figures/
-│   └── zero-to-hero/
-│       ├── 01-karpathy-zero-to-hero-learning-path.md
+│   ├── zero-to-hero/
+│   │   ├── 01-karpathy-zero-to-hero-learning-path.md
+│   │   └── figures/
+│   └── loop-engineering/
+│       ├── loop-engineering-karpathy-method.md
 │       └── figures/
 ```
 
