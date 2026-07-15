@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>随心记编辑器</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="editor-root">
+    <div class="toolbar" role="toolbar" aria-label="编辑器操作">
+      <div class="toolbar-group">
+        <button data-action="undo" title="撤销">↶</button>
+        <button data-action="redo" title="重做">↷</button>
+      </div>
+      <i class="divider"></i>
+      <div class="toolbar-group">
+        <button data-action="bold" title="加粗"><b>B</b></button>
+        <button data-action="italic" title="斜体"><i>I</i></button>
+        <button data-action="strike" title="删除线"><s>S</s></button>
+        <select id="font-family" title="字体" aria-label="字体">
+          <option value="system">系统字体</option>
+          <option value="Arial">Arial</option>
+          <option value="Helvetica Neue">Helvetica Neue</option>
+          <option value="PingFang SC">PingFang SC</option>
+          <option value="Songti SC">Songti SC</option>
+          <option value="Menlo">Menlo</option>
+          <option value="Georgia">Georgia</option>
+        </select>
+        <select id="font-size" title="字号" aria-label="字号">
+          <option value="12px">12</option>
+          <option value="14px">14</option>
+          <option value="15px">15</option>
+          <option value="18px">18</option>
+          <option value="24px">24</option>
+        </select>
+      </div>
+      <i class="divider"></i>
+      <div class="toolbar-group">
+        <select id="heading" title="段落样式" aria-label="段落样式">
+          <option value="paragraph">正文</option>
+          <option value="1">H1</option>
+          <option value="2">H2</option>
+          <option value="3">H3</option>
+          <option value="4">H4</option>
+          <option value="5">H5</option>
+        </select>
+        <button data-action="bullet" title="无序列表">•</button>
+        <button data-action="ordered" title="有序列表">1.</button>
+        <button data-action="quote" title="引用">❝</button>
+        <button data-action="code" title="代码片段">&lt;&gt;</button>
+      </div>
+      <i class="divider"></i>
+      <div class="toolbar-group table-tools">
+        <button data-action="insert-table" title="插入表格">▦</button>
+        <button data-action="add-row" title="添加一行">＋▤</button>
+        <button data-action="delete-row" title="删除当前行">−▤</button>
+        <button data-action="add-column" title="添加一列">＋▥</button>
+        <button data-action="delete-column" title="删除当前列">−▥</button>
+        <button data-action="delete-table" title="删除表格">⌫</button>
+      </div>
+    </div>
+    <div id="editor-scroll" class="editor-scroll">
+      <div id="editor" class="editor"></div>
+    </div>
+  </div>
+  <div id="image-modal" class="image-modal" hidden>
+    <div class="image-modal-backdrop"></div>
+    <img id="image-preview" alt="图片预览">
+  </div>
+  <script src="editor.js" defer></script>
+</body>
+</html>
