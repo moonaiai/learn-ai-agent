@@ -1,10 +1,18 @@
 import AppKit
 
+struct EditorOutlineItem {
+    let title: String
+    let level: Int
+    let index: Int
+}
+
 protocol EditorViewControllerDelegate: AnyObject {
     func noteMetaDidChange(_ noteId: String)
     func noteWasDeleted(_ noteId: String)
     func editorRequestsHide()
     func editorSaveStatus(_ text: String)
+    func editorOutlineDidChange(_ items: [EditorOutlineItem])
+    func editorOutlineSelectionDidChange(_ index: Int?)
 }
 
 /// Common lifecycle surface for the two editor implementations.
@@ -23,6 +31,8 @@ protocol NoteEditorController: AnyObject {
     func flush(userInitiated: Bool)
     func focus()
     func handlePaste() -> Bool
+    func openSearch() -> Bool
+    func jumpToOutlineItem(_ index: Int)
     /// Returns true when the editor consumed Escape (for example, an image
     /// preview overlay). Returning false lets the native panel hide itself.
     func handleEscape() -> Bool
@@ -456,6 +466,12 @@ final class EditorViewController: NSViewController, NoteEditorController {
     func focus() {
         view.window?.makeFirstResponder(textView)
     }
+
+    func jumpToOutlineItem(_ index: Int) {
+        // Outline navigation is implemented by the default WKWebView editor.
+    }
+
+    func openSearch() -> Bool { false }
 
     func handleEscape() -> Bool { false }
     func handlePaste() -> Bool { false }

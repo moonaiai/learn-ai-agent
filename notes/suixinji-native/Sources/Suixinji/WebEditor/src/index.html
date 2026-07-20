@@ -60,6 +60,15 @@
         <button data-action="delete-table" title="删除表格">⌫</button>
       </div>
     </div>
+    <div id="search-bar" class="search-bar" hidden>
+      <span class="search-icon" aria-hidden="true">⌕</span>
+      <input id="search-input" type="search" autocomplete="off" spellcheck="false"
+             placeholder="搜索笔记" aria-label="搜索笔记">
+      <span id="search-count" class="search-count" aria-live="polite">0/0</span>
+      <button data-search-action="prev" title="上一个匹配" aria-label="上一个匹配">↑</button>
+      <button data-search-action="next" title="下一个匹配" aria-label="下一个匹配">↓</button>
+      <button data-search-action="close" title="关闭搜索" aria-label="关闭搜索">×</button>
+    </div>
     <div id="editor-scroll" class="editor-scroll">
       <div id="editor" class="editor"></div>
     </div>

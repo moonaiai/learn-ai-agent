@@ -3,6 +3,7 @@ import AppKit
 protocol MainViewControllerDelegate: AnyObject {
     func mainDidRequestHide()
     func mainDidTogglePinned(_ pinned: Bool)
+    func mainDidChangeViewState(_ state: MainViewState)
 }
 
 /// Hosts the top bar and switches between the list (sidebar+editor) and
@@ -71,7 +72,9 @@ final class MainViewController: NSViewController {
     private let newButton = PillButton(title: "＋")
     private let newCategoryButton = PillButton(title: "")
     private let notePicker = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let outlinePicker = NSPopUpButton(frame: .zero, pullsDown: false)
     private let savedLabel = NSTextField(labelWithString: "")
+    private var outlineItems: [EditorOutlineItem] = []
     private var categoryPopover: NSPopover?
     private var sidebarButtonWidthConstraint: NSLayoutConstraint!
     private var toggleButtonTrailingConstraint: NSLayoutConstraint!
@@ -80,6 +83,7 @@ final class MainViewController: NSViewController {
     private var sidebarHidden = false
     private var listChildrenInstalled = false
     private var historyInstalled = false
+    private var viewStatePersistenceEnabled = false
 
     required init?(coder: NSCoder) { fatalError() }
 
@@ -141,6 +145,7 @@ final class MainViewController: NSViewController {
             switchToMode(.list)
             refreshAll()
             openDefaultNoteAfterRefresh()
+            viewStatePersistenceEnabled = true
         }
     }
 
@@ -179,7 +184,7 @@ final class MainViewController: NSViewController {
         notePicker.translatesAutoresizingMaskIntoConstraints = false
         notePicker.isBordered = false
         notePicker.bezelStyle = .inline
-        notePicker.font = Theme.titleFont
+        notePicker.font = Theme.smallFont
         notePicker.alignment = .left
         notePicker.contentTintColor = Theme.textDim
         notePicker.toolTip = "切换笔记"
@@ -190,6 +195,19 @@ final class MainViewController: NSViewController {
         // by the popup cell instead of expanding into the action area.
         notePicker.cell?.lineBreakMode = .byTruncatingTail
         notePicker.cell?.usesSingleLineMode = true
+
+        outlinePicker.translatesAutoresizingMaskIntoConstraints = false
+        outlinePicker.isBordered = false
+        outlinePicker.bezelStyle = .inline
+        outlinePicker.font = Theme.smallFont
+        outlinePicker.alignment = .left
+        outlinePicker.contentTintColor = Theme.textDim
+        outlinePicker.toolTip = "当前笔记大纲"
+        outlinePicker.setAccessibilityLabel("当前笔记大纲")
+        outlinePicker.target = self
+        outlinePicker.action = #selector(outlinePickerChanged(_:))
+        outlinePicker.cell?.lineBreakMode = .byTruncatingTail
+        outlinePicker.cell?.usesSingleLineMode = true
 
         // PillButton is an NSView that sizes itself from its internal label's
         // edge constraints. It MUST opt into Auto Layout — otherwise AppKit
@@ -206,7 +224,7 @@ final class MainViewController: NSViewController {
         newCategoryButton.widthAnchor.constraint(equalToConstant: 28).isActive = true
         newCategoryButton.heightAnchor.constraint(equalToConstant: 28).isActive = true
 
-        [sidebarButton, pinButton, titleLabel, notePicker, newCategoryButton, newButton, toggleButton, savedLabel].forEach {
+        [sidebarButton, pinButton, titleLabel, outlinePicker, notePicker, newCategoryButton, newButton, toggleButton, savedLabel].forEach {
             topBar.addSubview($0)
         }
 
@@ -228,9 +246,14 @@ final class MainViewController: NSViewController {
             titleLabel.leadingAnchor.constraint(equalTo: topBar.leadingAnchor, constant: 14),
             titleLabel.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
 
-            notePicker.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 8),
+            outlinePicker.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 8),
+            outlinePicker.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
+            outlinePicker.widthAnchor.constraint(equalToConstant: 60),
+            outlinePicker.heightAnchor.constraint(equalToConstant: 26),
+
+            notePicker.leadingAnchor.constraint(equalTo: outlinePicker.trailingAnchor, constant: 4),
             notePicker.centerYAnchor.constraint(equalTo: topBar.centerYAnchor),
-            notePicker.widthAnchor.constraint(equalToConstant: 180),
+            notePicker.widthAnchor.constraint(equalToConstant: 120),
             notePicker.heightAnchor.constraint(equalToConstant: 26),
 
             savedLabel.trailingAnchor.constraint(equalTo: topBar.trailingAnchor, constant: -14),
@@ -247,6 +270,8 @@ final class MainViewController: NSViewController {
         ])
 
         notePicker.isHidden = true
+        outlinePicker.isHidden = true
+        reloadOutlinePicker()
     }
 
     private func toggleMode() {
@@ -256,12 +281,30 @@ final class MainViewController: NSViewController {
     @objc private func toggleSidebar() {
         sidebarHidden.toggle()
         applySidebarVisibility()
+        notifyViewStateChanged()
     }
 
     @objc private func notePickerChanged(_ sender: NSPopUpButton) {
         guard let id = sender.selectedItem?.representedObject as? String,
               id != currentNoteId else { return }
         openNote(id)
+    }
+
+    @objc private func outlinePickerChanged(_ sender: NSPopUpButton) {
+        let index: Int?
+        if let value = sender.selectedItem?.representedObject as? Int {
+            index = value
+        } else if let value = sender.selectedItem?.representedObject as? NSNumber {
+            index = value.intValue
+        } else {
+            index = nil
+        }
+        guard let index else {
+            updateOutlineSelection(nil)
+            return
+        }
+        editor.jumpToOutlineItem(index)
+        updateOutlineSelection(index)
     }
 
     private func toggleCategoryPopover() {
@@ -356,6 +399,31 @@ final class MainViewController: NSViewController {
         applySidebarVisibility(listMode: listMode)
         editor.view.isHidden = !listMode
         if historyInstalled { history.view.isHidden = listMode }
+        notifyViewStateChanged()
+    }
+
+    private func notifyViewStateChanged() {
+        guard viewStatePersistenceEnabled else { return }
+        delegate?.mainDidChangeViewState(currentViewState)
+    }
+
+    private var currentViewState: MainViewState {
+        if mode == .global { return .global }
+        return sidebarHidden ? .listHiddenSidebar : .list
+    }
+
+    private func applyViewState(_ state: MainViewState) {
+        switch state {
+        case .global:
+            sidebarHidden = false
+            switchToMode(.global)
+        case .list:
+            sidebarHidden = false
+            switchToMode(.list)
+        case .listHiddenSidebar:
+            sidebarHidden = true
+            switchToMode(.list)
+        }
     }
 
     private func applySidebarVisibility(listMode: Bool? = nil) {
@@ -368,6 +436,10 @@ final class MainViewController: NSViewController {
         sidebarButtonWidthConstraint?.constant = isListMode ? 28 : 0
         toggleButtonTrailingConstraint?.constant = isListMode ? -4 : 0
         notePicker.isHidden = !(isListMode && sidebarHidden)
+        // The outline belongs to the current note, so keep it available in
+        // every list-view layout. The note switcher is still only needed when
+        // the sidebar itself is hidden.
+        outlinePicker.isHidden = !(isListMode && currentNoteId != nil)
         view.layoutSubtreeIfNeeded()
     }
 
@@ -414,15 +486,59 @@ final class MainViewController: NSViewController {
         }
     }
 
+    private func reloadOutlinePicker() {
+        outlinePicker.removeAllItems()
+        outlinePicker.addItem(withTitle: "大纲")
+        outlinePicker.item(at: 0)?.representedObject = nil
+
+        for item in outlineItems {
+            let indentation = String(repeating: "  ", count: max(0, item.level - 1))
+            let menuItem = NSMenuItem(title: indentation + item.title,
+                                      action: nil,
+                                      keyEquivalent: "")
+            menuItem.representedObject = item.index
+            menuItem.toolTip = item.title
+            outlinePicker.menu?.addItem(menuItem)
+        }
+        outlinePicker.selectItem(at: 0)
+    }
+
+    private func updateOutlineSelection(_ index: Int?) {
+        guard let index,
+              let itemIndex = outlineItems.firstIndex(where: { $0.index == index }) else {
+            outlinePicker.selectItem(at: 0)
+            return
+        }
+        outlinePicker.selectItem(at: itemIndex + 1)
+    }
+
     // MARK: - Note lifecycle
 
     /// Called when the panel is shown: enter the default list editor and ensure
     /// a fresh blank note is ready.
-    func onShow() {
-        switchToMode(.list)
+    func onShow(viewState: MainViewState? = nil) {
+        let previousPersistenceState = viewStatePersistenceEnabled
+        viewStatePersistenceEnabled = false
+        defer { viewStatePersistenceEnabled = previousPersistenceState }
+
+        if let viewState {
+            applyViewState(viewState)
+        } else {
+            switchToMode(.list)
+        }
         refreshAll()
         openDefaultNoteAfterRefresh()
+        if let viewState {
+            // Opening the default note enters list mode internally. Restore
+            // the persisted view after the note is ready so global mode is
+            // not lost on the next panel show.
+            applyViewState(viewState)
+        }
         DispatchQueue.main.async { self.editor.focus() }
+    }
+
+    func applyPinnedState(_ pinned: Bool) {
+        pinButton.setPinned(pinned)
     }
 
     /// The panel is a quick-entry surface. On every show, open the newest
@@ -452,6 +568,8 @@ final class MainViewController: NSViewController {
     }
 
     private func startFreshBlankNote() {
+        outlineItems = []
+        reloadOutlinePicker()
         editor.newNote()
         currentNoteId = editor.currentNoteId
         freshBlank = true
@@ -475,6 +593,8 @@ final class MainViewController: NSViewController {
 
     private func openNote(_ id: String) {
         editor.flush(userInitiated: false)
+        outlineItems = []
+        reloadOutlinePicker()
         editor.openNote(id: id)
         currentNoteId = id
         freshBlank = false
@@ -519,6 +639,11 @@ extension MainViewController: EditorViewControllerDelegate {
     func editorDidConsumePaste() -> Bool {
         editor.handlePaste()
     }
+
+    func editorDidConsumeFind() -> Bool {
+        editor.openSearch()
+    }
+
     func editorSaveStatus(_ text: String) {
         let status = text.trimmingCharacters(in: .whitespacesAndNewlines)
         savedLabel.toolTip = status.isEmpty ? nil : status
@@ -535,6 +660,15 @@ extension MainViewController: EditorViewControllerDelegate {
             savedLabel.stringValue = "✓"
             savedLabel.textColor = Theme.textDim
         }
+    }
+
+    func editorOutlineDidChange(_ items: [EditorOutlineItem]) {
+        outlineItems = items
+        reloadOutlinePicker()
+    }
+
+    func editorOutlineSelectionDidChange(_ index: Int?) {
+        updateOutlineSelection(index)
     }
 }
 

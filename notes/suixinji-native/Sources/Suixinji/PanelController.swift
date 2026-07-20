@@ -26,7 +26,9 @@ final class PanelController: NSObject, NSWindowDelegate {
 
     private var panel: InteractivePanel!
     private let mainVC = MainViewController()
+    private let configurationStore = SuixinjiWindowConfigurationStore()
     private var isPinned = false
+    private var frameSaveWorkItem: DispatchWorkItem?
     private var resignActiveObserver: NSObjectProtocol?
     private var activeApplicationObserver: NSObjectProtocol?
     private var activeSpaceObserver: NSObjectProtocol?
@@ -34,14 +36,16 @@ final class PanelController: NSObject, NSWindowDelegate {
     func setup() {
         mainVC.delegate = self
 
+        let defaultFrame = defaultPanelFrame()
+        let initialFrame = configurationStore.restoredFrame(defaultFrame: defaultFrame)
+        isPinned = configurationStore.value.pinned
+
         // Borderless and resizable, with no titlebar placeholder. The custom
         // 40px topBar starts at the window's true top edge. This is an
         // interactive panel rather than a nonactivating panel: editing and
         // toolbar controls must receive key/mouse events.
         let panel = InteractivePanel(
-            contentRect: NSRect(x: 0, y: 0,
-                                width: MainViewController.preferredPanelWidth,
-                                height: 520),
+            contentRect: initialFrame,
             styleMask: [.resizable],
             backing: .buffered,
             defer: false
@@ -86,13 +90,8 @@ final class PanelController: NSObject, NSWindowDelegate {
         contentView.autoresizingMask = [.width, .height]
         panel.contentView = contentView
 
-        // Use a safe initial frame. Before every actual show, the panel is
-        // moved to the screen containing the current frontmost window.
-        let screenFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1000, height: 700)
-        panel.setFrameOrigin(NSPoint(x: screenFrame.midX - panel.frame.width / 2,
-                                     y: screenFrame.midY - panel.frame.height / 2))
-
         self.panel = panel
+        mainVC.applyPinnedState(isPinned)
 
         resignActiveObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didResignActiveNotification,
@@ -159,6 +158,16 @@ final class PanelController: NSObject, NSWindowDelegate {
                self.mainVC.editorDidConsumePaste() {
                 return nil
             }
+            if event.modifierFlags.contains(.command),
+               !event.modifierFlags.contains(.shift),
+               !event.modifierFlags.contains(.option),
+               !event.modifierFlags.contains(.control),
+               let ch = event.charactersIgnoringModifiers,
+               ch.lowercased() == "f",
+               event.window === self.panel,
+               self.mainVC.editorDidConsumeFind() {
+                return nil
+            }
             return event
         }
     }
@@ -187,7 +196,7 @@ final class PanelController: NSObject, NSWindowDelegate {
     }
 
     func show() {
-        mainVC.onShow()
+        mainVC.onShow(viewState: configurationStore.value.viewState)
         movePanelToFrontmostWindowScreen()
         // Re-apply this before every show. This is important after the panel
         // has been hidden from an external app: AppKit then moves it to the
@@ -246,11 +255,13 @@ final class PanelController: NSObject, NSWindowDelegate {
         let currentScreen = NSScreen.screens.first(where: { $0.frame.contains(panelCenter) })
         guard currentScreen?.frame != targetScreen.frame else { return }
 
-        let visibleFrame = targetScreen.visibleFrame
-        panel.setFrameOrigin(NSPoint(
-            x: visibleFrame.midX - panel.frame.width / 2,
-            y: visibleFrame.midY - panel.frame.height / 2
-        ))
+        // Keep the existing target-screen decision above. Only the position
+        // within that screen comes from preferences, expressed as a ratio of
+        // the screen's available travel area rather than an absolute pixel
+        // coordinate.
+        let restoredFrame = configurationStore.frame(on: targetScreen,
+                                                      fallbackSize: panel.frame.size)
+        panel.setFrameOrigin(restoredFrame.origin)
     }
 
     private func scheduleFollowActiveWindow() {
@@ -266,11 +277,13 @@ final class PanelController: NSObject, NSWindowDelegate {
 
     func hide() {
         mainVC.flushBeforeHide()
+        saveWindowFrameNow()
         panel.orderOut(nil)
     }
 
     func setPinned(_ pinned: Bool) {
         isPinned = pinned
+        configurationStore.update(pinned: pinned)
         applyCollectionBehavior()
         if pinned, panel.isVisible {
             scheduleFollowActiveWindow()
@@ -291,6 +304,39 @@ final class PanelController: NSObject, NSWindowDelegate {
         hide()
         return false
     }
+
+    func windowDidMove(_ notification: Notification) {
+        scheduleSaveWindowFrame()
+    }
+
+    func windowDidResize(_ notification: Notification) {
+        scheduleSaveWindowFrame()
+    }
+
+    private func defaultPanelFrame() -> NSRect {
+        let screenFrame = NSScreen.main?.visibleFrame
+            ?? NSRect(x: 0, y: 0, width: 1000, height: 700)
+        let size = NSSize(width: MainViewController.preferredPanelWidth, height: 520)
+        return NSRect(x: screenFrame.midX - size.width / 2,
+                      y: screenFrame.midY - size.height / 2,
+                      width: size.width,
+                      height: size.height)
+    }
+
+    private func scheduleSaveWindowFrame() {
+        frameSaveWorkItem?.cancel()
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.saveWindowFrameNow()
+        }
+        frameSaveWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: workItem)
+    }
+
+    private func saveWindowFrameNow() {
+        guard let panel else { return }
+        frameSaveWorkItem?.cancel()
+        configurationStore.update(frame: panel.frame)
+    }
 }
 
 extension PanelController: MainViewControllerDelegate {
@@ -300,5 +346,9 @@ extension PanelController: MainViewControllerDelegate {
 
     func mainDidTogglePinned(_ pinned: Bool) {
         setPinned(pinned)
+    }
+
+    func mainDidChangeViewState(_ state: MainViewState) {
+        configurationStore.update(viewState: state)
     }
 }

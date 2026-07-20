@@ -37,6 +37,7 @@ private final class SuixinjiWebView: WKWebView {
         case "a": return onEditorShortcut?("selectAll") == true
         case "c": return onEditorShortcut?("copy") == true
         case "x": return onEditorShortcut?("cut") == true
+        case "f": return onEditorShortcut?("find") == true
         case "z": return onEditorShortcut?(flags.contains(.shift) ? "redo" : "undo") == true
         case "y": return onEditorShortcut?("redo") == true
         default: return false
@@ -67,6 +68,8 @@ private final class SuixinjiWebView: WKWebView {
             if onEditorShortcut?("cut") == true { return true }
         case "selectAll:":
             if onEditorShortcut?("selectAll") == true { return true }
+        case "find:":
+            if onEditorShortcut?("find") == true { return true }
         case "undo:":
             if onEditorShortcut?("undo") == true { return true }
         case "redo:":
@@ -165,6 +168,7 @@ final class WKWebViewEditorViewController: NSViewController, NoteEditorControlle
     private var meta: NoteMeta?
     private(set) var currentNoteId: String?
     private var imagePreviewController: ImagePreviewWindowController?
+    private var searchVisible = false
 
     var hasUnsavedChanges: Bool { dirty }
 
@@ -309,6 +313,18 @@ final class WKWebViewEditorViewController: NSViewController, NoteEditorControlle
         evaluate("window.SuixinjiEditor && window.SuixinjiEditor.focus();")
     }
 
+    func openSearch() -> Bool {
+        guard pageReady else { return false }
+        searchVisible = true
+        callEditorCommand("window.SuixinjiEditor && window.SuixinjiEditor.openSearch();")
+        return true
+    }
+
+    func jumpToOutlineItem(_ index: Int) {
+        guard pageReady, index >= 0 else { return }
+        evaluate("window.SuixinjiEditor && window.SuixinjiEditor.jumpToOutline(\(index));")
+    }
+
     private func insertPastedImage(_ dataURL: String) -> Bool {
         guard pageReady else {
             // The global Cmd+V monitor can run during the short interval in
@@ -401,6 +417,8 @@ final class WKWebViewEditorViewController: NSViewController, NoteEditorControlle
         case "cut":
             copySelection(cut: true)
             return true
+        case "find":
+            return openSearch()
         case "selectAll":
             callEditorCommand("window.SuixinjiEditor && window.SuixinjiEditor.selectAll();")
             return true
@@ -442,14 +460,23 @@ final class WKWebViewEditorViewController: NSViewController, NoteEditorControlle
                   let data = json.data(using: .utf8),
                   let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
             else {
-                // Keep the browser's own rich copy path as a fallback if the
-                // structured result cannot be bridged on this WebKit build.
-                self?.evaluate("document.execCommand('copy');")
+                // Keep WebKit's native command as a fallback if the
+                // structured selection cannot be bridged. The previous code
+                // only copied here; Cmd+X therefore became a no-op whenever
+                // the bridge failed.
+                if cut {
+                    self?.evaluate("document.execCommand('cut');")
+                } else {
+                    self?.evaluate("document.execCommand('copy');")
+                }
                 return
             }
             let text = payload["text"] as? String ?? ""
             let html = payload["html"] as? String ?? ""
-            guard !text.isEmpty || !html.isEmpty else { return }
+            guard !text.isEmpty || !html.isEmpty else {
+                if cut { self?.evaluate("document.execCommand('cut');") }
+                return
+            }
 
             let pasteboard = NSPasteboard.general
             pasteboard.clearContents()
@@ -467,11 +494,16 @@ final class WKWebViewEditorViewController: NSViewController, NoteEditorControlle
     }
 
     func handleEscape() -> Bool {
-        guard let controller = imagePreviewController,
-              controller.window?.isVisible == true else { return false }
-        controller.close()
-        imagePreviewController = nil
-        evaluate("window.SuixinjiEditor && window.SuixinjiEditor.closePreview();")
+        if let controller = imagePreviewController,
+           controller.window?.isVisible == true {
+            controller.close()
+            imagePreviewController = nil
+            evaluate("window.SuixinjiEditor && window.SuixinjiEditor.closePreview();")
+            return true
+        }
+        guard searchVisible else { return false }
+        searchVisible = false
+        callEditorCommand("window.SuixinjiEditor && window.SuixinjiEditor.closeSearch();")
         return true
     }
 
@@ -625,6 +657,27 @@ final class WKWebViewEditorViewController: NSViewController, NoteEditorControlle
             NSLog("[suixinji] web editor ready")
         case "change":
             receiveChange(payload)
+        case "outline":
+            guard let rawItems = payload["items"] as? [Any] else {
+                delegate?.editorOutlineDidChange([])
+                break
+            }
+            let items = rawItems.compactMap { rawItem -> EditorOutlineItem? in
+                guard let item = rawItem as? [String: Any],
+                      let title = item["title"] as? String,
+                      let index = (item["index"] as? NSNumber)?.intValue,
+                      let level = (item["level"] as? NSNumber)?.intValue else { return nil }
+                return EditorOutlineItem(title: title,
+                                         level: max(1, min(5, level)),
+                                         index: index)
+            }
+            delegate?.editorOutlineDidChange(items)
+        case "outlineSelection":
+            let index = (payload["index"] as? NSNumber)?.intValue
+                ?? (payload["index"] as? Int)
+            delegate?.editorOutlineSelectionDidChange(index)
+        case "searchClosed":
+            searchVisible = false
         case "imagePreview":
             if payload["visible"] as? Bool == true,
                let source = payload["src"] as? String {
