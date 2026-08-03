@@ -1,0 +1,4 @@
+/* Design tokens must come first — the component layer consumes them. */
+@import "../styles/tokens-midnight.css";
+@import "../styles/tokens-parchment.css";
+@import "../styles/shell.css";

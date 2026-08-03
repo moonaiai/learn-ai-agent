@@ -2,6 +2,8 @@
 
 > 面向 AI Agent 工程实践的中文学习资料库，系统整理 Agent 设计原则、上下文工程、可靠性、状态管理、工具调用和生产落地方法。
 
+📖 **在线阅读：<https://moonaiai.github.io/learn-ai-agent/>** —— 本仓库 `docs/` 下的全部文档与 PDF 都已渲染成可浏览的文档站（含目录导航、代码高亮、深浅色主题）。站点源码见 [`web/`](web/README.md)。
+
 ## 项目定位
 
 `learn-ai-agent` 不是零散资料收藏夹，而是一个围绕 **AI Agent 工程能力** 建立的系统化学习仓库。

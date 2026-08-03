@@ -1,0 +1,44 @@
+name: ci
+
+# Type-checks and builds the docs site on every PR so broken links, missing
+# assets or TypeScript errors don't reach main.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  web:
+    name: Build docs site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+      - name: Extract docs content
+        working-directory: web
+        run: npm run extract
+      - name: Type-check
+        working-directory: web
+        run: npm run typecheck
+      - name: Build with the Pages basePath
+        working-directory: web
+        run: npm run build
+        env:
+          NEXT_BASE_PATH: /learn-ai-agent
+      - name: Assert every asset URL carries the basePath
+        working-directory: web
+        run: |
+          if grep -rq 'src="/doc-assets' out/ || grep -rq '"/doc-pdf' out/; then
+            echo "发现未加 basePath 前缀的资源链接：" >&2
+            grep -rl 'src="/doc-assets' out/ >&2 || true
+            grep -rl '"/doc-pdf' out/ >&2 || true
+            exit 1
+          fi
+          echo "所有资源链接均已加上 basePath 前缀。"

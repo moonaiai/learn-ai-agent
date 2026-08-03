@@ -1,13 +1,19 @@
 .DS_Store
-_site/
-.jekyll-cache/
-.sass-cache/
-.bundle/
-vendor/
 
 .tokensave
 
 .serena
+
+# 文档站（web/）构建产物。web/.gitignore 覆盖 web 目录内的细节，
+# 这里兜底，避免在仓库根执行的工具漏掉。
+web/node_modules/
+web/.next/
+web/out/
+web/src/data/generated/
+web/public/doc-assets/
+web/public/doc-pdf/
+web/tsconfig.tsbuildinfo
+web/next-env.d.ts
 
 # SwiftPM / packaged build output
 .build/
