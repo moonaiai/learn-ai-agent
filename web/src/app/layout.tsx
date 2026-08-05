@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Topbar } from "@/components/topbar";
+import "katex/dist/katex.min.css";
 import "./globals.css";
 
 export const metadata: Metadata = {

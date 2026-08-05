@@ -1,8 +1,10 @@
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
 import remarkRehype from "remark-rehype";
 import rehypeRaw from "rehype-raw";
+import rehypeKatex from "rehype-katex";
 import rehypeSlug from "rehype-slug";
 import rehypeHighlight from "rehype-highlight";
 import rehypeStringify from "rehype-stringify";
@@ -19,14 +21,72 @@ export function renderMarkdown(markdown: string): string {
   const file = unified()
     .use(remarkParse)
     .use(remarkGfm)
+    .use(remarkMath)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
+    .use(rehypeKatex, { strict: false, throwOnError: false })
     .use(rehypeSlug)
     .use(rehypeHighlight, { detect: false, ignoreMissing: true })
     .use(rehypeStringify, { allowDangerousHtml: true })
-    .processSync(markdown);
+    .processSync(prepareMath(markdown));
 
   return postProcessHtml(String(file));
+}
+
+/** Normalisations that must happen before remark-math parses the document. */
+function prepareMath(markdown: string): string {
+  return liftDisplayMath(escapeCurrency(markdown));
+}
+
+/**
+ * Split a one-line `$$…$$` into a three-line fence.
+ *
+ * micromark only treats `$$` as *display* math when the fence sits on its own
+ * line; a single-line `$$x$$` parses as inline. Most Markdown previewers
+ * (Typora, VS Code) render the one-line form as a centred block, and the docs
+ * are written against that expectation.
+ */
+function liftDisplayMath(markdown: string): string {
+  return mapOutsideCode(markdown, (text) =>
+    text.replace(
+      /^([ \t]*)\$\$[ \t]*(?!\s*$)([\s\S]*?)[ \t]*\$\$[ \t]*$/gm,
+      (match, indent: string, body: string) =>
+        body.includes("\n") ? match : `${indent}$$\n${body}\n${indent}$$`
+    )
+  );
+}
+
+/**
+ * Neutralise `$` used as a currency symbol before remark-math sees it.
+ *
+ * The docs mix real math (`$r_\phi$`, `$$...$$`) with prices (`$2.50/$15.00`,
+ * `$20 套餐`). Without this, `$2.50/$` parses as an inline formula and the text
+ * between two prices is swallowed into a garbled span.
+ *
+ * A `$` is treated as currency when it is followed by a number that ends on
+ * whitespace or prose punctuation — never on `$` (which closes real math like
+ * `$0$`) and never on a TeX backslash (`$2\le t\le 5$`).
+ */
+function escapeCurrency(markdown: string): string {
+  return mapOutsideCode(markdown, (text) =>
+    text.replace(/\$(\d[\d,.]*)(?=[\s,)）。，、；;:：*/\]]|$)/gm, "\\$$$1")
+  );
+}
+
+/**
+ * Apply `transform` to the prose of a Markdown document, leaving fenced blocks
+ * and inline code spans byte-identical.
+ */
+function mapOutsideCode(
+  markdown: string,
+  transform: (text: string) => string
+): string {
+  // Alternation order matters: fences win over inline spans.
+  const CODE = /(^```[\s\S]*?^```$|^~~~[\s\S]*?^~~~$|`[^`\n]*`)/gm;
+  return markdown
+    .split(CODE)
+    .map((part, index) => (index % 2 === 1 ? part : transform(part)))
+    .join("");
 }
 
 /**

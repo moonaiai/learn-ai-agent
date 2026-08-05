@@ -38,7 +38,7 @@ button:focus-visible {
 }
 
 .site-shell {
-  max-width: 1280px;
+  max-width: 90vw;
   margin: 0 auto;
   padding: 18px 40px 80px;
 }
@@ -559,6 +559,25 @@ tbody tr:last-child td {
 
 tbody tr:hover td {
   background: var(--row-hover);
+}
+
+/* Math ------------------------------------------------------------------ */
+
+.doc-content .katex {
+  font-size: 1.04em;
+}
+
+/* Long formulas scroll rather than widening the column. */
+.doc-content .katex-display {
+  margin: 22px 0 26px;
+  padding: 4px 0 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.doc-content .katex-display > .katex {
+  text-align: center;
+  white-space: nowrap;
 }
 
 /* Code ------------------------------------------------------------------ */
