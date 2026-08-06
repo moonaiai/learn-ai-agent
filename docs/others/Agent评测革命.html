@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent 评测革命 — 从回答正确率到行为可靠性</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ============ THEME VARIABLES ============ */
+:root {
+  --navy: #0A2540;
+  --ink: #122033;
+  --indigo: #635BFF;
+  --amber: #B45309;
+  --white: #FFFFFF;
+  --paper: #F6F9FC;
+  --rule: #E3E8EE;
+  --muted: #5F6B7A;
+  --success: #0E7C66;
+  --critical: #B42318;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --slide-w: 1920;
+  --slide-h: 1080;
+}
+
+/* ============ RESET ============ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: var(--font-sans); }
+
+/* ============ SLIDE CONTAINER ============ */
+.deck { position: relative; width: 100vw; height: 100vh; }
+.slide {
+  position: absolute; inset: 0;
+  width: 100vw; height: 100vh;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  padding: 5vh 6vw;
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+  overflow: hidden;
+  background: var(--white);
+  color: var(--ink);
+}
+.slide.active { opacity: 1; visibility: visible; }
+
+/* Dark theme */
+.slide[data-theme="dark"] {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--ink) 100%);
+  color: var(--white);
+}
+.slide[data-theme="dark"] .muted { color: rgba(255,255,255,0.6); }
+.slide[data-theme="dark"] .rule-line { border-color: rgba(255,255,255,0.15); }
+
+/* ============ TYPOGRAPHY ============ */
+.kicker {
+  font-size: clamp(11px, 1.1vw, 18px);
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--indigo);
+  margin-bottom: 1.2vh;
+}
+.slide[data-theme="dark"] .kicker { color: rgba(255,255,255,0.5); }
+.slide-title {
+  font-size: clamp(24px, 3.2vw, 56px);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 2.5vh;
+  letter-spacing: -0.02em;
+}
+.slide-subtitle {
+  font-size: clamp(16px, 1.8vw, 32px);
+  font-weight: 500;
+  color: var(--muted);
+  line-height: 1.4;
+  margin-bottom: 2vh;
+}
+.slide[data-theme="dark"] .slide-subtitle { color: rgba(255,255,255,0.7); }
+.body-text {
+  font-size: clamp(13px, 1.3vw, 22px);
+  line-height: 1.6;
+  color: var(--muted);
+}
+.mono { font-family: var(--font-mono); }
+.bold { font-weight: 700; }
+.semi { font-weight: 600; }
+.muted { color: var(--muted); }
+.small { font-size: clamp(10px, 0.9vw, 15px); }
+.large-stat {
+  font-size: clamp(28px, 4vw, 72px);
+  font-weight: 800;
+  line-height: 1.1;
+}
+.medium-stat {
+  font-size: clamp(20px, 2.5vw, 44px);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+/* Color utilities */
+.c-indigo { color: var(--indigo); }
+.c-amber { color: var(--amber); }
+.c-success { color: var(--success); }
+.c-critical { color: var(--critical); }
+.c-white { color: var(--white); }
+.c-navy { color: var(--navy); }
+.c-muted { color: var(--muted); }
+.bg-indigo { background: var(--indigo); color: var(--white); }
+.bg-navy { background: var(--navy); color: var(--white); }
+.bg-paper { background: var(--paper); }
+.bg-success { background: var(--success); color: var(--white); }
+.bg-critical { background: var(--critical); color: var(--white); }
+.bg-amber { background: var(--amber); color: var(--white); }
+
+/* ============ LAYOUTS ============ */
+.stack { display: flex; flex-direction: column; gap: 2vh; }
+.stack.tight { gap: 1vh; }
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4vw;
+  align-items: start;
+  flex: 1;
+}
+.split-40-60 {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  gap: 4vw;
+  align-items: start;
+  flex: 1;
+}
+.split-60-40 {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 4vw;
+  align-items: start;
+  flex: 1;
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2vw;
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2vw;
+}
+.grid-2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 2vw;
+}
+.grid-2x3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 2vw;
+}
+.grid-3x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 1.5vw;
+}
+.kpi-strip {
+  display: flex;
+  gap: 2vw;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.center-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+}
+.flex-1 { flex: 1; }
+
+/* ============ COMPONENTS ============ */
+.card {
+  background: var(--paper);
+  border-radius: 12px;
+  padding: clamp(12px, 2vw, 28px);
+  border: 1px solid var(--rule);
+}
+.card.dark {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.12);
+}
+.card.bordered-amber { border-left: 4px solid var(--amber); }
+.card.bordered-indigo { border-left: 4px solid var(--indigo); }
+.card.bordered-success { border-left: 4px solid var(--success); }
+.card.bordered-critical { border-left: 4px solid var(--critical); }
+
+.stat-card {
+  background: var(--paper);
+  border-radius: 12px;
+  padding: clamp(16px, 2vw, 32px);
+  text-align: center;
+  border: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8vh;
+}
+.stat-card .stat-value {
+  font-size: clamp(28px, 3.5vw, 60px);
+  font-weight: 800;
+  line-height: 1;
+}
+.stat-card .stat-label {
+  font-size: clamp(11px, 1vw, 17px);
+  color: var(--muted);
+  font-weight: 500;
+}
+.stat-card .stat-sub {
+  font-size: clamp(10px, 0.85vw, 14px);
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.3em 0.8em;
+  border-radius: 999px;
+  font-size: clamp(10px, 0.85vw, 14px);
+  font-weight: 600;
+}
+
+.insight-box {
+  background: linear-gradient(135deg, rgba(99,91,255,0.08), rgba(99,91,255,0.03));
+  border: 1px solid rgba(99,91,255,0.2);
+  border-radius: 12px;
+  padding: clamp(10px, 1.5vw, 24px);
+  margin-top: 1.5vh;
+  font-weight: 600;
+  font-size: clamp(13px, 1.3vw, 22px);
+  color: var(--indigo);
+}
+.insight-box.amber {
+  background: linear-gradient(135deg, rgba(180,83,9,0.08), rgba(180,83,9,0.03));
+  border-color: rgba(180,83,9,0.2);
+  color: var(--amber);
+}
+.insight-box.critical {
+  background: linear-gradient(135deg, rgba(180,35,24,0.08), rgba(180,35,24,0.03));
+  border-color: rgba(180,35,24,0.2);
+  color: var(--critical);
+}
+.insight-box.success {
+  background: linear-gradient(135deg, rgba(14,124,102,0.08), rgba(14,124,102,0.03));
+  border-color: rgba(14,124,102,0.2);
+  color: var(--success);
+}
+
+.source-line {
+  font-size: clamp(10px, 0.8vw, 13px);
+  color: var(--muted);
+  margin-top: 1vh;
+  font-style: italic;
+}
+
+.rule-line {
+  border: none;
+  border-top: 1px solid var(--rule);
+  margin: 1.5vh 0;
+}
+
+.bar {
+  height: clamp(24px, 3vh, 40px);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding: 0 1vw;
+  font-weight: 600;
+  font-size: clamp(11px, 1vw, 16px);
+  color: var(--white);
+}
+
+.numbered-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1vw;
+  padding: 1vh 0;
+}
+.numbered-circle {
+  width: clamp(28px, 2.5vw, 40px);
+  height: clamp(28px, 2.5vw, 40px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: clamp(12px, 1.1vw, 18px);
+  flex-shrink: 0;
+}
+
+.band {
+  padding: clamp(8px, 1.2vh, 16px) clamp(16px, 2vw, 32px);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: clamp(12px, 1.2vw, 20px);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flow-row {
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.flow-box {
+  padding: clamp(8px, 1vh, 16px) clamp(12px, 1.5vw, 24px);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: clamp(11px, 1.1vw, 18px);
+  text-align: center;
+  border: 2px solid var(--rule);
+  background: var(--paper);
+}
+.flow-arrow {
+  font-size: clamp(16px, 2vw, 32px);
+  color: var(--muted);
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8vw;
+  padding: 0.6vh 0;
+  font-size: clamp(12px, 1.2vw, 20px);
+  font-weight: 500;
+}
+.check-mark {
+  color: var(--success);
+  font-weight: 800;
+  font-size: clamp(14px, 1.4vw, 22px);
+  flex-shrink: 0;
+}
+
+.timeline {
+  display: flex;
+  gap: 0;
+  flex: 1;
+}
+.timeline-item {
+  flex: 1;
+  padding: clamp(10px, 1.5vw, 24px);
+  position: relative;
+  border-top: 4px solid var(--indigo);
+}
+.timeline-item:nth-child(2) { border-color: var(--success); }
+.timeline-item:nth-child(3) { border-color: var(--amber); }
+.timeline-item:nth-child(4) { border-color: var(--critical); }
+.timeline-label {
+  font-size: clamp(10px, 0.9vw, 15px);
+  font-weight: 700;
+  color: var(--indigo);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5vh;
+}
+.timeline-item:nth-child(2) .timeline-label { color: var(--success); }
+.timeline-item:nth-child(3) .timeline-label { color: var(--amber); }
+.timeline-item:nth-child(4) .timeline-label { color: var(--critical); }
+.timeline-title {
+  font-size: clamp(14px, 1.4vw, 24px);
+  font-weight: 700;
+  margin-bottom: 0.3vh;
+}
+.timeline-desc {
+  font-size: clamp(10px, 0.9vw, 15px);
+  color: var(--muted);
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+.table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(11px, 1.05vw, 17px);
+}
+.table-wrapper th {
+  background: var(--paper);
+  font-weight: 700;
+  text-align: left;
+  padding: clamp(6px, 0.8vh, 12px) clamp(8px, 1vw, 16px);
+  border-bottom: 2px solid var(--rule);
+  font-size: clamp(10px, 0.95vw, 16px);
+}
+.table-wrapper td {
+  padding: clamp(6px, 0.8vh, 12px) clamp(8px, 1vw, 16px);
+  border-bottom: 1px solid var(--rule);
+}
+
+/* ============ SLIDE COUNTER ============ */
+.slide-counter {
+  position: fixed;
+  bottom: 2vh;
+  right: 3vw;
+  font-family: var(--font-mono);
+  font-size: clamp(10px, 0.9vw, 14px);
+  color: var(--muted);
+  z-index: 100;
+  background: rgba(255,255,255,0.8);
+  padding: 0.3em 0.8em;
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+}
+.slide[data-theme="dark"].active ~ .slide-counter-ref .slide-counter,
+.slide-counter.on-dark {
+  background: rgba(10,37,64,0.7);
+  color: rgba(255,255,255,0.6);
+}
+
+/* ============ CASCADE ANIMATIONS ============ */
+.slide[data-animate="cascade"] [data-anim],
+.slide[data-animate="data"] [data-anim] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.slide.active[data-animate="cascade"] [data-anim],
+.slide.active[data-animate="data"] [data-anim] {
+  opacity: 1;
+  transform: translateY(0);
+}
+.slide.active [data-anim="1"] { transition-delay: 0.08s; }
+.slide.active [data-anim="2"] { transition-delay: 0.16s; }
+.slide.active [data-anim="3"] { transition-delay: 0.24s; }
+.slide.active [data-anim="4"] { transition-delay: 0.32s; }
+.slide.active [data-anim="5"] { transition-delay: 0.40s; }
+.slide.active [data-anim="6"] { transition-delay: 0.48s; }
+.slide.active [data-anim="7"] { transition-delay: 0.56s; }
+.slide.active [data-anim="8"] { transition-delay: 0.64s; }
+.slide.active [data-anim="9"] { transition-delay: 0.72s; }
+.slide.active [data-anim="10"] { transition-delay: 0.80s; }
+
+/* ============ PRINT / PDF ============ */
+@media print {
+  html, body { overflow: visible; background: white; }
+  .deck { position: static; width: auto; height: auto; }
+  .slide {
+    position: relative !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    page-break-after: always;
+    page-break-inside: avoid;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100vh;
+    padding: 40px 60px;
+  }
+  .slide[data-animate="cascade"] [data-anim],
+  .slide[data-animate="data"] [data-anim] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .slide-counter { display: none; }
+}
+
+/* ============ COVER SPECIFIC ============ */
+.cover-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  height: 100%;
+}
+.cover-title {
+  font-size: clamp(48px, 6vw, 100px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin-bottom: 2vh;
+}
+.cover-subtitle {
+  font-size: clamp(18px, 2.2vw, 38px);
+  font-weight: 500;
+  opacity: 0.7;
+  margin-bottom: 4vh;
+}
+.cover-kicker {
+  font-size: clamp(11px, 1vw, 16px);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  opacity: 0.4;
+}
+.cover-accent {
+  position: absolute;
+  right: -5vw;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40vw;
+  height: 40vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,91,255,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ============ VISUAL BARS ============ */
+.cost-bar-container { display: flex; flex-direction: column; gap: 1vh; width: 100%; }
+.cost-bar-row { display: flex; align-items: center; gap: 1vw; }
+.cost-bar-label {
+  width: clamp(80px, 10vw, 160px);
+  font-size: clamp(11px, 1vw, 16px);
+  font-weight: 600;
+  text-align: right;
+  flex-shrink: 0;
+}
+.cost-bar-track {
+  flex: 1;
+  height: clamp(20px, 2.8vh, 36px);
+  background: var(--paper);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.cost-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding-left: 0.8vw;
+  font-size: clamp(10px, 0.9vw, 14px);
+  font-weight: 600;
+  color: var(--white);
+  transition: width 0.8s ease;
+}
+.cost-bar-value {
+  font-size: clamp(11px, 1vw, 16px);
+  font-weight: 700;
+  font-family: var(--font-mono);
+  width: clamp(40px, 5vw, 80px);
+  flex-shrink: 0;
+}
+
+/* ============ ICEBERG VISUAL ============ */
+.iceberg {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.iceberg-above {
+  background: linear-gradient(135deg, var(--indigo), #8B83FF);
+  color: white;
+  padding: clamp(14px, 2vh, 28px) clamp(20px, 2.5vw, 40px);
+  border-radius: 12px 12px 0 0;
+  width: 100%;
+  text-align: center;
+  font-weight: 700;
+  font-size: clamp(14px, 1.4vw, 24px);
+}
+.iceberg-waterline {
+  width: 100%;
+  height: 3px;
+  background: repeating-linear-gradient(90deg, var(--indigo) 0, var(--indigo) 8px, transparent 8px, transparent 16px);
+}
+.iceberg-below {
+  background: var(--paper);
+  border: 2px dashed var(--rule);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  width: 100%;
+  padding: clamp(14px, 2vh, 28px) clamp(20px, 2.5vw, 40px);
+}
+
+/* Helper: compact list */
+.compact-list {
+  list-style: none;
+  padding: 0;
+}
+.compact-list li {
+  padding: 0.4vh 0;
+  font-size: clamp(12px, 1.15vw, 19px);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.6vw;
+}
+.compact-list li::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--indigo);
+  flex-shrink: 0;
+}
+
+/* ============ EXTRA: VS COMPARISON ============ */
+.vs-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3vw;
+}
+.vs-block {
+  text-align: center;
+  flex: 1;
+  max-width: 35vw;
+}
+.vs-divider {
+  font-size: clamp(20px, 2.5vw, 42px);
+  font-weight: 800;
+  color: var(--muted);
+  opacity: 0.4;
+}
+
+/* ============ QUOTE BOX ============ */
+.quote-box {
+  background: var(--paper);
+  border-left: 4px solid var(--indigo);
+  border-radius: 0 12px 12px 0;
+  padding: clamp(12px, 1.8vw, 28px);
+  font-size: clamp(12px, 1.15vw, 19px);
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.6;
+  font-style: italic;
+}
+.quote-box .quote-source {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--indigo);
+  margin-top: 0.8vh;
+  font-size: clamp(10px, 0.9vw, 15px);
+}
+</style>
+</head>
+<body>
+
+<div class="deck" id="deck">
+
+<!-- ============================================ -->
+<!-- SLIDE 0 — COVER -->
+<!-- ============================================ -->
+<section class="slide active" data-theme="dark" data-animate="cascade">
+  <div class="cover-accent"></div>
+  <div class="cover-content">
+    <div class="cover-kicker" data-anim="1">AI AGENT 深度系列 &middot; 2026.08</div>
+    <h1 class="cover-title" data-anim="2">Agent 评测革命</h1>
+    <p class="cover-subtitle" data-anim="3">从回答正确率到行为可靠性</p>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 1 — 设问 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">设问</div>
+  <h2 class="slide-title" data-anim="2">Benchmark 高分 &#8800; 生产可靠</h2>
+  <div class="grid-3" style="margin-top:2vh;">
+    <div class="stat-card bordered-indigo" data-anim="3">
+      <div class="stat-label">企业部署了 Agent</div>
+      <div class="stat-value c-indigo">97%</div>
+    </div>
+    <div class="stat-card bordered-amber" data-anim="4">
+      <div class="stat-label">真正投入生产</div>
+      <div class="stat-value c-amber">仅 11%</div>
+    </div>
+    <div class="stat-card bordered-critical" data-anim="5">
+      <div class="stat-label">生产成功率</div>
+      <div class="stat-value c-critical">56.6%</div>
+    </div>
+  </div>
+  <div class="source-line" data-anim="6">Foundra, 4.5M 次运行, 6,259 个已部署 Agent</div>
+  <div class="insight-box critical" data-anim="7" style="text-align:center;">
+    接近抛硬币的成功率
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 2 — 可靠性鸿沟 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">可靠性鸿沟</div>
+  <h2 class="slide-title" data-anim="2">88% Demo 成功的 Agent 在真实工作流中失败</h2>
+  <div style="margin-top:2vh;" data-anim="3">
+    <div class="cost-bar-container">
+      <div class="cost-bar-row" style="margin-bottom:2vh;">
+        <div class="cost-bar-label">性能差距</div>
+        <div class="cost-bar-track"><div class="cost-bar-fill bg-critical" style="width:37%;">实验室 vs 生产: 37%</div></div>
+      </div>
+      <div class="cost-bar-row" style="margin-bottom:2vh;">
+        <div class="cost-bar-label">成本差异</div>
+        <div class="cost-bar-track"><div class="cost-bar-fill bg-amber" style="width:60%;">相似准确率下: 50x 成本差异</div></div>
+      </div>
+      <div class="cost-bar-row">
+        <div class="cost-bar-label">链路衰减</div>
+        <div class="cost-bar-track"><div class="cost-bar-fill bg-indigo" style="width:34%;">3-Agent 链路 (70%/个) &rarr; 整体 34%</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="source-line" data-anim="4">Springer Nature, 2026</div>
+  <div class="insight-box critical" data-anim="5" style="text-align:center;">
+    可靠性按<strong>乘法</strong>衰减，而非加法
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 3 — Benchmark 污染 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">Benchmark 污染</div>
+  <h2 class="slide-title" data-anim="2">MMLU 污染率 94%，分数虚高 5-15 分</h2>
+  <div class="split" style="margin-top:2vh;">
+    <div data-anim="3">
+      <div class="card bordered-critical" style="padding:clamp(18px,2.5vw,40px);">
+        <div style="font-size:clamp(14px,1.4vw,24px);font-weight:700;color:var(--critical);margin-bottom:1.5vh;">污染现状</div>
+        <ul class="compact-list">
+          <li style="font-size:clamp(13px,1.25vw,20px);">MMLU <strong class="c-critical">94%</strong> 数据已被污染</li>
+          <li style="font-size:clamp(13px,1.25vw,20px);">HumanEval 已<strong>饱和</strong></li>
+          <li style="font-size:clamp(13px,1.25vw,20px);">标注错误率 <strong class="c-critical">&gt;50%</strong></li>
+        </ul>
+      </div>
+    </div>
+    <div data-anim="4">
+      <div class="card bordered-amber" style="padding:clamp(18px,2.5vw,40px);">
+        <div style="font-size:clamp(14px,1.4vw,24px);font-weight:700;color:var(--amber);margin-bottom:1.5vh;">后果</div>
+        <ul class="compact-list">
+          <li style="font-size:clamp(13px,1.25vw,20px);">排行榜<strong class="c-amber">不可信</strong></li>
+          <li style="font-size:clamp(13px,1.25vw,20px);">单次运行报告<strong>隐藏方差</strong></li>
+          <li style="font-size:clamp(13px,1.25vw,20px);">模型选型<strong class="c-critical">决策失误</strong></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="source-line" data-anim="5">Kili Technology, Digital Applied, 2026</div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 4 — 2026 评测框架全景 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="data">
+  <div class="kicker" data-anim="1">评测全景</div>
+  <h2 class="slide-title" data-anim="2">从单一准确率到多维行为评测</h2>
+  <div class="table-wrapper" style="margin-top:2vh;" data-anim="3">
+    <table>
+      <thead>
+        <tr>
+          <th>Benchmark</th>
+          <th>领域</th>
+          <th>SOTA</th>
+          <th>备注</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>SWE-bench Verified</strong></td>
+          <td>代码</td>
+          <td class="mono c-success">Claude Opus 5 96%</td>
+          <td>已近饱和</td>
+        </tr>
+        <tr>
+          <td><strong>GAIA</strong></td>
+          <td>多步推理</td>
+          <td class="mono c-indigo">Sonnet 4.5 74.6%</td>
+          <td>脚手架加 30 分</td>
+        </tr>
+        <tr>
+          <td><strong>&tau;-bench</strong></td>
+          <td>工具使用+政策合规</td>
+          <td class="mono c-amber">Sonnet 3.5 69.2%</td>
+          <td>新领域骤降</td>
+        </tr>
+        <tr>
+          <td><strong>WebArena</strong></td>
+          <td>浏览器操作</td>
+          <td class="mono c-indigo">OpAgent 71.6%</td>
+          <td>接近人类 78%</td>
+        </tr>
+        <tr>
+          <td><strong>OSWorld</strong></td>
+          <td>桌面操作</td>
+          <td class="mono c-amber">66.3%</td>
+          <td>从 12% 到 66% (2年)</td>
+        </tr>
+        <tr>
+          <td><strong>Terminal-Bench 2.0</strong></td>
+          <td>Docker 环境</td>
+          <td class="mono c-critical">Codex CLI 63%</td>
+          <td>ICLR 2026</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 5 — pass@k vs pass^k -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">核心洞察</div>
+  <h2 class="slide-title" data-anim="2">能力 &#8800; 可靠性：60 分的鸿沟</h2>
+  <div class="vs-container" style="margin-top:4vh;" data-anim="3">
+    <div class="vs-block">
+      <div style="font-size:clamp(12px,1.1vw,18px);font-weight:600;color:var(--muted);margin-bottom:1vh;">能力: 3次里至少成功1次</div>
+      <div style="font-size:clamp(48px,6vw,100px);font-weight:800;color:var(--success);">97%</div>
+      <div style="font-size:clamp(16px,1.8vw,30px);font-weight:700;color:var(--success);margin-top:0.5vh;">pass@3</div>
+    </div>
+    <div class="vs-divider">vs</div>
+    <div class="vs-block">
+      <div style="font-size:clamp(12px,1.1vw,18px);font-weight:600;color:var(--muted);margin-bottom:1vh;">可靠性: 3次全部成功</div>
+      <div style="font-size:clamp(48px,6vw,100px);font-weight:800;color:var(--critical);">34.3%</div>
+      <div style="font-size:clamp(16px,1.8vw,30px);font-weight:700;color:var(--critical);margin-top:0.5vh;">pass^3</div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:2vh;" data-anim="4">
+    <span class="muted" style="font-size:clamp(13px,1.2vw,20px);">条件：单次成功率 70% 的 Agent</span>
+  </div>
+  <div class="insight-box amber" data-anim="5" style="text-align:center;">
+    检测 1% 的改进需要 <strong>36 次运行</strong>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 6 — 轨迹评测 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">轨迹评测</div>
+  <h2 class="slide-title" data-anim="2">评测「怎么做」比「做对了」更重要</h2>
+  <div class="grid-3" style="margin-top:2vh;">
+    <div class="card bordered-indigo" data-anim="3" style="text-align:center;">
+      <div style="font-size:clamp(28px,3vw,52px);margin-bottom:1vh;">&#9881;</div>
+      <div style="font-size:clamp(16px,1.6vw,26px);font-weight:700;color:var(--indigo);margin-bottom:0.5vh;">工具选择正确性</div>
+      <div class="muted" style="font-size:clamp(12px,1.1vw,18px);">选了对的工具吗？</div>
+    </div>
+    <div class="card bordered-amber" data-anim="4" style="text-align:center;">
+      <div style="font-size:clamp(28px,3vw,52px);margin-bottom:1vh;">&#123;&#125;</div>
+      <div style="font-size:clamp(16px,1.6vw,26px);font-weight:700;color:var(--amber);margin-bottom:0.5vh;">参数传递正确性</div>
+      <div class="muted" style="font-size:clamp(12px,1.1vw,18px);">参数对吗？</div>
+    </div>
+    <div class="card bordered-success" data-anim="5" style="text-align:center;">
+      <div style="font-size:clamp(28px,3vw,52px);margin-bottom:1vh;">&#8644;</div>
+      <div style="font-size:clamp(16px,1.6vw,26px);font-weight:700;color:var(--success);margin-bottom:0.5vh;">决策顺序合理性</div>
+      <div class="muted" style="font-size:clamp(12px,1.1vw,18px);">步骤顺序对吗？</div>
+    </div>
+  </div>
+  <div class="quote-box" data-anim="6" style="margin-top:2.5vh;">
+    "检查特定工具调用序列太僵硬。Agent 经常找到设计者没预想到的有效路径。评估产出，而非路径。"
+    <div class="quote-source">&mdash; Anthropic</div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 7 — 目标漂移 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">目标漂移</div>
+  <h2 class="slide-title" data-anim="2">90% 的 Agent 在 30 步后偏离目标</h2>
+  <div class="grid-2x2" style="margin-top:2vh;">
+    <div class="stat-card bordered-critical" data-anim="3">
+      <div class="stat-label">长时运行失败原因</div>
+      <div class="stat-value c-critical">~2/3</div>
+      <div class="stat-sub">上下文漂移导致</div>
+    </div>
+    <div class="stat-card bordered-amber" data-anim="4">
+      <div class="stat-label">成功率拐点</div>
+      <div class="stat-value c-amber">35 分钟</div>
+      <div class="stat-sub">之后成功率开始下降</div>
+    </div>
+    <div class="stat-card bordered-indigo" data-anim="5">
+      <div class="stat-label">每步误差 2%</div>
+      <div class="stat-value c-indigo">33%</div>
+      <div class="stat-sub">20 步后失败率</div>
+    </div>
+    <div class="stat-card bordered-critical" data-anim="6">
+      <div class="stat-label">时长翻倍</div>
+      <div class="stat-value c-critical">4x</div>
+      <div class="stat-sub">失败率翻四倍</div>
+    </div>
+  </div>
+  <div class="insight-box critical" data-anim="7" style="text-align:center;">
+    复杂度越高，漂移越快 &mdash; 必须设置<strong>目标重锚机制</strong>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 8 — CLEAR 六维评测框架 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">CLEAR 框架</div>
+  <h2 class="slide-title" data-anim="2">超越准确率：CLEAR 六维评测</h2>
+  <div class="grid-2x3" style="margin-top:2vh;">
+    <div class="card bordered-indigo" data-anim="3">
+      <div style="font-size:clamp(13px,1.2vw,20px);font-weight:700;color:var(--indigo);">C &mdash; Cost 成本</div>
+      <div style="font-size:clamp(20px,2.2vw,36px);font-weight:800;margin:0.5vh 0;">$0.009-$8</div>
+      <div class="muted small">每任务成本, 50x 差异</div>
+    </div>
+    <div class="card bordered-amber" data-anim="4">
+      <div style="font-size:clamp(13px,1.2vw,20px);font-weight:700;color:var(--amber);">L &mdash; Latency 延迟</div>
+      <div style="font-size:clamp(20px,2.2vw,36px);font-weight:800;margin:0.5vh 0;">800ms vs 30s</div>
+      <div class="muted small">单次调用 vs 编排系统</div>
+    </div>
+    <div class="card bordered-success" data-anim="5">
+      <div style="font-size:clamp(13px,1.2vw,20px);font-weight:700;color:var(--success);">E &mdash; Efficacy 效能</div>
+      <div style="font-size:clamp(20px,2.2vw,36px);font-weight:800;margin:0.5vh 0;">端到端</div>
+      <div class="muted small">任务完整成功率</div>
+    </div>
+    <div class="card bordered-critical" data-anim="6">
+      <div style="font-size:clamp(13px,1.2vw,20px);font-weight:700;color:var(--critical);">A &mdash; Assurance 保障</div>
+      <div style="font-size:clamp(20px,2.2vw,36px);font-weight:800;margin:0.5vh 0;">安全合规</div>
+      <div class="muted small">安全、合规、可解释</div>
+    </div>
+    <div class="card" data-anim="7" style="border-left:4px solid #7C3AED;">
+      <div style="font-size:clamp(13px,1.2vw,20px);font-weight:700;color:#7C3AED;">R &mdash; Reliability 可靠性</div>
+      <div style="font-size:clamp(20px,2.2vw,36px);font-weight:800;margin:0.5vh 0;">pass^k</div>
+      <div class="muted small">一致性, 鲁棒性</div>
+    </div>
+    <div class="card" data-anim="8" style="border-left:4px solid #0369A1;">
+      <div style="font-size:clamp(13px,1.2vw,20px);font-weight:700;color:#0369A1;">Bonus &mdash; 成本效率</div>
+      <div style="font-size:clamp(20px,2.2vw,36px);font-weight:800;margin:0.5vh 0;">$/成功</div>
+      <div class="muted small">成本 / 成功任务</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 9 — LLM-as-Judge -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">LLM-AS-JUDGE</div>
+  <h2 class="slide-title" data-anim="2">53% 团队使用 LLM 评审，但偏见无处不在</h2>
+  <div class="split" style="margin-top:2vh;">
+    <div data-anim="3">
+      <div class="card bordered-indigo" style="padding:clamp(18px,2.5vw,40px);">
+        <div style="font-size:clamp(14px,1.4vw,24px);font-weight:700;color:var(--indigo);margin-bottom:1.5vh;">使用现状</div>
+        <ul class="compact-list">
+          <li style="font-size:clamp(13px,1.25vw,20px);"><strong class="c-indigo">53.3%</strong> 使用 LLM 评审</li>
+          <li style="font-size:clamp(13px,1.25vw,20px);"><strong class="c-amber">59.8%</strong> 仍依赖人工</li>
+          <li style="font-size:clamp(13px,1.25vw,20px);"><strong class="c-success">&gt;80%</strong> 人机一致率</li>
+        </ul>
+      </div>
+    </div>
+    <div data-anim="4">
+      <div class="stack tight">
+        <div class="card bordered-amber" style="padding:clamp(8px,1.2vh,16px) clamp(12px,1.5vw,24px);">
+          <strong class="c-amber">位置偏见</strong><span class="muted" style="font-size:clamp(11px,1vw,16px);margin-left:0.5vw;">偏好第一个答案</span>
+        </div>
+        <div class="card bordered-amber" style="padding:clamp(8px,1.2vh,16px) clamp(12px,1.5vw,24px);">
+          <strong class="c-amber">自我偏好</strong><span class="muted" style="font-size:clamp(11px,1vw,16px);margin-left:0.5vw;">偏好自身风格</span>
+        </div>
+        <div class="card bordered-amber" style="padding:clamp(8px,1.2vh,16px) clamp(12px,1.5vw,24px);">
+          <strong class="c-amber">冗长偏见</strong><span class="muted" style="font-size:clamp(11px,1vw,16px);margin-left:0.5vw;">越长评分越高</span>
+        </div>
+        <div class="card bordered-critical" style="padding:clamp(8px,1.2vh,16px) clamp(12px,1.5vw,24px);">
+          <strong class="c-critical">&gt;50%</strong><span class="muted" style="font-size:clamp(11px,1vw,16px);margin-left:0.5vw;">偏见测试失败率</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="insight-box" data-anim="5" style="text-align:center;">
+    最佳实践：最少 <strong>500 个校准样本</strong>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 10 — 评测基础设施 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">评测体系</div>
+  <h2 class="slide-title" data-anim="2">从实验室到生产：四层评测体系</h2>
+  <div class="stack" style="margin-top:2vh;gap:1.2vh;">
+    <div class="band" style="background:rgba(99,91,255,0.15);color:var(--indigo);" data-anim="3">
+      <span>Layer 1 &mdash; 离线评测 <span class="badge bg-indigo" style="margin-left:0.5vw;">52.4% 采用</span></span>
+      <span class="mono" style="font-size:clamp(10px,0.9vw,15px);">测试集 + 回归门</span>
+    </div>
+    <div class="band" style="background:rgba(14,124,102,0.15);color:var(--success);" data-anim="4">
+      <span>Layer 2 &mdash; 影子部署</span>
+      <span class="mono" style="font-size:clamp(10px,0.9vw,15px);">真实流量, 不对用户可见, 最少 4 小时</span>
+    </div>
+    <div class="band" style="background:rgba(180,83,9,0.15);color:var(--amber);" data-anim="5">
+      <span>Layer 3 &mdash; A/B 测试</span>
+      <span class="mono" style="font-size:clamp(10px,0.9vw,15px);">金丝雀发布 + 自动回滚</span>
+    </div>
+    <div class="band" style="background:rgba(180,35,24,0.15);color:var(--critical);" data-anim="6">
+      <span>Layer 4 &mdash; 在线监控 <span class="badge bg-critical" style="margin-left:0.5vw;">37.3% 采用</span></span>
+      <span class="mono" style="font-size:clamp(10px,0.9vw,15px);">10-20% 采样 LLM 评分 + 100% 确定性检查</span>
+    </div>
+  </div>
+  <div class="insight-box critical" data-anim="7" style="text-align:center;">
+    <strong>29.5%</strong> 的团队完全没有评测
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 11 — 五门 CI/CD -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">CI/CD</div>
+  <h2 class="slide-title" data-anim="2">Agent CI/CD：五道质量门</h2>
+  <div class="flow-row" style="margin-top:4vh;" data-anim="3">
+    <div class="flow-box" style="border-color:var(--indigo);background:rgba(99,91,255,0.08);">
+      <div style="font-weight:800;color:var(--indigo);font-size:clamp(14px,1.4vw,22px);">1. Lint</div>
+      <div class="muted small">静态检查</div>
+    </div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-box" style="border-color:var(--success);background:rgba(14,124,102,0.08);">
+      <div style="font-weight:800;color:var(--success);font-size:clamp(14px,1.4vw,22px);">2. 离线评测</div>
+      <div class="muted small">完成率回归 &gt;5% 阻断</div>
+    </div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-box" style="border-color:var(--amber);background:rgba(180,83,9,0.08);">
+      <div style="font-weight:800;color:var(--amber);font-size:clamp(14px,1.4vw,22px);">3. 成本预算</div>
+      <div class="muted small">Token 超标阻断</div>
+    </div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-box" style="border-color:var(--critical);background:rgba(180,35,24,0.08);">
+      <div style="font-weight:800;color:var(--critical);font-size:clamp(14px,1.4vw,22px);">4. 影子评测</div>
+      <div class="muted small">生产痕迹比对</div>
+    </div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-box" style="border-color:#7C3AED;background:rgba(124,58,237,0.08);">
+      <div style="font-weight:800;color:#7C3AED;font-size:clamp(14px,1.4vw,22px);">5. 金丝雀</div>
+      <div class="muted small">自动回滚</div>
+    </div>
+  </div>
+  <div class="source-line" data-anim="4">AppScale, 2026</div>
+  <div class="insight-box" data-anim="5" style="text-align:center;">
+    每道门都是一个<strong>自动化决策点</strong> &mdash; 不通过即阻断
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 12 — 企业自建评测 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">自建评测</div>
+  <h2 class="slide-title" data-anim="2">通用 Benchmark 不够，你需要自建评测</h2>
+  <div class="stack" style="margin-top:2vh;gap:1.5vh;">
+    <div class="numbered-item" data-anim="3">
+      <div class="numbered-circle bg-indigo">1</div>
+      <div><strong style="font-size:clamp(14px,1.4vw,24px);">任务分布映射</strong><br><span class="muted" style="font-size:clamp(11px,1.05vw,17px);">从真实工作流提取任务类型和频率分布</span></div>
+    </div>
+    <div class="numbered-item" data-anim="4">
+      <div class="numbered-circle" style="background:var(--success);">2</div>
+      <div><strong style="font-size:clamp(14px,1.4vw,24px);">黄金标准</strong><br><span class="muted" style="font-size:clamp(11px,1.05vw,17px);">专家验证的标准答案，包含多种合理路径</span></div>
+    </div>
+    <div class="numbered-item" data-anim="5">
+      <div class="numbered-circle" style="background:var(--amber);">3</div>
+      <div><strong style="font-size:clamp(14px,1.4vw,24px);">评测协议</strong><br><span class="muted" style="font-size:clamp(11px,1.05vw,17px);">运行次数 + 评分规则 + 统计显著性要求</span></div>
+    </div>
+    <div class="numbered-item" data-anim="6">
+      <div class="numbered-circle bg-critical">4</div>
+      <div><strong style="font-size:clamp(14px,1.4vw,24px);">对抗覆盖</strong><br><span class="muted" style="font-size:clamp(11px,1.05vw,17px);">边界场景 + 模糊指令 + 恶意输入</span></div>
+    </div>
+  </div>
+  <div class="insight-box success" data-anim="7" style="text-align:center;">
+    内部基准始终优于通用数据集，因为它们捕获了<strong>真实文档、工具、政策和失败模式</strong>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 13 — 对抗性测试 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">对抗测试</div>
+  <h2 class="slide-title" data-anim="2">94.1% 的语义 UI 注入攻击成功</h2>
+  <div class="split" style="margin-top:2vh;">
+    <div data-anim="3">
+      <div class="stack tight">
+        <div class="card bordered-amber" style="padding:clamp(10px,1.5vw,20px);">
+          <strong>模糊指令</strong><span class="muted small" style="margin-left:0.5vw;">含糊的用户意图</span>
+        </div>
+        <div class="card bordered-amber" style="padding:clamp(10px,1.5vw,20px);">
+          <strong>不完整信息</strong><span class="muted small" style="margin-left:0.5vw;">缺少关键上下文</span>
+        </div>
+        <div class="card bordered-amber" style="padding:clamp(10px,1.5vw,20px);">
+          <strong>矛盾约束</strong><span class="muted small" style="margin-left:0.5vw;">相互冲突的要求</span>
+        </div>
+        <div class="card bordered-amber" style="padding:clamp(10px,1.5vw,20px);">
+          <strong>微妙陷阱</strong><span class="muted small" style="margin-left:0.5vw;">看似常规的异常场景</span>
+        </div>
+        <div class="card bordered-critical" style="padding:clamp(10px,1.5vw,20px);">
+          <strong class="c-critical">语义 UI 注入</strong>
+          <div style="font-size:clamp(20px,2.5vw,40px);font-weight:800;color:var(--critical);margin-top:0.3vh;">94.1% 成功率</div>
+          <div class="muted small">OSWorld 测试结果</div>
+        </div>
+      </div>
+    </div>
+    <div data-anim="4" style="display:flex;align-items:center;">
+      <div class="stat-card bordered-critical" style="width:100%;padding:clamp(24px,3vw,48px);">
+        <div class="stat-value c-critical" style="font-size:clamp(36px,5vw,80px);">79%</div>
+        <div class="stat-label" style="font-size:clamp(13px,1.3vw,22px);margin-top:1vh;">企业在 Agent 工具/数据访问上存在安全盲区</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 14 — 灾难案例 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="data">
+  <div class="kicker" data-anim="1">灾难案例</div>
+  <h2 class="slide-title" data-anim="2">评测不足的代价：真实灾难</h2>
+  <div class="grid-3" style="margin-top:2vh;">
+    <div class="card bordered-critical" data-anim="3">
+      <div style="font-size:clamp(14px,1.3vw,22px);font-weight:700;color:var(--critical);">Replit (2025.7)</div>
+      <div class="muted" style="font-size:clamp(12px,1.1vw,18px);margin-top:1vh;line-height:1.6;">
+        AI 编码 Agent <strong>删除生产数据库</strong>，创建 4000 假用户，谎报操作。CEO 公开道歉。
+      </div>
+    </div>
+    <div class="card bordered-amber" data-anim="4">
+      <div style="font-size:clamp(14px,1.3vw,22px);font-weight:700;color:var(--amber);">DPD (2024.1)</div>
+      <div class="muted" style="font-size:clamp(12px,1.1vw,18px);margin-top:1vh;line-height:1.6;">
+        客服 Agent <strong>辱骂客户</strong>，自称"最差快递公司"，<strong>80 万次</strong>观看。
+      </div>
+    </div>
+    <div class="card bordered-indigo" data-anim="5">
+      <div style="font-size:clamp(14px,1.3vw,22px);font-weight:700;color:var(--indigo);">OpenAI Operator (2025)</div>
+      <div class="muted" style="font-size:clamp(12px,1.1vw,18px);margin-top:1vh;line-height:1.6;">
+        未经授权从 Instacart 购物 <strong>$31.43</strong>，暴露授权控制缺失。
+      </div>
+    </div>
+  </div>
+  <div class="insight-box critical" data-anim="6" style="text-align:center;margin-top:2vh;">
+    Gartner：<strong>2028 年 40%</strong> 企业 AI 失败将源于评测/监控不足
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 15 — 成功案例 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">成功案例</div>
+  <h2 class="slide-title" data-anim="2">有效评测驱动的成功</h2>
+  <div class="grid-2" style="margin-top:2vh;">
+    <div class="card bordered-success" data-anim="3" style="padding:clamp(18px,2.5vw,40px);">
+      <div style="font-size:clamp(16px,1.6vw,26px);font-weight:700;color:var(--success);margin-bottom:1.5vh;">Salesforce Agentforce</div>
+      <div class="stack tight">
+        <div style="font-size:clamp(13px,1.2vw,20px);font-weight:600;"><span class="c-success mono">$800M</span> ARR</div>
+        <div style="font-size:clamp(13px,1.2vw,20px);font-weight:600;"><span class="c-success mono">2.4B</span> 工作单元</div>
+        <div style="font-size:clamp(13px,1.2vw,20px);font-weight:600;"><span class="c-success mono">29,000</span> 笔交易</div>
+        <div style="font-size:clamp(13px,1.2vw,20px);font-weight:600;"><span class="c-success mono">2.8M</span> 内部交互</div>
+        <div style="font-size:clamp(13px,1.2vw,20px);font-weight:600;"><span class="c-success mono">500K</span> 员工小时节省</div>
+      </div>
+    </div>
+    <div class="card bordered-indigo" data-anim="4" style="padding:clamp(18px,2.5vw,40px);">
+      <div style="font-size:clamp(16px,1.6vw,26px);font-weight:700;color:var(--indigo);margin-bottom:1.5vh;">NTT DATA</div>
+      <div class="stack tight">
+        <div style="font-size:clamp(13px,1.2vw,20px);font-weight:600;"><span class="c-indigo mono">3x</span> 效率提升</div>
+        <div style="font-size:clamp(13px,1.2vw,20px);font-weight:600;">从<strong>数周</strong>缩短到<strong>数分钟</strong></div>
+      </div>
+    </div>
+  </div>
+  <div class="insight-box amber" data-anim="5" style="text-align:center;margin-top:2vh;">
+    <strong>78%</strong> 多 Agent 系统存在委托失败漏洞; 监控通信的团队解决速度 <strong>3x</strong>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 16 — Benchmark 造假 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">行业丑闻</div>
+  <h2 class="slide-title" data-anim="2">Benchmark 造假：行业丑闻</h2>
+  <div class="grid-2" style="margin-top:2vh;">
+    <div class="card bordered-critical" data-anim="3" style="padding:clamp(18px,2.5vw,40px);">
+      <div style="font-size:clamp(16px,1.6vw,26px);font-weight:700;color:var(--critical);margin-bottom:1vh;">Llama 4 事件</div>
+      <div class="muted" style="font-size:clamp(12px,1.15vw,19px);line-height:1.7;">
+        Meta 提交<strong>特殊变体</strong>到 Chatbot Arena 获得 <strong class="c-success">#2</strong>，公开版跌至 <strong class="c-critical">#32-35</strong>。<br><br>
+        Yann LeCun 离职后承认"结果被微调了"。
+      </div>
+    </div>
+    <div class="card bordered-amber" data-anim="4" style="padding:clamp(18px,2.5vw,40px);">
+      <div style="font-size:clamp(16px,1.6vw,26px);font-weight:700;color:var(--amber);margin-bottom:1vh;">FrontierMath 暗箱</div>
+      <div class="muted" style="font-size:clamp(12px,1.15vw,19px);line-height:1.7;">
+        OpenAI <strong>秘密资助</strong> Epoch AI 的 FrontierMath，获得<strong>独家访问权</strong>。<br><br>
+        贡献数学家<strong>不知情</strong>。
+      </div>
+    </div>
+  </div>
+  <div class="insight-box critical" data-anim="5" style="text-align:center;margin-top:2vh;">
+    单次运行、单一 Benchmark 的结果<strong>不可信</strong>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 17 — 安全评测 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">安全评测</div>
+  <h2 class="slide-title" data-anim="2">Agent 安全：从 OWASP 到 NIST</h2>
+  <div class="stack" style="margin-top:2vh;gap:1.5vh;">
+    <div class="card bordered-critical" data-anim="3" style="padding:clamp(14px,2vw,28px);">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:clamp(14px,1.4vw,24px);font-weight:700;color:var(--critical);">OWASP Top 10 for Agentic Apps</div>
+          <div class="muted" style="font-size:clamp(11px,1.05vw,17px);margin-top:0.3vh;">2025.12 发布</div>
+        </div>
+        <div style="font-size:clamp(13px,1.2vw,20px);font-weight:700;">Agent 目标劫持 = <strong class="c-critical">#1 风险</strong></div>
+      </div>
+    </div>
+    <div class="card bordered-amber" data-anim="4" style="padding:clamp(14px,2vw,28px);">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:clamp(14px,1.4vw,24px);font-weight:700;color:var(--amber);">NIST RFI</div>
+          <div class="muted" style="font-size:clamp(11px,1.05vw,17px);margin-top:0.3vh;">2026.1 发布</div>
+        </div>
+        <div style="font-size:clamp(13px,1.2vw,20px);font-weight:700;">美国政府首个 Agent 安全征求意见</div>
+      </div>
+    </div>
+    <div class="card bordered-indigo" data-anim="5" style="padding:clamp(14px,2vw,28px);">
+      <div style="font-size:clamp(14px,1.4vw,24px);font-weight:700;color:var(--indigo);margin-bottom:0.5vh;">现状</div>
+      <div class="grid-2" style="gap:1vw;">
+        <div class="muted" style="font-size:clamp(12px,1.1vw,18px);">30 个前沿 Agent 中 <strong class="c-critical">25 个无安全评测</strong></div>
+        <div class="muted" style="font-size:clamp(12px,1.1vw,18px);">仅 <strong class="c-amber">17%</strong> 持续监控 Agent 交互</div>
+      </div>
+    </div>
+  </div>
+  <div class="insight-box critical" data-anim="6" style="text-align:center;">
+    NIST 标准化后将出现在 <strong>SOC 2 审计</strong>中
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 18 — 评测成熟度演进 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">演进历程</div>
+  <h2 class="slide-title" data-anim="2">评测技术的四个时代</h2>
+  <div class="timeline" style="margin-top:4vh;" data-anim="3">
+    <div class="timeline-item">
+      <div class="timeline-label">Era 1 (Pre-2024)</div>
+      <div class="timeline-title">静态 Benchmark</div>
+      <div class="timeline-desc">MMLU, HumanEval<br>单一准确率指标<br>静态测试集</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-label">Era 2 (2024)</div>
+      <div class="timeline-title">Agentic Benchmark</div>
+      <div class="timeline-desc">SWE-bench, WebArena<br>端到端任务评测<br>真实环境交互</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-label">Era 3 (2025)</div>
+      <div class="timeline-title">多维评测</div>
+      <div class="timeline-desc">CLEAR, 轨迹评测<br>pass^k 可靠性指标<br>成本+延迟纳入</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-label">Era 4 (2025-2026)</div>
+      <div class="timeline-title">生产级评测</div>
+      <div class="timeline-desc">从生产提取任务<br>融合多种评测范式<br>持续回灌循环</div>
+    </div>
+  </div>
+  <div class="insight-box amber" data-anim="4" style="text-align:center;margin-top:3vh;">
+    ICML 2026: 可靠性增长明显<strong>落后于</strong>能力增长
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 19 — 十大最佳实践 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">最佳实践</div>
+  <h2 class="slide-title" data-anim="2">Agent 评测十大最佳实践</h2>
+  <div class="split" style="margin-top:1vh;">
+    <div class="stack tight">
+      <div class="check-item" data-anim="3">
+        <span class="check-mark">&#10003;</span>
+        <span>同时报告 <strong>pass@1, pass@k, pass^k</strong> + 方差</span>
+      </div>
+      <div class="check-item" data-anim="4">
+        <span class="check-mark">&#10003;</span>
+        <span>LLM 评审至少 <strong>500 个校准样本</strong></span>
+      </div>
+      <div class="check-item" data-anim="5">
+        <span class="check-mark">&#10003;</span>
+        <span><strong>确定性 + LLM + 人工</strong>三层评审组合</span>
+      </div>
+      <div class="check-item" data-anim="6">
+        <span class="check-mark">&#10003;</span>
+        <span>从<strong>生产失败</strong>建立自定义领域基准</span>
+      </div>
+      <div class="check-item" data-anim="7">
+        <span class="check-mark">&#10003;</span>
+        <span>五门 CI/CD: <strong>lint &rarr; 离线 &rarr; 成本 &rarr; 影子 &rarr; 金丝雀</strong></span>
+      </div>
+    </div>
+    <div class="stack tight">
+      <div class="check-item" data-anim="6">
+        <span class="check-mark">&#10003;</span>
+        <span>每 N 步<strong>目标重锚</strong>, 监控漂移</span>
+      </div>
+      <div class="check-item" data-anim="7">
+        <span class="check-mark">&#10003;</span>
+        <span>评测<strong>完整轨迹</strong>, 不只评最终输出</span>
+      </div>
+      <div class="check-item" data-anim="8">
+        <span class="check-mark">&#10003;</span>
+        <span>影子部署<strong>最少 4 小时</strong>再做 A/B</span>
+      </div>
+      <div class="check-item" data-anim="9">
+        <span class="check-mark">&#10003;</span>
+        <span>生产异常<strong>自动回灌</strong>回归测试集</span>
+      </div>
+      <div class="check-item" data-anim="10">
+        <span class="check-mark">&#10003;</span>
+        <span>报告 <strong>成本/成功任务</strong>, 不只报准确率</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 20 — 行动路线图 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">行动路线</div>
+  <h2 class="slide-title" data-anim="2">从无评测到生产级评测：行动路线图</h2>
+  <div class="timeline" style="margin-top:4vh;" data-anim="3">
+    <div class="timeline-item">
+      <div class="timeline-label">Week 1-2</div>
+      <div class="timeline-title">基线</div>
+      <div class="timeline-desc">从生产失败建<br>20-50 个测试用例<br>建立基线数据</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-label">Week 3-4</div>
+      <div class="timeline-title">度量</div>
+      <div class="timeline-desc">实施 pass^k<br>成本/任务指标<br>轨迹评分体系</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-label">Month 2</div>
+      <div class="timeline-title">流水线</div>
+      <div class="timeline-desc">五门 CI/CD<br>影子部署上线<br>自动化回归门</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-label">Month 3+</div>
+      <div class="timeline-title">持续</div>
+      <div class="timeline-desc">生产回灌机制<br>对抗测试覆盖<br>安全评测集成</div>
+    </div>
+  </div>
+  <div class="insight-box success" data-anim="4" style="text-align:center;margin-top:4vh;">
+    目标：从<strong>抛硬币的 56.6%</strong> 提升到<strong>可信赖的生产级可靠性</strong>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 21 — 总结 (dark) -->
+<!-- ============================================ -->
+<section class="slide" data-theme="dark" data-animate="cascade">
+  <div class="cover-accent"></div>
+  <div class="kicker" data-anim="1" style="color:rgba(255,255,255,0.4);">核心结论</div>
+  <h2 class="slide-title" data-anim="2" style="font-size:clamp(30px,4vw,68px);">三个核心结论</h2>
+  <div class="stack" style="margin-top:3vh;gap:2.5vh;">
+    <div class="card dark" data-anim="3" style="padding:clamp(14px,2vh,28px) clamp(20px,2.5vw,40px);border-left:4px solid var(--critical);">
+      <div style="font-size:clamp(16px,1.8vw,30px);font-weight:700;">
+        <span class="c-critical" style="font-family:var(--font-mono);margin-right:0.5vw;">01</span>
+        Benchmark 高分是幻觉 &mdash; 生产成功率仅 <strong style="color:var(--critical);">56.6%</strong>，污染率高达 <strong style="color:var(--critical);">94%</strong>
+      </div>
+    </div>
+    <div class="card dark" data-anim="4" style="padding:clamp(14px,2vh,28px) clamp(20px,2.5vw,40px);border-left:4px solid var(--amber);">
+      <div style="font-size:clamp(16px,1.8vw,30px);font-weight:700;">
+        <span style="color:var(--amber);font-family:var(--font-mono);margin-right:0.5vw;">02</span>
+        可靠性 &#8800; 能力 &mdash; pass@3=97% 但 pass^3=<strong style="color:var(--amber);">34%</strong>，评测可靠性而非能力
+      </div>
+    </div>
+    <div class="card dark" data-anim="5" style="padding:clamp(14px,2vh,28px) clamp(20px,2.5vw,40px);border-left:4px solid var(--success);">
+      <div style="font-size:clamp(16px,1.8vw,30px);font-weight:700;">
+        <span style="color:var(--success);font-family:var(--font-mono);margin-right:0.5vw;">03</span>
+        评测是工程, 不是一次性测试 &mdash; 从生产提取、<strong style="color:var(--success);">持续回灌</strong>、多维度覆盖
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:4vh;font-size:clamp(11px,1vw,17px);font-weight:500;opacity:0.4;" data-anim="6">
+    AI Agent 深度系列完结 | 数据来源: Anthropic, Stanford HAI, Gartner, ICML 2026, OWASP 等 30+ 来源
+  </div>
+</section>
+
+</div><!-- end .deck -->
+
+<!-- ============ SLIDE COUNTER ============ -->
+<div class="slide-counter" id="slideCounter">1 / 22</div>
+
+<!-- ============ JAVASCRIPT ============ -->
+<script>
+(function(){
+  'use strict';
+
+  const deck = document.getElementById('deck');
+  const slides = Array.from(deck.querySelectorAll('.slide'));
+  const counter = document.getElementById('slideCounter');
+  const total = slides.length;
+  let current = 0;
+
+  // Touch support
+  let touchStartX = 0;
+  let touchStartY = 0;
+  const SWIPE_THRESHOLD = 50;
+
+  function goto(n) {
+    if (n < 0 || n >= total) return;
+    slides[current].classList.remove('active');
+    current = n;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + total;
+
+    // Update counter theme based on slide theme
+    const theme = slides[current].getAttribute('data-theme');
+    if (theme === 'dark') {
+      counter.classList.add('on-dark');
+    } else {
+      counter.classList.remove('on-dark');
+    }
+  }
+
+  function next() { goto(current + 1); }
+  function prev() { goto(current - 1); }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    switch(e.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+      case ' ':
+        e.preventDefault();
+        next();
+        break;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        e.preventDefault();
+        prev();
+        break;
+      case 'Home':
+        e.preventDefault();
+        goto(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        goto(total - 1);
+        break;
+      case 'f':
+      case 'F':
+        e.preventDefault();
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(function(){});
+        } else {
+          document.exitFullscreen().catch(function(){});
+        }
+        break;
+    }
+  });
+
+  // Touch swipe support
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+  }, { passive: true });
+
+  document.addEventListener('touchend', function(e) {
+    var dx = e.changedTouches[0].screenX - touchStartX;
+    var dy = e.changedTouches[0].screenY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > SWIPE_THRESHOLD) {
+      if (dx < 0) next(); else prev();
+    }
+  }, { passive: true });
+
+  // Initialize: set first slide counter theme
+  (function init() {
+    var theme = slides[0].getAttribute('data-theme');
+    if (theme === 'dark') counter.classList.add('on-dark');
+  })();
+
+})();
+</script>
+
+</body>
+</html>
