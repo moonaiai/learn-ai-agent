@@ -115,10 +115,15 @@ export const TOPIC_LABELS: Record<string, string> = {
 /**
  * Per-document overrides, keyed by `<topic>/<source filename>`.
  *
- * Needed when the Markdown has no `# H1` to derive a title from, or when the
- * first paragraph makes a poor card summary.
+ * Needed when the Markdown has no `# H1` to derive a title from, when the
+ * first paragraph makes a poor card summary, or when the auto-derived slug is
+ * unusable — `slugify` drops CJK, so a filename like `Agent经济学.html`
+ * collapses to `agent` and can steal that slug from another document.
  */
-export const DOC_OVERRIDES: Record<string, { title?: string; summary?: string }> = {
+export const DOC_OVERRIDES: Record<
+  string,
+  { title?: string; summary?: string; slug?: string }
+> = {
   // Starts with a `>` source-attribution blockquote instead of an H1.
   "build-agent-context-engineering/build-agent-context-engineering.md": {
     title: "Agent 架构综述：从 Prompt 到上下文工程构建 AI Agent",
@@ -142,6 +147,16 @@ export const DOC_OVERRIDES: Record<string, { title?: string; summary?: string }>
   "others/AI时代的工程师-颠覆困境与进化.pdf": {
     title: "AI 时代的工程师：颠覆、困境与进化",
     summary: "AI 工具冲击下工程师角色的变化与能力演进路径（PDF）。",
+  },
+  // Both of these slugify to bare "agent" (CJK is dropped). Pin them so the
+  // ordering of discovery can't shuffle which one gets the hash suffix.
+  "others/长时程自主Agent — 从完成任务到持续经营任务.pdf": {
+    slug: "agent",
+    title: "长时程自主 Agent：从完成任务到持续经营任务",
+    summary: "长周期自主 Agent 的目标维持、状态管理与持续运营视角（PDF）。",
+  },
+  "others/Agent经济学.html": {
+    slug: "agent-economics",
   },
 };
 

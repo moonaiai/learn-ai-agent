@@ -9,6 +9,7 @@ next-env.d.ts
 src/data/generated/
 public/doc-assets/
 public/doc-pdf/
+public/doc-html/
 
 .DS_Store
 *.log

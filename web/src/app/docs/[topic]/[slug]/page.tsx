@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getAllDocs, getDoc, getNeighbours } from "@/lib/docs";
 import { DocContent } from "@/components/doc-content";
 import { DocToc } from "@/components/doc-toc";
+import { HtmlViewer } from "@/components/html-viewer";
 import { PdfViewer } from "@/components/pdf-viewer";
 import { PrevNext } from "@/components/prev-next";
 
@@ -56,6 +57,12 @@ export default async function DocPage({ params }: PageProps) {
       {doc.kind === "pdf" ? (
         <PdfViewer
           url={doc.pdfUrl!}
+          title={doc.title}
+          bytes={doc.bytes}
+        />
+      ) : doc.kind === "html" ? (
+        <HtmlViewer
+          url={doc.embedUrl!}
           title={doc.title}
           bytes={doc.bytes}
         />

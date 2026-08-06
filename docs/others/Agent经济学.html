@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent 经济学 — Token 预算、动作计费与单位任务成本</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ============ THEME VARIABLES ============ */
+:root {
+  --navy: #0A2540;
+  --ink: #122033;
+  --indigo: #635BFF;
+  --amber: #B45309;
+  --white: #FFFFFF;
+  --paper: #F6F9FC;
+  --rule: #E3E8EE;
+  --muted: #5F6B7A;
+  --success: #0E7C66;
+  --critical: #B42318;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --slide-w: 1920;
+  --slide-h: 1080;
+}
+
+/* ============ RESET ============ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: var(--font-sans); }
+
+/* ============ SLIDE CONTAINER ============ */
+.deck { position: relative; width: 100vw; height: 100vh; }
+.slide {
+  position: absolute; inset: 0;
+  width: 100vw; height: 100vh;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  padding: 5vh 6vw;
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+  overflow: hidden;
+  background: var(--white);
+  color: var(--ink);
+}
+.slide.active { opacity: 1; visibility: visible; }
+
+/* Dark theme */
+.slide[data-theme="dark"] {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--ink) 100%);
+  color: var(--white);
+}
+.slide[data-theme="dark"] .muted { color: rgba(255,255,255,0.6); }
+.slide[data-theme="dark"] .rule-line { border-color: rgba(255,255,255,0.15); }
+
+/* ============ TYPOGRAPHY ============ */
+.kicker {
+  font-size: clamp(11px, 1.1vw, 18px);
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--indigo);
+  margin-bottom: 1.2vh;
+}
+.slide[data-theme="dark"] .kicker { color: rgba(255,255,255,0.5); }
+.slide-title {
+  font-size: clamp(24px, 3.2vw, 56px);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 2.5vh;
+  letter-spacing: -0.02em;
+}
+.slide-subtitle {
+  font-size: clamp(16px, 1.8vw, 32px);
+  font-weight: 500;
+  color: var(--muted);
+  line-height: 1.4;
+  margin-bottom: 2vh;
+}
+.slide[data-theme="dark"] .slide-subtitle { color: rgba(255,255,255,0.7); }
+.body-text {
+  font-size: clamp(13px, 1.3vw, 22px);
+  line-height: 1.6;
+  color: var(--muted);
+}
+.mono { font-family: var(--font-mono); }
+.bold { font-weight: 700; }
+.semi { font-weight: 600; }
+.muted { color: var(--muted); }
+.small { font-size: clamp(10px, 0.9vw, 15px); }
+.large-stat {
+  font-size: clamp(28px, 4vw, 72px);
+  font-weight: 800;
+  line-height: 1.1;
+}
+.medium-stat {
+  font-size: clamp(20px, 2.5vw, 44px);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+/* Color utilities */
+.c-indigo { color: var(--indigo); }
+.c-amber { color: var(--amber); }
+.c-success { color: var(--success); }
+.c-critical { color: var(--critical); }
+.c-white { color: var(--white); }
+.c-navy { color: var(--navy); }
+.c-muted { color: var(--muted); }
+.bg-indigo { background: var(--indigo); color: var(--white); }
+.bg-navy { background: var(--navy); color: var(--white); }
+.bg-paper { background: var(--paper); }
+.bg-success { background: var(--success); color: var(--white); }
+.bg-critical { background: var(--critical); color: var(--white); }
+.bg-amber { background: var(--amber); color: var(--white); }
+
+/* ============ LAYOUTS ============ */
+.stack { display: flex; flex-direction: column; gap: 2vh; }
+.stack.tight { gap: 1vh; }
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4vw;
+  align-items: start;
+  flex: 1;
+}
+.split-40-60 {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  gap: 4vw;
+  align-items: start;
+  flex: 1;
+}
+.split-60-40 {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 4vw;
+  align-items: start;
+  flex: 1;
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2vw;
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2vw;
+}
+.grid-2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 2vw;
+}
+.grid-2x3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 2vw;
+}
+.grid-3x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 1.5vw;
+}
+.kpi-strip {
+  display: flex;
+  gap: 2vw;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.center-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+}
+.flex-1 { flex: 1; }
+
+/* ============ COMPONENTS ============ */
+.card {
+  background: var(--paper);
+  border-radius: 12px;
+  padding: clamp(12px, 2vw, 28px);
+  border: 1px solid var(--rule);
+}
+.card.dark {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.12);
+}
+.card.bordered-amber { border-left: 4px solid var(--amber); }
+.card.bordered-indigo { border-left: 4px solid var(--indigo); }
+.card.bordered-success { border-left: 4px solid var(--success); }
+.card.bordered-critical { border-left: 4px solid var(--critical); }
+
+.stat-card {
+  background: var(--paper);
+  border-radius: 12px;
+  padding: clamp(16px, 2vw, 32px);
+  text-align: center;
+  border: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8vh;
+}
+.stat-card .stat-value {
+  font-size: clamp(28px, 3.5vw, 60px);
+  font-weight: 800;
+  line-height: 1;
+}
+.stat-card .stat-label {
+  font-size: clamp(11px, 1vw, 17px);
+  color: var(--muted);
+  font-weight: 500;
+}
+.stat-card .stat-sub {
+  font-size: clamp(10px, 0.85vw, 14px);
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.3em 0.8em;
+  border-radius: 999px;
+  font-size: clamp(10px, 0.85vw, 14px);
+  font-weight: 600;
+}
+
+.insight-box {
+  background: linear-gradient(135deg, rgba(99,91,255,0.08), rgba(99,91,255,0.03));
+  border: 1px solid rgba(99,91,255,0.2);
+  border-radius: 12px;
+  padding: clamp(10px, 1.5vw, 24px);
+  margin-top: 1.5vh;
+  font-weight: 600;
+  font-size: clamp(13px, 1.3vw, 22px);
+  color: var(--indigo);
+}
+.insight-box.amber {
+  background: linear-gradient(135deg, rgba(180,83,9,0.08), rgba(180,83,9,0.03));
+  border-color: rgba(180,83,9,0.2);
+  color: var(--amber);
+}
+.insight-box.critical {
+  background: linear-gradient(135deg, rgba(180,35,24,0.08), rgba(180,35,24,0.03));
+  border-color: rgba(180,35,24,0.2);
+  color: var(--critical);
+}
+.insight-box.success {
+  background: linear-gradient(135deg, rgba(14,124,102,0.08), rgba(14,124,102,0.03));
+  border-color: rgba(14,124,102,0.2);
+  color: var(--success);
+}
+
+.source-line {
+  font-size: clamp(10px, 0.8vw, 13px);
+  color: var(--muted);
+  margin-top: 1vh;
+  font-style: italic;
+}
+
+.rule-line {
+  border: none;
+  border-top: 1px solid var(--rule);
+  margin: 1.5vh 0;
+}
+
+.bar {
+  height: clamp(24px, 3vh, 40px);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding: 0 1vw;
+  font-weight: 600;
+  font-size: clamp(11px, 1vw, 16px);
+  color: var(--white);
+}
+
+.numbered-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1vw;
+  padding: 1vh 0;
+}
+.numbered-circle {
+  width: clamp(28px, 2.5vw, 40px);
+  height: clamp(28px, 2.5vw, 40px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: clamp(12px, 1.1vw, 18px);
+  flex-shrink: 0;
+}
+
+.band {
+  padding: clamp(8px, 1.2vh, 16px) clamp(16px, 2vw, 32px);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: clamp(12px, 1.2vw, 20px);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flow-row {
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.flow-box {
+  padding: clamp(8px, 1vh, 16px) clamp(12px, 1.5vw, 24px);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: clamp(11px, 1.1vw, 18px);
+  text-align: center;
+  border: 2px solid var(--rule);
+  background: var(--paper);
+}
+.flow-arrow {
+  font-size: clamp(16px, 2vw, 32px);
+  color: var(--muted);
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8vw;
+  padding: 0.6vh 0;
+  font-size: clamp(12px, 1.2vw, 20px);
+  font-weight: 500;
+}
+.check-mark {
+  color: var(--success);
+  font-weight: 800;
+  font-size: clamp(14px, 1.4vw, 22px);
+  flex-shrink: 0;
+}
+
+.timeline {
+  display: flex;
+  gap: 0;
+  flex: 1;
+}
+.timeline-item {
+  flex: 1;
+  padding: clamp(10px, 1.5vw, 24px);
+  position: relative;
+  border-top: 4px solid var(--indigo);
+}
+.timeline-item:nth-child(2) { border-color: var(--success); }
+.timeline-item:nth-child(3) { border-color: var(--amber); }
+.timeline-item:nth-child(4) { border-color: var(--critical); }
+.timeline-label {
+  font-size: clamp(10px, 0.9vw, 15px);
+  font-weight: 700;
+  color: var(--indigo);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5vh;
+}
+.timeline-item:nth-child(2) .timeline-label { color: var(--success); }
+.timeline-item:nth-child(3) .timeline-label { color: var(--amber); }
+.timeline-item:nth-child(4) .timeline-label { color: var(--critical); }
+.timeline-title {
+  font-size: clamp(14px, 1.4vw, 24px);
+  font-weight: 700;
+  margin-bottom: 0.3vh;
+}
+.timeline-desc {
+  font-size: clamp(10px, 0.9vw, 15px);
+  color: var(--muted);
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+.table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(11px, 1.05vw, 17px);
+}
+.table-wrapper th {
+  background: var(--paper);
+  font-weight: 700;
+  text-align: left;
+  padding: clamp(6px, 0.8vh, 12px) clamp(8px, 1vw, 16px);
+  border-bottom: 2px solid var(--rule);
+  font-size: clamp(10px, 0.95vw, 16px);
+}
+.table-wrapper td {
+  padding: clamp(6px, 0.8vh, 12px) clamp(8px, 1vw, 16px);
+  border-bottom: 1px solid var(--rule);
+}
+
+/* ============ SLIDE COUNTER ============ */
+.slide-counter {
+  position: fixed;
+  bottom: 2vh;
+  right: 3vw;
+  font-family: var(--font-mono);
+  font-size: clamp(10px, 0.9vw, 14px);
+  color: var(--muted);
+  z-index: 100;
+  background: rgba(255,255,255,0.8);
+  padding: 0.3em 0.8em;
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+}
+.slide[data-theme="dark"].active ~ .slide-counter-ref .slide-counter,
+.slide-counter.on-dark {
+  background: rgba(10,37,64,0.7);
+  color: rgba(255,255,255,0.6);
+}
+
+/* ============ CASCADE ANIMATIONS ============ */
+.slide[data-animate="cascade"] [data-anim],
+.slide[data-animate="data"] [data-anim] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.slide.active[data-animate="cascade"] [data-anim],
+.slide.active[data-animate="data"] [data-anim] {
+  opacity: 1;
+  transform: translateY(0);
+}
+.slide.active [data-anim="1"] { transition-delay: 0.08s; }
+.slide.active [data-anim="2"] { transition-delay: 0.16s; }
+.slide.active [data-anim="3"] { transition-delay: 0.24s; }
+.slide.active [data-anim="4"] { transition-delay: 0.32s; }
+.slide.active [data-anim="5"] { transition-delay: 0.40s; }
+.slide.active [data-anim="6"] { transition-delay: 0.48s; }
+.slide.active [data-anim="7"] { transition-delay: 0.56s; }
+.slide.active [data-anim="8"] { transition-delay: 0.64s; }
+.slide.active [data-anim="9"] { transition-delay: 0.72s; }
+.slide.active [data-anim="10"] { transition-delay: 0.80s; }
+
+/* ============ PRINT / PDF ============ */
+@media print {
+  html, body { overflow: visible; background: white; }
+  .deck { position: static; width: auto; height: auto; }
+  .slide {
+    position: relative !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    page-break-after: always;
+    page-break-inside: avoid;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100vh;
+    padding: 40px 60px;
+  }
+  .slide[data-animate="cascade"] [data-anim],
+  .slide[data-animate="data"] [data-anim] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .slide-counter { display: none; }
+}
+
+/* ============ COVER SPECIFIC ============ */
+.cover-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  height: 100%;
+}
+.cover-title {
+  font-size: clamp(48px, 6vw, 100px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin-bottom: 2vh;
+}
+.cover-subtitle {
+  font-size: clamp(18px, 2.2vw, 38px);
+  font-weight: 500;
+  opacity: 0.7;
+  margin-bottom: 4vh;
+}
+.cover-kicker {
+  font-size: clamp(11px, 1vw, 16px);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  opacity: 0.4;
+}
+.cover-accent {
+  position: absolute;
+  right: -5vw;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40vw;
+  height: 40vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,91,255,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ============ VISUAL BARS ============ */
+.cost-bar-container { display: flex; flex-direction: column; gap: 1vh; width: 100%; }
+.cost-bar-row { display: flex; align-items: center; gap: 1vw; }
+.cost-bar-label {
+  width: clamp(80px, 10vw, 160px);
+  font-size: clamp(11px, 1vw, 16px);
+  font-weight: 600;
+  text-align: right;
+  flex-shrink: 0;
+}
+.cost-bar-track {
+  flex: 1;
+  height: clamp(20px, 2.8vh, 36px);
+  background: var(--paper);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.cost-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding-left: 0.8vw;
+  font-size: clamp(10px, 0.9vw, 14px);
+  font-weight: 600;
+  color: var(--white);
+  transition: width 0.8s ease;
+}
+.cost-bar-value {
+  font-size: clamp(11px, 1vw, 16px);
+  font-weight: 700;
+  font-family: var(--font-mono);
+  width: clamp(40px, 5vw, 80px);
+  flex-shrink: 0;
+}
+
+/* ============ ICEBERG VISUAL ============ */
+.iceberg {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.iceberg-above {
+  background: linear-gradient(135deg, var(--indigo), #8B83FF);
+  color: white;
+  padding: clamp(14px, 2vh, 28px) clamp(20px, 2.5vw, 40px);
+  border-radius: 12px 12px 0 0;
+  width: 100%;
+  text-align: center;
+  font-weight: 700;
+  font-size: clamp(14px, 1.4vw, 24px);
+}
+.iceberg-waterline {
+  width: 100%;
+  height: 3px;
+  background: repeating-linear-gradient(90deg, var(--indigo) 0, var(--indigo) 8px, transparent 8px, transparent 16px);
+}
+.iceberg-below {
+  background: var(--paper);
+  border: 2px dashed var(--rule);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  width: 100%;
+  padding: clamp(14px, 2vh, 28px) clamp(20px, 2.5vw, 40px);
+}
+
+/* Helper: compact list */
+.compact-list {
+  list-style: none;
+  padding: 0;
+}
+.compact-list li {
+  padding: 0.4vh 0;
+  font-size: clamp(12px, 1.15vw, 19px);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.6vw;
+}
+.compact-list li::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--indigo);
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<div class="deck" id="deck">
+
+<!-- ============================================ -->
+<!-- SLIDE 0 — COVER -->
+<!-- ============================================ -->
+<section class="slide active" data-theme="dark" data-animate="cascade">
+  <div class="cover-accent"></div>
+  <div class="cover-content">
+    <div class="cover-kicker" data-anim="1">AI AGENT 深度系列 &middot; 2026.08</div>
+    <h1 class="cover-title" data-anim="2">Agent 经济学</h1>
+    <p class="cover-subtitle" data-anim="3">Token 预算、动作计费与单位任务成本</p>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 1 — 设问 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">设问</div>
+  <h2 class="slide-title" data-anim="2">一次 Agent 任务，到底花了多少钱？</h2>
+  <div class="grid-3" style="margin-top:2vh;">
+    <div class="stat-card" data-anim="3">
+      <div class="stat-label">简单问答</div>
+      <div class="stat-value c-success">$0.003</div>
+      <div class="stat-sub">~500 tokens</div>
+    </div>
+    <div class="stat-card" style="border-color:var(--amber);" data-anim="4">
+      <div class="stat-label">Agent 任务</div>
+      <div class="stat-value c-amber">$0.62</div>
+      <div class="stat-sub">15K-80K tokens</div>
+    </div>
+    <div class="stat-card" style="border-color:var(--critical);" data-anim="5">
+      <div class="stat-label">复杂编码</div>
+      <div class="stat-value c-critical">$2.60</div>
+      <div class="stat-sub">4.17M tokens</div>
+    </div>
+  </div>
+  <div class="insight-box amber" data-anim="6" style="text-align:center;">
+    Agent 任务的成本是简单问答的 <strong>200 倍</strong>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 2 — 成本冰山 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">成本冰山</div>
+  <h2 class="slide-title" data-anim="2">API 账单只是冰山的 8-15%</h2>
+  <div class="split" style="margin-top:2vh;">
+    <div data-anim="3">
+      <div class="iceberg">
+        <div class="iceberg-above">模型 API 调用<br><span class="mono" style="font-size:clamp(20px,2.5vw,40px);">8 - 15%</span></div>
+        <div class="iceberg-waterline"></div>
+        <div class="iceberg-below">
+          <ul class="compact-list">
+            <li style="font-size:clamp(13px,1.25vw,20px);">基础设施 &amp; 编排 <strong class="c-critical">40-60%</strong></li>
+            <li style="font-size:clamp(13px,1.25vw,20px);">集成工程 <strong class="c-amber">40-55%</strong></li>
+            <li style="font-size:clamp(13px,1.25vw,20px);">可观测性 <strong class="c-indigo">5-15%</strong></li>
+            <li style="font-size:clamp(13px,1.25vw,20px);">人工审批 &amp; 培训</li>
+            <li style="font-size:clamp(13px,1.25vw,20px);">错误恢复 &amp; 重试</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div data-anim="4" style="display:flex;flex-direction:column;justify-content:center;height:100%;">
+      <div class="card bordered-amber" style="padding:clamp(20px,3vw,48px);">
+        <div style="font-size:clamp(14px,1.5vw,26px);font-weight:600;color:var(--ink);margin-bottom:2vh;">水面下的真实成本</div>
+        <div style="font-size:clamp(12px,1.2vw,20px);color:var(--muted);line-height:1.7;">
+          <strong>基础设施 &amp; 编排</strong> — 向量数据库、消息队列、状态管理<br>
+          <strong>集成工程</strong> — API 对接、数据清洗、格式转换<br>
+          <strong>可观测性</strong> — 日志、追踪、成本监控<br>
+          <strong>人工审批</strong> — 关键决策需人工参与<br>
+          <strong>错误恢复</strong> — 失败重试、回滚机制
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="source-line" data-anim="5">每 $100 AI 支出中，$60 花在数据基础设施 — McKinsey</div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 3 — Token 价格悖论 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">价格悖论</div>
+  <h2 class="slide-title" data-anim="2">Token 价格暴跌 95%+，企业支出反增 3 倍</h2>
+  <div class="split" style="margin-top:2vh;">
+    <div class="card" data-anim="3">
+      <div style="font-size:clamp(14px,1.3vw,22px);font-weight:700;margin-bottom:1.5vh;color:var(--indigo);">价格趋势</div>
+      <div class="stack tight">
+        <div style="font-size:clamp(12px,1.15vw,19px);font-weight:500;">GPT-4: <strong class="mono">$30 → &lt;$0.50</strong>/MTok</div>
+        <div style="font-size:clamp(12px,1.15vw,19px);font-weight:500;">降速 <strong class="c-success">200x/年</strong></div>
+        <div style="font-size:clamp(12px,1.15vw,19px);font-weight:500;">Sonnet 4.6: <strong class="mono">$3/$15</strong></div>
+        <div style="font-size:clamp(12px,1.15vw,19px);font-weight:500;">Flash: <strong class="mono">$0.30/$2.50</strong></div>
+      </div>
+    </div>
+    <div class="card bordered-amber" data-anim="4">
+      <div style="font-size:clamp(14px,1.3vw,22px);font-weight:700;margin-bottom:1.5vh;color:var(--amber);">消费悖论</div>
+      <div class="stack tight">
+        <div style="font-size:clamp(12px,1.15vw,19px);font-weight:500;">支出翻 <strong class="c-critical">3 倍</strong></div>
+        <div style="font-size:clamp(12px,1.15vw,19px);font-weight:500;"><strong class="c-critical">93%</strong> 企业超预算</div>
+        <div style="font-size:clamp(12px,1.15vw,19px);font-weight:500;">月均 <strong class="mono c-amber">$85,521</strong></div>
+        <div style="font-size:clamp(12px,1.15vw,19px);font-weight:500;">1/5 组织已限制 AI 使用</div>
+      </div>
+    </div>
+  </div>
+  <div class="insight-box" data-anim="5" style="text-align:center;">
+    Jevons 悖论：效率提升 → 用量暴增 → 总支出不降反升
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 4 — 成本解剖 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="data">
+  <div class="kicker" data-anim="1">成本解剖</div>
+  <h2 class="slide-title" data-anim="2">一次 Agent 任务的成本解剖</h2>
+  <div class="kpi-strip" style="margin-top:2vh;" data-anim="3">
+    <div class="stat-card">
+      <div class="stat-label">上下文积累</div>
+      <div class="stat-value c-indigo">52%</div>
+      <div class="stat-sub">总 Token 占比</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">精炼检查</div>
+      <div class="stat-value c-amber">60%</div>
+      <div class="stat-sub">用于验证与修正</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">实际生成</div>
+      <div class="stat-value c-success">5-15%</div>
+      <div class="stat-sub">产出内容占比</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Input : Output</div>
+      <div class="stat-value c-navy">154:1</div>
+      <div class="stat-sub">Token 比例</div>
+    </div>
+  </div>
+  <div class="insight-box critical" data-anim="4" style="text-align:center;margin-top:3vh;">
+    <span class="large-stat c-critical" style="font-size:clamp(24px,3vw,52px);">p95 成本是 p50 的 18 倍</span>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 5 — 多Agent乘数 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">乘数效应</div>
+  <h2 class="slide-title" data-anim="2">多 Agent 系统的成本乘数效应</h2>
+  <div class="split" style="margin-top:2vh;">
+    <div data-anim="3">
+      <div class="cost-bar-container">
+        <div class="cost-bar-row">
+          <div class="cost-bar-label">单 Agent</div>
+          <div class="cost-bar-track"><div class="cost-bar-fill bg-indigo" style="width:12%;">1x</div></div>
+        </div>
+        <div class="cost-bar-row" style="margin-top:1.5vh;">
+          <div class="cost-bar-label">多 Agent</div>
+          <div class="cost-bar-track"><div class="cost-bar-fill" style="width:40%;background:var(--amber);">3-5x</div></div>
+        </div>
+        <div class="cost-bar-row" style="margin-top:1.5vh;">
+          <div class="cost-bar-label">编排系统</div>
+          <div class="cost-bar-track"><div class="cost-bar-fill" style="width:65%;background:#D97706;">8.5x</div></div>
+        </div>
+        <div class="cost-bar-row" style="margin-top:1.5vh;">
+          <div class="cost-bar-label">大规模集群</div>
+          <div class="cost-bar-track"><div class="cost-bar-fill bg-critical" style="width:95%;">15x</div></div>
+        </div>
+      </div>
+    </div>
+    <div data-anim="4">
+      <div class="card bordered-critical" style="padding:clamp(18px,2.5vw,40px);">
+        <div style="font-size:clamp(13px,1.2vw,20px);font-weight:700;color:var(--critical);margin-bottom:1vh;">OpenClaw 案例</div>
+        <div class="stack tight">
+          <div style="font-size:clamp(12px,1.1vw,18px);"><strong>100</strong> 个并发 Agent</div>
+          <div style="font-size:clamp(12px,1.1vw,18px);"><strong class="mono">603B</strong> tokens 消耗</div>
+          <div style="font-size:clamp(20px,2.5vw,42px);font-weight:800;color:var(--critical);margin-top:1vh;">$1.3M / 月</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 6 — 爆炸模式 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">风险模式</div>
+  <h2 class="slide-title" data-anim="2">五大成本爆炸模式</h2>
+  <div class="stack" style="margin-top:1vh;gap:1.2vh;">
+    <div class="numbered-item" data-anim="3">
+      <div class="numbered-circle bg-indigo">1</div>
+      <div><strong style="font-size:clamp(14px,1.4vw,24px);">上下文膨胀</strong><br><span class="muted" style="font-size:clamp(11px,1.05vw,17px);">上下文窗口二次方增长 — 每轮对话累加历史，Token 量指数上升</span></div>
+    </div>
+    <div class="numbered-item" data-anim="4">
+      <div class="numbered-circle" style="background:var(--amber);">2</div>
+      <div><strong style="font-size:clamp(14px,1.4vw,24px);">重试风暴</strong><br><span class="muted" style="font-size:clamp(11px,1.05vw,17px);">错误率上升 7.1x — 失败触发重试链，成本螺旋放大</span></div>
+    </div>
+    <div class="numbered-item" data-anim="5">
+      <div class="numbered-circle bg-critical">3</div>
+      <div><strong style="font-size:clamp(14px,1.4vw,24px);">修复放大</strong><br><span class="muted" style="font-size:clamp(11px,1.05vw,17px);">修复消耗 50 倍 Token — 一次错误生成的修正成本远超首次生成</span></div>
+    </div>
+    <div class="numbered-item" data-anim="6">
+      <div class="numbered-circle" style="background:#7C3AED;">4</div>
+      <div><strong style="font-size:clamp(14px,1.4vw,24px);">递归循环</strong><br><span class="muted" style="font-size:clamp(11px,1.05vw,17px);">无限工具调用 — Agent 陷入工具调用循环，无硬性终止条件</span></div>
+    </div>
+    <div class="numbered-item" data-anim="7">
+      <div class="numbered-circle" style="background:#0369A1;">5</div>
+      <div><strong style="font-size:clamp(14px,1.4vw,24px);">预算穿透</strong><br><span class="muted" style="font-size:clamp(11px,1.05vw,17px);">缺乏硬性上限 — 软限制被绕过，无自动熔断机制</span></div>
+    </div>
+  </div>
+  <div class="insight-box critical" data-anim="8" style="text-align:center;">
+    成本增长是<strong>超线性的</strong> — 复杂度 +1，成本可能 +10
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 7 — 灾难案例 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="data">
+  <div class="kicker" data-anim="1">灾难案例</div>
+  <h2 class="slide-title" data-anim="2">成本灾难：真实案例</h2>
+  <div class="grid-2x2" style="margin-top:1vh;">
+    <div class="card bordered-critical" data-anim="3">
+      <div style="font-size:clamp(12px,1.1vw,18px);font-weight:700;color:var(--critical);">OpenClaw</div>
+      <div style="font-size:clamp(22px,2.8vw,48px);font-weight:800;color:var(--critical);margin:0.5vh 0;">$1.3M/月</div>
+      <div class="muted" style="font-size:clamp(10px,0.9vw,15px);">100 Agent 集群，603B tokens</div>
+    </div>
+    <div class="card bordered-amber" data-anim="4">
+      <div style="font-size:clamp(12px,1.1vw,18px);font-weight:700;color:var(--amber);">miHoYo (米哈游)</div>
+      <div style="font-size:clamp(22px,2.8vw,48px);font-weight:800;color:var(--amber);margin:0.5vh 0;">200万 RMB</div>
+      <div class="muted" style="font-size:clamp(10px,0.9vw,15px);">仅 13 小时运行</div>
+    </div>
+    <div class="card bordered-amber" data-anim="5">
+      <div style="font-size:clamp(12px,1.1vw,18px);font-weight:700;color:var(--amber);">Uber</div>
+      <div style="font-size:clamp(22px,2.8vw,48px);font-weight:800;color:var(--amber);margin:0.5vh 0;">4月花完全年</div>
+      <div class="muted" style="font-size:clamp(10px,0.9vw,15px);">预算在 Q1 即耗尽</div>
+    </div>
+    <div class="card bordered-critical" data-anim="6">
+      <div style="font-size:clamp(12px,1.1vw,18px);font-weight:700;color:var(--critical);">匿名大型企业</div>
+      <div style="font-size:clamp(22px,2.8vw,48px);font-weight:800;color:var(--critical);margin:0.5vh 0;">$500M/月</div>
+      <div class="muted" style="font-size:clamp(10px,0.9vw,15px);">企业级全面部署</div>
+    </div>
+  </div>
+  <div class="insight-box critical" data-anim="7" style="text-align:center;margin-top:2vh;">
+    项目平均超支 <strong style="font-size:clamp(24px,3vw,48px);">2.4x</strong>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 8 — 五层防御 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">防御体系</div>
+  <h2 class="slide-title" data-anim="2">Token 预算的五层防御体系</h2>
+  <div class="stack" style="margin-top:2vh;gap:1.2vh;">
+    <div class="band" style="background:rgba(99,91,255,0.15);color:var(--indigo);" data-anim="3">
+      <span>Layer 1 &mdash; 请求级</span>
+      <span class="mono" style="font-size:clamp(10px,0.9vw,15px);">max_tokens / 单次上限</span>
+    </div>
+    <div class="band" style="background:rgba(99,91,255,0.30);color:var(--indigo);" data-anim="4">
+      <span>Layer 2 &mdash; 会话级</span>
+      <span class="mono" style="font-size:clamp(10px,0.9vw,15px);">session budget / 对话预算</span>
+    </div>
+    <div class="band" style="background:rgba(99,91,255,0.50);color:var(--white);" data-anim="5">
+      <span>Layer 3 &mdash; Key 级</span>
+      <span class="mono" style="font-size:clamp(10px,0.9vw,15px);">API key rate limit / 密钥配额</span>
+    </div>
+    <div class="band" style="background:rgba(99,91,255,0.70);color:var(--white);" data-anim="6">
+      <span>Layer 4 &mdash; 模型路由</span>
+      <span class="mono" style="font-size:clamp(10px,0.9vw,15px);">complexity → model mapping</span>
+    </div>
+    <div class="band" style="background:rgba(99,91,255,0.90);color:var(--white);" data-anim="7">
+      <span>Layer 5 &mdash; 熔断器</span>
+      <span class="mono" style="font-size:clamp(10px,0.9vw,15px);">circuit breaker / 硬性终止</span>
+    </div>
+  </div>
+  <div class="insight-box" data-anim="8" style="text-align:center;">
+    五层防御 = 纵深防御 — 任一层失效，下一层兜底
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 9 — 模型路由 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">智能路由</div>
+  <h2 class="slide-title" data-anim="2">用 61% 的成本达到 97.7% 的准确率</h2>
+  <div class="flow-row" style="margin-top:3vh;" data-anim="3">
+    <div class="flow-box" style="border-color:var(--indigo);background:rgba(99,91,255,0.05);">
+      <div style="font-weight:700;">Input</div>
+      <div class="muted small">用户请求</div>
+    </div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-box" style="border-color:var(--indigo);background:var(--indigo);color:white;">
+      <div style="font-weight:700;">Classifier</div>
+      <div style="opacity:0.8;" class="small">复杂度分级</div>
+    </div>
+    <div class="flow-arrow">&rarr;</div>
+    <div style="display:flex;flex-direction:column;gap:1vh;">
+      <div class="flow-box" style="border-color:var(--success);">
+        <span class="c-success bold">70%</span> Haiku <span class="muted small">(简单)</span>
+      </div>
+      <div class="flow-box" style="border-color:var(--amber);">
+        <span class="c-amber bold">20%</span> Sonnet <span class="muted small">(中等)</span>
+      </div>
+      <div class="flow-box" style="border-color:var(--critical);">
+        <span class="c-critical bold">10%</span> Opus <span class="muted small">(复杂)</span>
+      </div>
+    </div>
+  </div>
+  <div class="kpi-strip" style="margin-top:4vh;" data-anim="4">
+    <div class="stat-card bordered-success" style="flex:1;max-width:300px;">
+      <div class="stat-label">混合准确率</div>
+      <div class="stat-value c-success">97.7%</div>
+    </div>
+    <div class="stat-card bordered-indigo" style="flex:1;max-width:300px;">
+      <div class="stat-label">成本占比</div>
+      <div class="stat-value c-indigo">61%</div>
+      <div class="stat-sub">节省 39%</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 10 — 缓存经济学 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="data">
+  <div class="kicker" data-anim="1">缓存策略</div>
+  <h2 class="slide-title" data-anim="2">74% 命中率 = 59-70% 成本削减</h2>
+  <div class="grid-3" style="margin-top:2vh;">
+    <div class="stat-card bordered-indigo" data-anim="3">
+      <div style="font-size:clamp(14px,1.3vw,22px);font-weight:700;color:var(--indigo);margin-bottom:0.5vh;">Anthropic</div>
+      <div class="stat-value c-indigo">-90%</div>
+      <div class="stat-sub">Prompt Caching</div>
+      <div class="muted small" style="margin-top:0.3vh;">写入 +25% / 读取 -90%</div>
+    </div>
+    <div class="stat-card bordered-success" data-anim="4">
+      <div style="font-size:clamp(14px,1.3vw,22px);font-weight:700;color:var(--success);margin-bottom:0.5vh;">Google</div>
+      <div class="stat-value c-success">-90%</div>
+      <div class="stat-sub">Context Caching</div>
+      <div class="muted small" style="margin-top:0.3vh;">自动 + 显式缓存</div>
+    </div>
+    <div class="stat-card bordered-amber" data-anim="5">
+      <div style="font-size:clamp(14px,1.3vw,22px);font-weight:700;color:var(--amber);margin-bottom:0.5vh;">OpenAI</div>
+      <div class="stat-value c-amber">-50%</div>
+      <div class="stat-sub">Auto Caching</div>
+      <div class="muted small" style="margin-top:0.3vh;">1024 token 前缀匹配</div>
+    </div>
+  </div>
+  <div class="insight-box success" data-anim="6" style="text-align:center;margin-top:2vh;">
+    关键指标：<strong>74% 命中率</strong> → 59-70% 成本削减
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 11 — 组合优化 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">组合优化</div>
+  <h2 class="slide-title" data-anim="2">组合优化：60-90% 总成本削减</h2>
+  <div style="margin-top:2vh;" data-anim="3">
+    <div class="cost-bar-container">
+      <div class="cost-bar-row" style="margin-bottom:1.5vh;">
+        <div class="cost-bar-label">缓存</div>
+        <div class="cost-bar-track"><div class="cost-bar-fill" style="width:90%;background:var(--indigo);">60-90%</div></div>
+      </div>
+      <div class="cost-bar-row" style="margin-bottom:1.5vh;">
+        <div class="cost-bar-label">路由</div>
+        <div class="cost-bar-track"><div class="cost-bar-fill" style="width:70%;background:var(--success);">40-70%</div></div>
+      </div>
+      <div class="cost-bar-row" style="margin-bottom:1.5vh;">
+        <div class="cost-bar-label">压缩</div>
+        <div class="cost-bar-track"><div class="cost-bar-fill" style="width:60%;background:var(--amber);">30-60%</div></div>
+      </div>
+      <div class="cost-bar-row">
+        <div class="cost-bar-label">批量</div>
+        <div class="cost-bar-track"><div class="cost-bar-fill" style="width:50%;background:#7C3AED;">50%</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="insight-box success" data-anim="4" style="text-align:center;margin-top:3vh;">
+    组合优化可达 <strong style="font-size:clamp(24px,3vw,48px);">60-90%</strong> 总成本削减
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 12 — ROI -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="data">
+  <div class="kicker" data-anim="1">ROI 框架</div>
+  <h2 class="slide-title" data-anim="2">Agent ROI 框架：不只是省钱</h2>
+  <div class="kpi-strip" style="margin-top:2vh;" data-anim="3">
+    <div class="stat-card bordered-success" style="flex:1;">
+      <div class="stat-label">整体 ROI</div>
+      <div class="stat-value c-success">171-192%</div>
+    </div>
+    <div class="stat-card bordered-indigo" style="flex:1;">
+      <div class="stat-label">一年回本率</div>
+      <div class="stat-value c-indigo">74%</div>
+    </div>
+    <div class="stat-card bordered-amber" style="flex:1;">
+      <div class="stat-label">开发占 TCO</div>
+      <div class="stat-value c-amber">25-35%</div>
+    </div>
+  </div>
+  <div style="margin-top:3vh;" data-anim="4">
+    <div style="font-size:clamp(13px,1.2vw,20px);font-weight:700;margin-bottom:1vh;">回本时间线</div>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-label">最快</div>
+        <div class="timeline-title">客服 Agent</div>
+        <div class="timeline-desc">~2 周回本</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-label">中等</div>
+        <div class="timeline-title">SDR Agent</div>
+        <div class="timeline-desc">3.4 个月</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-label">标准</div>
+        <div class="timeline-title">通用 Agent</div>
+        <div class="timeline-desc">5.1 个月</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 13 — 成功案例 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">标杆案例</div>
+  <h2 class="slide-title" data-anim="2">成功案例的经济账</h2>
+  <div class="grid-3" style="margin-top:2vh;">
+    <div class="card bordered-success" data-anim="3">
+      <div style="font-size:clamp(14px,1.3vw,22px);font-weight:700;color:var(--success);">Klarna</div>
+      <div style="font-size:clamp(26px,3.2vw,54px);font-weight:800;color:var(--success);margin:1vh 0;">$60M</div>
+      <div class="muted" style="font-size:clamp(11px,1vw,16px);">年度成本节省<br>AI 客服替代 700 FTE</div>
+    </div>
+    <div class="card bordered-indigo" data-anim="4">
+      <div style="font-size:clamp(14px,1.3vw,22px);font-weight:700;color:var(--indigo);">JPMorgan</div>
+      <div style="font-size:clamp(26px,3.2vw,54px);font-weight:800;color:var(--indigo);margin:1vh 0;">360K</div>
+      <div class="muted" style="font-size:clamp(11px,1vw,16px);">工时节省/年<br>合同分析 Agent</div>
+    </div>
+    <div class="card bordered-amber" data-anim="5">
+      <div style="font-size:clamp(14px,1.3vw,22px);font-weight:700;color:var(--amber);">General Mills</div>
+      <div style="font-size:clamp(26px,3.2vw,54px);font-weight:800;color:var(--amber);margin:1vh 0;">$20M+</div>
+      <div class="muted" style="font-size:clamp(11px,1vw,16px);">运营效率提升<br>供应链优化 Agent</div>
+    </div>
+  </div>
+  <div class="insight-box amber" data-anim="6" style="text-align:center;margin-top:2vh;">
+    Klarna 教训：纯成本导向会牺牲服务质量 — 后续已重新招聘人工
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 14 — 定价模式 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">定价模式</div>
+  <h2 class="slide-title" data-anim="2">Agent 定价模式全景</h2>
+  <div class="table-wrapper" style="margin-top:2vh;" data-anim="3">
+    <table>
+      <thead>
+        <tr>
+          <th>模式</th>
+          <th>计费方式</th>
+          <th>典型价格</th>
+          <th>适用场景</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Token 计费</strong></td>
+          <td>按输入/输出 Token</td>
+          <td class="mono">$0.30-$15/MTok</td>
+          <td>API 直调</td>
+        </tr>
+        <tr>
+          <td><strong>解决量计费</strong></td>
+          <td>按成功解决数</td>
+          <td class="mono">$0.99-$2/次</td>
+          <td>客服 Agent</td>
+        </tr>
+        <tr>
+          <td><strong>ACU 计费</strong></td>
+          <td>Agent 计算单元</td>
+          <td class="mono">$2/unit</td>
+          <td>复杂任务</td>
+        </tr>
+        <tr>
+          <td><strong>混合模式</strong></td>
+          <td>基础费 + 用量</td>
+          <td class="mono">41% 采用率</td>
+          <td>企业级</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="insight-box" data-anim="4" style="text-align:center;margin-top:2vh;">
+    趋势：席位定价 <strong>21% → 15%</strong> 持续下降，用量计费成为主流
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 15 — Gartner -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">行业预警</div>
+  <h2 class="slide-title" data-anim="2">40%+ Agentic AI 项目将在 2027 前被取消</h2>
+  <div class="source-line" data-anim="3" style="margin-top:0;margin-bottom:2vh;font-style:normal;font-size:clamp(11px,1.1vw,18px);color:var(--muted);">来源：Gartner 2025 — 3,412 名受访者调研</div>
+  <div class="grid-3" style="margin-top:1vh;">
+    <div class="card bordered-critical" data-anim="4" style="text-align:center;">
+      <div style="font-size:clamp(32px,4vw,64px);font-weight:800;color:var(--critical);">30x</div>
+      <div style="font-size:clamp(14px,1.3vw,22px);font-weight:700;margin:1vh 0;">成本超预期</div>
+      <div class="muted" style="font-size:clamp(11px,1vw,16px);">Agent 成本可达传统方案 30 倍</div>
+    </div>
+    <div class="card bordered-amber" data-anim="5" style="text-align:center;">
+      <div style="font-size:clamp(32px,4vw,64px);font-weight:800;color:var(--amber);">???</div>
+      <div style="font-size:clamp(14px,1.3vw,22px);font-weight:700;margin:1vh 0;">价值不清</div>
+      <div class="muted" style="font-size:clamp(11px,1vw,16px);">ROI 难以量化，业务价值模糊</div>
+    </div>
+    <div class="card bordered-indigo" data-anim="6" style="text-align:center;">
+      <div style="font-size:clamp(32px,4vw,64px);font-weight:800;color:var(--indigo);">⚠</div>
+      <div style="font-size:clamp(14px,1.3vw,22px);font-weight:700;margin:1vh 0;">风险不足</div>
+      <div class="muted" style="font-size:clamp(11px,1vw,16px);">安全、合规、可控性准备不足</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 16 — 隐藏成本 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="data">
+  <div class="kicker" data-anim="1">隐藏成本</div>
+  <h2 class="slide-title" data-anim="2">被忽视的隐藏成本</h2>
+  <div class="grid-2x3" style="margin-top:1vh;">
+    <div class="card" data-anim="3">
+      <div style="font-size:clamp(13px,1.2vw,20px);font-weight:700;color:var(--critical);">MCP Tax</div>
+      <div style="font-size:clamp(18px,2.2vw,36px);font-weight:800;margin:0.5vh 0;">10-60K/轮</div>
+      <div class="muted small">工具描述注入 Token 开销</div>
+    </div>
+    <div class="card" data-anim="4">
+      <div style="font-size:clamp(13px,1.2vw,20px);font-weight:700;color:var(--amber);">可观测性</div>
+      <div style="font-size:clamp(18px,2.2vw,36px);font-weight:800;margin:0.5vh 0;">5-15%</div>
+      <div class="muted small">日志、追踪、监控成本</div>
+    </div>
+    <div class="card" data-anim="5">
+      <div style="font-size:clamp(13px,1.2vw,20px);font-weight:700;color:var(--indigo);">集成工程</div>
+      <div style="font-size:clamp(18px,2.2vw,36px);font-weight:800;margin:0.5vh 0;">40-55%</div>
+      <div class="muted small">API 对接与数据管道</div>
+    </div>
+    <div class="card" data-anim="6">
+      <div style="font-size:clamp(13px,1.2vw,20px);font-weight:700;color:var(--success);">人员上手</div>
+      <div style="font-size:clamp(18px,2.2vw,36px);font-weight:800;margin:0.5vh 0;">$4-9K/人</div>
+      <div class="muted small">培训与学习曲线成本</div>
+    </div>
+    <div class="card" data-anim="7">
+      <div style="font-size:clamp(13px,1.2vw,20px);font-weight:700;color:#7C3AED;">合规审计</div>
+      <div style="font-size:clamp(18px,2.2vw,36px);font-weight:800;margin:0.5vh 0;">持续投入</div>
+      <div class="muted small">数据合规与安全审计</div>
+    </div>
+    <div class="card" data-anim="8">
+      <div style="font-size:clamp(13px,1.2vw,20px);font-weight:700;color:#0369A1;">供应商锁定</div>
+      <div style="font-size:clamp(18px,2.2vw,36px);font-weight:800;margin:0.5vh 0;">迁移成本</div>
+      <div class="muted small">切换供应商的隐性代价</div>
+    </div>
+  </div>
+  <div class="insight-box critical" data-anim="9" style="text-align:center;margin-top:1.5vh;">
+    TCO = API 费用 <strong>&times; 7-12 倍</strong>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 17 — AI FinOps -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">AI FinOps</div>
+  <h2 class="slide-title" data-anim="2">从云成本管理到 Token 成本管理</h2>
+  <div class="table-wrapper" style="margin-top:2vh;" data-anim="3">
+    <table>
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th>传统 FinOps</th>
+          <th>AI FinOps</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>计量单位</strong></td>
+          <td>CPU/内存/存储</td>
+          <td>Token / 工具调用 / Agent 步骤</td>
+        </tr>
+        <tr>
+          <td><strong>成本可预测性</strong></td>
+          <td>高（固定资源）</td>
+          <td>低（动态、非确定性）</td>
+        </tr>
+        <tr>
+          <td><strong>优化手段</strong></td>
+          <td>Reserved / Spot</td>
+          <td>缓存 / 路由 / 压缩 / 批量</td>
+        </tr>
+        <tr>
+          <td><strong>归因粒度</strong></td>
+          <td>服务 / 团队</td>
+          <td>Agent / 任务 / 用户 / 对话</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="kpi-strip" style="margin-top:3vh;" data-anim="4">
+    <div class="card bordered-indigo" style="flex:1;text-align:center;padding:clamp(8px,1.2vh,18px) clamp(12px,1.5vw,24px);">
+      <div style="font-size:clamp(13px,1.2vw,20px);font-weight:800;color:var(--indigo);">可见</div>
+      <div class="muted small">Token 级追踪</div>
+    </div>
+    <div class="card bordered-success" style="flex:1;text-align:center;padding:clamp(8px,1.2vh,18px) clamp(12px,1.5vw,24px);">
+      <div style="font-size:clamp(13px,1.2vw,20px);font-weight:800;color:var(--success);">优化</div>
+      <div class="muted small">智能缓存路由</div>
+    </div>
+    <div class="card bordered-amber" style="flex:1;text-align:center;padding:clamp(8px,1.2vh,18px) clamp(12px,1.5vw,24px);">
+      <div style="font-size:clamp(13px,1.2vw,20px);font-weight:800;color:var(--amber);">运营</div>
+      <div class="muted small">预算治理</div>
+    </div>
+    <div class="card bordered-critical" style="flex:1;text-align:center;padding:clamp(8px,1.2vh,18px) clamp(12px,1.5vw,24px);">
+      <div style="font-size:clamp(13px,1.2vw,20px);font-weight:800;color:var(--critical);">治理</div>
+      <div class="muted small">政策自动化</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 18 — 监控 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="data">
+  <div class="kicker" data-anim="1">监控体系</div>
+  <h2 class="slide-title" data-anim="2">生产级成本监控：关键指标</h2>
+  <div class="grid-3x2" style="margin-top:1vh;">
+    <div class="stat-card" data-anim="3">
+      <div class="stat-label">单任务成本</div>
+      <div class="stat-value" style="font-size:clamp(16px,2vw,32px);">$/task</div>
+      <div class="stat-sub">p50 / p95 / p99</div>
+    </div>
+    <div class="stat-card" data-anim="4">
+      <div class="stat-label">Token 效率</div>
+      <div class="stat-value" style="font-size:clamp(16px,2vw,32px);">tok/step</div>
+      <div class="stat-sub">输入输出比</div>
+    </div>
+    <div class="stat-card" data-anim="5">
+      <div class="stat-label">缓存命中率</div>
+      <div class="stat-value" style="font-size:clamp(16px,2vw,32px);">hit%</div>
+      <div class="stat-sub">目标 &gt;70%</div>
+    </div>
+    <div class="stat-card" data-anim="6">
+      <div class="stat-label">路由分布</div>
+      <div class="stat-value" style="font-size:clamp(16px,2vw,32px);">model%</div>
+      <div class="stat-sub">各模型占比</div>
+    </div>
+    <div class="stat-card" data-anim="7">
+      <div class="stat-label">重试率</div>
+      <div class="stat-value" style="font-size:clamp(16px,2vw,32px);">retry%</div>
+      <div class="stat-sub">目标 &lt;5%</div>
+    </div>
+    <div class="stat-card" data-anim="8">
+      <div class="stat-label">预算利用率</div>
+      <div class="stat-value" style="font-size:clamp(16px,2vw,32px);">util%</div>
+      <div class="stat-sub">实际/预算</div>
+    </div>
+  </div>
+  <div class="card bordered-critical" data-anim="9" style="margin-top:1.5vh;text-align:center;">
+    <span class="c-critical bold" style="font-size:clamp(12px,1.15vw,19px);">ALERT 示例：</span>
+    <span class="mono" style="font-size:clamp(11px,1.05vw,17px);"> 当 p95_cost &gt; 3x p50_cost 或 daily_spend &gt; budget * 0.8 时触发预警</span>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 19 — 检查清单 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">实操指南</div>
+  <h2 class="slide-title" data-anim="2">实操检查清单</h2>
+  <div class="split" style="margin-top:2vh;">
+    <div class="stack tight">
+      <div class="check-item" data-anim="3">
+        <span class="check-mark">&#10003;</span>
+        <span>为每个 Agent 设置 <strong>硬性 Token 上限</strong></span>
+      </div>
+      <div class="check-item" data-anim="4">
+        <span class="check-mark">&#10003;</span>
+        <span>实现 <strong>Prompt Caching</strong>，目标命中率 &gt;70%</span>
+      </div>
+      <div class="check-item" data-anim="5">
+        <span class="check-mark">&#10003;</span>
+        <span>部署 <strong>模型路由</strong>，70% 流量走轻量模型</span>
+      </div>
+      <div class="check-item" data-anim="6">
+        <span class="check-mark">&#10003;</span>
+        <span>建立 <strong>成本归因</strong>，追踪到 Agent/任务级别</span>
+      </div>
+    </div>
+    <div class="stack tight">
+      <div class="check-item" data-anim="7">
+        <span class="check-mark">&#10003;</span>
+        <span>配置 <strong>熔断器</strong>，异常时自动终止</span>
+      </div>
+      <div class="check-item" data-anim="8">
+        <span class="check-mark">&#10003;</span>
+        <span>监控 <strong>p95/p99</strong> 成本分布，而非仅看平均值</span>
+      </div>
+      <div class="check-item" data-anim="9">
+        <span class="check-mark">&#10003;</span>
+        <span>定义 <strong>单位经济指标</strong>：$/task, $/resolution</span>
+      </div>
+      <div class="check-item" data-anim="10">
+        <span class="check-mark">&#10003;</span>
+        <span>每月进行 <strong>成本审计</strong>，识别浪费与异常</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 20 — 路线图 -->
+<!-- ============================================ -->
+<section class="slide" data-theme="light" data-animate="cascade">
+  <div class="kicker" data-anim="1">落地路线</div>
+  <h2 class="slide-title" data-anim="2">从成本失控到成本可控</h2>
+  <div class="timeline" style="margin-top:4vh;" data-anim="3">
+    <div class="timeline-item">
+      <div class="timeline-label">Week 1-2</div>
+      <div class="timeline-title">可见</div>
+      <div class="timeline-desc">Token 级追踪<br>成本归因建设<br>基线数据采集</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-label">Week 3-4</div>
+      <div class="timeline-title">防御</div>
+      <div class="timeline-desc">五层预算上限<br>熔断器配置<br>预警规则部署</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-label">Month 2-3</div>
+      <div class="timeline-title">优化</div>
+      <div class="timeline-desc">缓存策略上线<br>模型路由部署<br>压缩与批量处理</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-label">Month 4+</div>
+      <div class="timeline-title">治理</div>
+      <div class="timeline-desc">AI FinOps 体系<br>自动化政策<br>持续优化循环</div>
+    </div>
+  </div>
+  <div class="insight-box" data-anim="4" style="text-align:center;margin-top:4vh;">
+    目标：<strong>60-90% 成本优化</strong> + 完整成本可见性 + 自动化治理
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- SLIDE 21 — 总结 (dark) -->
+<!-- ============================================ -->
+<section class="slide" data-theme="dark" data-animate="cascade">
+  <div class="cover-accent"></div>
+  <div class="kicker" data-anim="1" style="color:rgba(255,255,255,0.4);">核心结论</div>
+  <h2 class="slide-title" data-anim="2" style="font-size:clamp(30px,4vw,68px);">三个核心结论</h2>
+  <div class="stack" style="margin-top:3vh;gap:2.5vh;">
+    <div class="card dark" data-anim="3" style="padding:clamp(14px,2vh,28px) clamp(20px,2.5vw,40px);border-left:4px solid var(--indigo);">
+      <div style="font-size:clamp(16px,1.8vw,30px);font-weight:700;">
+        <span class="c-indigo" style="font-family:var(--font-mono);margin-right:0.5vw;">01</span>
+        Agent 成本 = API &times; <strong style="color:var(--indigo);">7-12 倍</strong>
+      </div>
+      <div style="font-size:clamp(11px,1vw,17px);opacity:0.6;margin-top:0.5vh;">基础设施、集成、可观测性是真正的成本大头</div>
+    </div>
+    <div class="card dark" data-anim="4" style="padding:clamp(14px,2vh,28px) clamp(20px,2.5vw,40px);border-left:4px solid var(--amber);">
+      <div style="font-size:clamp(16px,1.8vw,30px);font-weight:700;">
+        <span style="color:var(--amber);font-family:var(--font-mono);margin-right:0.5vw;">02</span>
+        Token 越便宜，总支出越多 — <strong style="color:var(--amber);">Jevons 悖论</strong>
+      </div>
+      <div style="font-size:clamp(11px,1vw,17px);opacity:0.6;margin-top:0.5vh;">价格下降驱动用量爆发，总支出反而翻 3 倍</div>
+    </div>
+    <div class="card dark" data-anim="5" style="padding:clamp(14px,2vh,28px) clamp(20px,2.5vw,40px);border-left:4px solid var(--success);">
+      <div style="font-size:clamp(16px,1.8vw,30px);font-weight:700;">
+        <span style="color:var(--success);font-family:var(--font-mono);margin-right:0.5vw;">03</span>
+        成本工程是必修课 — <strong style="color:var(--success);">60-90% 优化空间</strong>
+      </div>
+      <div style="font-size:clamp(11px,1vw,17px);opacity:0.6;margin-top:0.5vh;">缓存 + 路由 + 压缩 + 预算防御 = 系统化降本</div>
+    </div>
+  </div>
+  <div style="margin-top:4vh;font-size:clamp(14px,1.4vw,24px);font-weight:600;opacity:0.5;" data-anim="6">
+    下一主题 &rarr; Agent 评测革命
+  </div>
+</section>
+
+</div><!-- end .deck -->
+
+<!-- ============ SLIDE COUNTER ============ -->
+<div class="slide-counter" id="slideCounter">1 / 22</div>
+
+<!-- ============ JAVASCRIPT ============ -->
+<script>
+(function(){
+  'use strict';
+
+  const deck = document.getElementById('deck');
+  const slides = Array.from(deck.querySelectorAll('.slide'));
+  const counter = document.getElementById('slideCounter');
+  const total = slides.length;
+  let current = 0;
+
+  // Touch support
+  let touchStartX = 0;
+  let touchStartY = 0;
+  const SWIPE_THRESHOLD = 50;
+
+  function goto(n) {
+    if (n < 0 || n >= total) return;
+    slides[current].classList.remove('active');
+    current = n;
+    slides[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + total;
+
+    // Update counter theme based on slide theme
+    const theme = slides[current].getAttribute('data-theme');
+    if (theme === 'dark') {
+      counter.classList.add('on-dark');
+    } else {
+      counter.classList.remove('on-dark');
+    }
+  }
+
+  function next() { goto(current + 1); }
+  function prev() { goto(current - 1); }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    switch(e.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+      case ' ':
+        e.preventDefault();
+        next();
+        break;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        e.preventDefault();
+        prev();
+        break;
+      case 'Home':
+        e.preventDefault();
+        goto(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        goto(total - 1);
+        break;
+      case 'f':
+      case 'F':
+        e.preventDefault();
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(function(){});
+        } else {
+          document.exitFullscreen().catch(function(){});
+        }
+        break;
+    }
+  });
+
+  // Touch swipe support
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+  }, { passive: true });
+
+  document.addEventListener('touchend', function(e) {
+    var dx = e.changedTouches[0].screenX - touchStartX;
+    var dy = e.changedTouches[0].screenY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > SWIPE_THRESHOLD) {
+      if (dx < 0) next(); else prev();
+    }
+  }, { passive: true });
+
+  // Initialize: set first slide counter theme
+  (function init() {
+    var theme = slides[0].getAttribute('data-theme');
+    if (theme === 'dark') counter.classList.add('on-dark');
+  })();
+
+})();
+</script>
+
+</body>
+</html>

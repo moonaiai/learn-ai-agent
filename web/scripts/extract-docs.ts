@@ -2,8 +2,8 @@
  * Build-time content extractor.
  *
  * Recursively scans `docs/` at the repo root, renders every Markdown file to
- * HTML, copies image assets and PDFs into `public/`, and writes two JSON files
- * that the Next.js pages consume:
+ * HTML, copies image assets, PDFs and standalone HTML pages into `public/`, and
+ * writes two JSON files that the Next.js pages consume:
  *
  *   src/data/generated/docs.json  — full entries including rendered HTML
  *   src/data/generated/nav.json   — the same minus HTML, for layout/home/nav
@@ -37,6 +37,7 @@ const OUT_DIR = path.join(WEB_DIR, "src", "data", "generated");
 const PUBLIC_DIR = path.join(WEB_DIR, "public");
 const ASSETS_OUT = path.join(PUBLIC_DIR, "doc-assets");
 const PDF_OUT = path.join(PUBLIC_DIR, "doc-pdf");
+const HTML_OUT = path.join(PUBLIC_DIR, "doc-html");
 
 /** Public URL prefix. Empty for local dev; `/learn-ai-agent` on GitHub Pages. */
 const ASSET_BASE = process.env.NEXT_BASE_PATH ?? "";
@@ -58,7 +59,7 @@ interface SourceFile {
   /** Path relative to `docs/`, e.g. `transformer/01-x.md`. */
   relPath: string;
   absPath: string
-  kind: "md" | "pdf";
+  kind: "md" | "pdf" | "html";
 }
 
 const warnings: string[] = [];
@@ -71,6 +72,14 @@ function warn(message: string) {
 // Discovery
 // ---------------------------------------------------------------------------
 
+/** Source extensions that become site pages, mapped to their doc kind. */
+const SOURCE_KINDS: Record<string, SourceFile["kind"]> = {
+  ".md": "md",
+  ".pdf": "pdf",
+  ".html": "html",
+  ".htm": "html",
+};
+
 function discover(): SourceFile[] {
   const found: SourceFile[] = [];
 
@@ -82,7 +91,8 @@ function discover(): SourceFile[] {
         continue;
       }
       const ext = path.extname(entry.name).toLowerCase();
-      if (ext !== ".md" && ext !== ".pdf") continue;
+      const kind = SOURCE_KINDS[ext];
+      if (!kind) continue;
 
       const relPath = path.relative(DOCS_ROOT, abs);
       const topic = relPath.split(path.sep)[0];
@@ -91,7 +101,7 @@ function discover(): SourceFile[] {
         warn(`跳过 docs/ 根目录下的文件（需放在主题目录内）: ${relPath}`);
         continue;
       }
-      found.push({ topic, relPath, absPath: abs, kind: ext === ".md" ? "md" : "pdf" });
+      found.push({ topic, relPath, absPath: abs, kind });
     }
   }
 
@@ -161,6 +171,83 @@ function copyPdf(source: SourceFile, topic: string, slug: string): number {
   const dest = path.join(destDir, `${slug}.pdf`);
   fs.copyFileSync(source.absPath, dest);
   return fs.statSync(dest).size;
+}
+
+/**
+ * Copy a standalone HTML document into `public/doc-html/<topic>/<slug>.html`.
+ *
+ * These are self-contained pages (slide decks, interactive demos) authored
+ * outside this site — they ship their own `<style>`, scripts and key handlers,
+ * and several assume they own the whole viewport. So they are served verbatim
+ * from `public/` and shown in an iframe rather than merged into the prose
+ * pipeline, which keeps their CSS and this site's CSS from colliding.
+ */
+function copyHtml(source: SourceFile, topic: string, slug: string): number {
+  const destDir = path.join(HTML_OUT, topic);
+  fs.mkdirSync(destDir, { recursive: true });
+  const dest = path.join(destDir, `${slug}.html`);
+  fs.copyFileSync(source.absPath, dest);
+  return fs.statSync(dest).size;
+}
+
+// ---------------------------------------------------------------------------
+// Standalone HTML metadata
+// ---------------------------------------------------------------------------
+
+function decodeEntities(text: string): string {
+  const named: Record<string, string> = {
+    amp: "&",
+    lt: "<",
+    gt: ">",
+    quot: '"',
+    apos: "'",
+    nbsp: " ",
+  };
+  return text
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code: string) =>
+      String.fromCodePoint(parseInt(code, 16))
+    )
+    .replace(/&([a-z]+);/gi, (match, name: string) => named[name.toLowerCase()] ?? match);
+}
+
+/**
+ * Pull a display title and summary out of a standalone HTML document, so it
+ * gets the same card treatment as Markdown without a hand-written override.
+ *
+ * Title falls back through `<title>` → first `<h1>` → filename; summary uses
+ * `<meta name="description">` when present. The `<title>` of these decks often
+ * carries a subtitle after an em-dash (e.g. "Agent 经济学 — Token 预算…"), which
+ * makes a better summary than a duplicate of the title, so it is split off.
+ */
+function htmlMetadata(
+  absPath: string,
+  fallbackTitle: string
+): { title: string; summary?: string } {
+  const head = fs.readFileSync(absPath, "utf-8").slice(0, 200_000);
+
+  const clean = (value: string | undefined) =>
+    value ? decodeEntities(value.replace(/<[^>]*>/g, "")).replace(/\s+/g, " ").trim() : "";
+
+  const rawTitle =
+    clean(/<title[^>]*>([\s\S]*?)<\/title>/i.exec(head)?.[1]) ||
+    clean(/<h1[^>]*>([\s\S]*?)<\/h1>/i.exec(head)?.[1]);
+
+  const description = clean(
+    /<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)["']/i.exec(head)?.[1]
+  );
+
+  if (!rawTitle) {
+    return { title: fallbackTitle, summary: description || undefined };
+  }
+
+  // Split "主标题 — 副标题" into title + summary when there is no meta description.
+  const [, main, subtitle] = /^(.+?)\s+[—–-]{1,2}\s+(.+)$/.exec(rawTitle) ?? [];
+  if (!description && main && subtitle) {
+    return { title: main.trim(), summary: subtitle.trim() };
+  }
+
+  return { title: rawTitle, summary: description || undefined };
 }
 
 // ---------------------------------------------------------------------------
@@ -263,7 +350,7 @@ function rewriteLinks(
         return `${bang}[${text}](${ASSET_BASE}/doc-assets/${posixPath}${tail})`;
       }
 
-      if (ext === ".md" || ext === ".pdf") {
+      if (ext === ".md" || ext === ".pdf" || ext === ".html" || ext === ".htm") {
         const route = routeByRelPath.get(posixPath);
         if (route) {
           return `${bang}[${text}](${route}${hash ? `#${hash}` : ""}${tail})`;
@@ -297,6 +384,7 @@ function main() {
   const assetDirs = copyAssets(topics);
 
   fs.rmSync(PDF_OUT, { recursive: true, force: true });
+  fs.rmSync(HTML_OUT, { recursive: true, force: true });
 
   // Pass 1: assign slugs and routes so links can be resolved in pass 2.
   // Two forms per document: `route` for next/link (no basePath — Next prepends
@@ -307,13 +395,32 @@ function main() {
   const hrefByRelPath = new Map<string, string>();
   const slugByRelPath = new Map<string, string>();
 
+  // Reserve every pinned slug first, so an auto-derived slug can never claim
+  // one out from under an override (discovery order would otherwise decide).
+  for (const source of sources) {
+    const posixRel = source.relPath.split(path.sep).join("/");
+    const pinned = DOC_OVERRIDES[posixRel]?.slug;
+    if (!pinned) continue;
+    const topicSlug = slugify(source.topic) || "topic";
+    if (!takenSlugs.has(topicSlug)) takenSlugs.set(topicSlug, new Set());
+    const taken = takenSlugs.get(topicSlug)!;
+    if (taken.has(pinned)) {
+      warn(`slug 覆盖重复，后者将覆盖前者: ${posixRel} → ${pinned}`);
+    }
+    taken.add(pinned);
+  }
+
   for (const source of sources) {
     const topicSlug = slugify(source.topic) || "topic";
     const basename = path.basename(source.relPath, path.extname(source.relPath));
     if (!takenSlugs.has(topicSlug)) takenSlugs.set(topicSlug, new Set());
-    const slug = uniqueSlug(basename, source.relPath, takenSlugs.get(topicSlug)!);
 
     const posixRel = source.relPath.split(path.sep).join("/");
+    const taken = takenSlugs.get(topicSlug)!;
+    // Pinned slugs were reserved above; everything else fills the gaps.
+    const slug =
+      DOC_OVERRIDES[posixRel]?.slug ?? uniqueSlug(basename, source.relPath, taken);
+
     const route = `/docs/${topicSlug}/${slug}/`;
     slugByRelPath.set(posixRel, slug);
     routeByRelPath.set(posixRel, route);
@@ -353,6 +460,22 @@ function main() {
         summary: override.summary ?? "PDF 文档。",
         headings: [],
         pdfUrl: `${ASSET_BASE}/doc-pdf/${topicSlug}/${slug}.pdf`,
+        bytes,
+      });
+      continue;
+    }
+
+    if (source.kind === "html") {
+      const bytes = copyHtml(source, topicSlug, slug);
+      const ext = path.extname(source.relPath);
+      const meta = htmlMetadata(source.absPath, path.basename(source.relPath, ext));
+      docs.push({
+        ...base,
+        kind: "html",
+        title: override.title ?? meta.title,
+        summary: override.summary ?? meta.summary ?? "独立 HTML 页面。",
+        headings: [],
+        embedUrl: `${ASSET_BASE}/doc-html/${topicSlug}/${slug}.html`,
         bytes,
       });
       continue;
@@ -426,6 +549,7 @@ function main() {
     stats: {
       markdown: docs.filter((doc) => doc.kind === "md").length,
       pdf: docs.filter((doc) => doc.kind === "pdf").length,
+      html: docs.filter((doc) => doc.kind === "html").length,
       categories: categories.length,
     },
   };
@@ -435,7 +559,7 @@ function main() {
   fs.writeFileSync(path.join(OUT_DIR, "nav.json"), JSON.stringify(nav, null, 2));
 
   console.log("\n提取完成：");
-  console.log(`  Markdown ${nav.stats.markdown} 篇，PDF ${nav.stats.pdf} 份`);
+  console.log(`  Markdown ${nav.stats.markdown} 篇，PDF ${nav.stats.pdf} 份，HTML ${nav.stats.html} 个`);
   console.log(`  分类 ${nav.stats.categories} 组`);
   for (const category of categories) {
     console.log(`    ${category.label}: ${category.docs.length} 篇`);

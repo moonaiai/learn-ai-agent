@@ -4,7 +4,7 @@ export interface Heading {
   id: string;
 }
 
-export type DocKind = "md" | "pdf";
+export type DocKind = "md" | "pdf" | "html";
 
 /** One document. `html` (rendered content) is only present for `kind: "md"`. */
 export interface DocEntry {
@@ -38,7 +38,12 @@ export interface DocEntry {
   sourcesHtml?: string;
   /** Public URL of the copied PDF, basePath included — `pdf` only. */
   pdfUrl?: string;
-  /** Size of the source PDF in bytes — `pdf` only. */
+  /**
+   * Public URL of the copied standalone HTML page, basePath included —
+   * `html` only. Served verbatim from `public/`, outside Next's routing.
+   */
+  embedUrl?: string;
+  /** Size of the source PDF or HTML file in bytes — `pdf` / `html` only. */
   bytes?: number;
 }
 
@@ -59,6 +64,7 @@ export interface NavIndex {
   stats: {
     markdown: number;
     pdf: number;
+    html: number;
     categories: number;
   };
 }

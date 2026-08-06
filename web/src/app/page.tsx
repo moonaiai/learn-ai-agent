@@ -3,7 +3,7 @@ import { DocCard } from "@/components/doc-card";
 
 export default function HomePage() {
   const nav = getNav();
-  const { markdown, pdf, categories } = nav.stats;
+  const { markdown, pdf, html, categories } = nav.stats;
 
   return (
     <>
@@ -17,6 +17,7 @@ export default function HomePage() {
         <div className="meta-row">
           <span className="pill">{markdown} 篇文档</span>
           <span className="pill">{pdf} 份 PDF</span>
+          {html > 0 && <span className="pill">{html} 个在线演示</span>}
           <span className="pill">{categories} 个主题分类</span>
           <span className="pill">中文 · 持续更新</span>
         </div>

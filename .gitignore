@@ -12,6 +12,7 @@ web/out/
 web/src/data/generated/
 web/public/doc-assets/
 web/public/doc-pdf/
+web/public/doc-html/
 web/tsconfig.tsbuildinfo
 web/next-env.d.ts
 
@@ -26,3 +27,5 @@ logs/
 
 # 笔记数据（用户本地数据，不入库）
 .notes/
+
+my-docs/
