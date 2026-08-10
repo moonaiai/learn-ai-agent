@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent 记忆与状态管理</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg-light: #F4F6FA; --bg-dark: #0F172A; --bg-card: #FFFFFF;
+  --text-light: #0F172A; --text-dark: #F4F6FA;
+  --accent: #0D6670; --accent-bright: #00B8B8; --accent-green: #1FB57A;
+  --accent-amber: #F5A524; --accent-rose: #E84A6F;
+  --muted: #5A6379; --muted-light: rgba(15,23,42,0.4);
+  --border: #E3E7F2; --border-strong: #C9D0E2;
+  --font-heading: 'Inter','Helvetica Neue',Arial,sans-serif;
+  --font-body: 'Inter','Helvetica Neue',Arial,sans-serif;
+  --font-mono: 'JetBrains Mono','Fira Code',monospace;
+  --transition-speed: 0.4s; --radius: 10px;
+}
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+html,body { width:100%; height:100%; overflow:hidden; background:var(--bg-dark); }
+
+.deck { position:relative; width:100%; height:100%; }
+.slide {
+  position:absolute; top:0; left:0; width:100vw; height:100vh;
+  display:flex; flex-direction:column; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity var(--transition-speed) ease; overflow:hidden;
+}
+.slide.active { opacity:1; pointer-events:auto; }
+.slide[data-theme="light"] { background:var(--bg-light); color:var(--text-light); }
+.slide[data-theme="dark"] { background:var(--bg-dark); color:var(--text-dark); }
+
+/* === Cover === */
+.cover-slide { width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; padding:80px 100px; position:relative; }
+.top-bar { position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,#0D6670 0%,#00B8B8 40%,#1FB57A 100%); }
+.cover-nav { position:absolute; top:36px; left:100px; right:100px; display:flex; justify-content:space-between; align-items:center; }
+.nav-left { font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--accent); letter-spacing:0.15em; text-transform:uppercase; }
+.nav-right-pills { display:flex; gap:20px; }
+.nav-pill { font-size:11px; font-weight:600; color:var(--muted-light); letter-spacing:0.08em; text-transform:uppercase; padding:6px 14px; border-radius:4px; }
+.nav-pill.active { color:var(--accent); background:rgba(13,102,112,0.07); border:1px solid rgba(13,102,112,0.18); }
+.cover-body { max-width:1100px; }
+.cover-slide .kicker { font-family:var(--font-mono); font-size:14px; font-weight:500; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); margin-bottom:20px; }
+.cover-slide h1 { font-size:58px; font-weight:900; line-height:1.08; color:var(--text-light); margin-bottom:24px; }
+.cover-sub { font-size:20px; line-height:1.6; color:var(--muted); max-width:780px; margin-bottom:48px; }
+.cover-kpi-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; max-width:1000px; }
+.cover-kpi { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:24px 20px; display:flex; flex-direction:column; gap:8px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+.cover-kpi-num { font-family:var(--font-mono); font-size:32px; font-weight:600; color:var(--accent); }
+.cover-kpi-label { font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
+.cover-tags { position:absolute; bottom:44px; left:100px; display:flex; gap:24px; }
+.tech-tag { font-family:var(--font-mono); font-size:11px; font-weight:500; color:var(--muted-light); padding:5px 12px; border:1px solid var(--border); border-radius:4px; background:var(--bg-card); }
+
+/* === Content === */
+.content-slide { padding:48px 100px 60px; display:flex; flex-direction:column; gap:20px; width:100%; height:100%; justify-content:center; }
+.content-slide .kicker,.statement-block .kicker,.closing-slide .kicker { font-family:var(--font-mono); font-size:13px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent); }
+.dark-content .kicker { color:var(--accent-bright); }
+.content-slide h1,.statement-block h1,.closing-slide h1 { font-family:var(--font-heading); font-size:36px; font-weight:800; line-height:1.18; max-width:1200px; }
+.content-slide h3 { font-size:17px; font-weight:700; line-height:1.3; }
+.content-slide p { font-size:15px; line-height:1.55; color:var(--muted); }
+.dark-content p { color:rgba(244,246,250,0.6); }
+.insight { font-size:14px; font-style:italic; color:var(--muted); padding-top:12px; border-top:1px solid var(--border); }
+.dark-insight { color:rgba(244,246,250,0.45); border-color:rgba(255,255,255,0.1); }
+.mono-label { font-family:var(--font-mono); font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent); margin-bottom:6px; display:block; }
+code { font-family:var(--font-mono); font-size:14px; padding:2px 6px; background:rgba(13,102,112,0.05); border-radius:3px; }
+
+/* === Statement === */
+.statement-block { padding:80px 120px; display:flex; flex-direction:column; justify-content:center; gap:24px; height:100%; }
+.statement-block h1 { font-size:44px; max-width:900px; }
+.lead { font-size:20px; color:rgba(244,246,250,0.55); max-width:700px; line-height:1.5; }
+.two-col-statement { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:16px; }
+.ts-card { padding:28px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); }
+.ts-card h3 { color:var(--accent-bright); font-size:22px; margin-bottom:8px; }
+.ts-card p { font-size:18px; color:rgba(244,246,250,0.8); }
+.ts-sub { font-size:14px; color:rgba(244,246,250,0.4); margin-top:8px; display:block; }
+
+/* === Cards & Grids === */
+.mem-layers { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.mem-layers > :nth-child(n+5) { grid-column:span 1; }
+.ml-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px 16px; display:flex; flex-direction:column; gap:6px; }
+.ml-tag { font-family:var(--font-mono); font-size:11px; font-weight:700; padding:3px 8px; border-radius:3px; width:fit-content; letter-spacing:0.08em; }
+.ml-t1 { background:rgba(13,102,112,0.1); color:var(--accent); }
+.ml-t2 { background:rgba(30,26,120,0.1); color:#1E1A78; }
+.ml-t3 { background:rgba(245,165,36,0.1); color:var(--accent-amber); }
+.ml-t4 { background:rgba(31,181,122,0.1); color:var(--accent-green); }
+.ml-t5 { background:rgba(232,74,111,0.1); color:var(--accent-rose); }
+.ml-t6 { background:rgba(13,102,112,0.1); color:var(--accent); }
+.ml-t7 { background:rgba(30,26,120,0.1); color:#1E1A78; }
+
+/* === Compare === */
+.mem-compare { display:grid; grid-template-columns:1fr auto 1fr auto 1fr; gap:16px; align-items:stretch; }
+.mc-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.mc-header { padding:14px 20px; font-weight:700; font-size:15px; letter-spacing:0.05em; text-transform:uppercase; }
+.mc-ep { background:rgba(232,74,111,0.06); color:var(--accent-rose); }
+.mc-sem { background:rgba(13,102,112,0.06); color:var(--accent); }
+.mc-proc { background:rgba(31,181,122,0.06); color:var(--accent-green); }
+.mc-body { padding:20px; }
+.mc-example { font-style:italic; color:var(--text-light); font-weight:500; margin-bottom:8px; font-size:14px; }
+.mc-arrow { display:flex; align-items:center; color:var(--border-strong); font-size:20px; }
+
+/* === STM grid === */
+.stm-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.stm-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; display:flex; flex-direction:column; gap:6px; }
+.stm-fit { font-size:12px; color:var(--accent-green); }
+.stm-risk { font-size:12px; color:var(--accent-rose); }
+.budget-bar { margin-top:8px; }
+.bb-label { font-family:var(--font-mono); font-size:11px; font-weight:600; color:var(--accent); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px; }
+.bb-segments { display:flex; gap:2px; height:32px; border-radius:6px; overflow:hidden; }
+.bb-seg { display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; color:#fff; }
+.bb-s1 { background:#0D6670; } .bb-s2 { background:#00B8B8; } .bb-s3 { background:#1E1A78; } .bb-s4 { background:#1FB57A; } .bb-s5 { background:#F5A524; }
+
+/* === Numbered items === */
+.sf-items,.ckpt-grid { display:flex; flex-direction:column; gap:10px; }
+.sf-item,.ck-item { display:flex; gap:14px; align-items:flex-start; padding:10px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+.sf-num,.ck-num { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent); min-width:28px; padding-top:2px; }
+.ckpt-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+
+/* === RAG signals === */
+.rag-signals { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.rs-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); padding:18px; }
+.rs-card h3 { color:var(--accent-bright); }
+
+/* === Cache === */
+.cache-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.cache-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
+.cache-rule { padding:16px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+.cr-split { display:grid; grid-template-columns:1fr auto 1fr; gap:16px; margin-top:10px; }
+.cr-item { font-size:14px; }
+.cr-item span { font-size:12px; color:var(--muted); display:block; margin-top:4px; }
+.cr-static { color:var(--accent-green); font-weight:600; }
+.cr-dynamic { color:var(--accent-amber); font-weight:600; }
+.cr-divider { color:var(--border-strong); font-weight:300; }
+
+/* === Vector === */
+.vec-platforms { display:flex; gap:10px; margin-bottom:12px; }
+.vp-tag { font-family:var(--font-mono); font-size:12px; padding:5px 12px; background:rgba(13,102,112,0.06); border:1px solid var(--border); border-radius:4px; color:var(--accent); font-weight:500; }
+.vec-schema { display:grid; grid-template-columns:repeat(2,1fr); gap:6px; }
+.vs-row { display:flex; gap:12px; align-items:center; padding:8px 12px; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; font-size:14px; }
+.vs-row code { font-size:13px; min-width:170px; }
+.vs-row span { color:var(--muted); }
+
+/* === KG === */
+.kg-demo { display:flex; align-items:center; gap:12px; justify-content:center; padding:16px 0; }
+.kg-node { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px 24px; font-weight:700; font-size:16px; text-align:center; }
+.kg-node-accent { border-color:var(--accent); background:rgba(13,102,112,0.04); }
+.kg-edge { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.kg-edge-label { font-size:13px; font-weight:600; color:var(--accent); }
+.kg-validity { font-family:var(--font-mono); font-size:10px; color:var(--muted); }
+.kg-edge-new .kg-edge-label { color:var(--accent-green); }
+.kg-caps { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.kg-cap { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+
+/* === Hybrid arch === */
+.hybrid-arch { display:flex; flex-direction:column; gap:8px; }
+.ha-layer { display:flex; align-items:center; gap:20px; padding:14px 24px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); border-left:3px solid var(--accent); }
+.ha-label { font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--accent); min-width:100px; }
+.ha-desc { font-size:14px; color:var(--muted); }
+
+/* === Score signals === */
+.formula-display { text-align:center; padding:16px; }
+.formula-display code { font-size:20px; font-weight:500; color:var(--accent); background:none; }
+.score-signals { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+.ss-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; text-align:center; }
+.ss-var { font-family:var(--font-mono); font-size:24px; font-weight:700; color:var(--accent); display:block; margin-bottom:6px; }
+
+/* === Tables === */
+table { width:100%; border-collapse:collapse; font-size:14px; background:var(--bg-card); border-radius:var(--radius); overflow:hidden; border:1px solid var(--border); }
+th { font-family:var(--font-mono); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; padding:14px 16px; text-align:left; background:rgba(13,102,112,0.05); color:var(--accent); border-bottom:2px solid var(--border); }
+td { padding:12px 16px; border-bottom:1px solid var(--border); color:var(--muted); }
+.qt-label { text-align:left; font-weight:600; color:var(--text-light); }
+
+/* === WM schema === */
+.wm-schema { display:grid; grid-template-columns:1fr 280px; gap:24px; }
+.wm-fields { display:flex; flex-direction:column; gap:6px; }
+.wm-f { display:flex; gap:12px; align-items:center; padding:8px 12px; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; }
+.wm-f code { min-width:170px; font-size:13px; }
+.wm-f span { color:var(--muted); font-size:14px; }
+.wm-rules { padding:16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); height:fit-content; }
+.wm-rules p { font-size:14px; }
+
+/* === Decision record === */
+.decision-record { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+.dr-item { display:flex; gap:14px; align-items:center; padding:14px 18px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+.dr-field { font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--accent); min-width:110px; }
+.dr-desc { font-size:15px; color:var(--muted); }
+
+/* === FSM === */
+.fsm-diagram { display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center; }
+.fsm-node { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 20px; font-weight:700; font-size:14px; text-align:center; }
+.fsm-arrow { color:var(--accent); font-size:18px; }
+.fsm-wait { border-color:var(--accent-amber); }
+.fsm-exec { border-color:var(--accent); background:rgba(13,102,112,0.04); }
+.fsm-done { border-color:var(--accent-green); color:var(--accent-green); }
+.fsm-fail { border-color:var(--accent-rose); color:var(--accent-rose); }
+.fsm-retry { display:flex; align-items:center; gap:10px; justify-content:center; margin-top:8px; font-size:14px; color:var(--muted); }
+
+/* === DAG === */
+.dag-content { display:flex; flex-direction:column; gap:20px; }
+.dag-caps { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.dag-cap { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+.dag-vs { display:grid; grid-template-columns:1fr auto 1fr; gap:16px; }
+.dv-item { padding:16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+.dv-item span { font-weight:700; font-size:16px; color:var(--accent); display:block; margin-bottom:6px; }
+.dv-sep { display:flex; align-items:center; font-weight:700; color:var(--border-strong); }
+.dag-decision { padding:16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+
+/* === Nine rules === */
+.nine-rules { display:flex; flex-direction:column; gap:8px; margin-top:16px; }
+.nr-row { display:flex; gap:14px; align-items:center; font-size:16px; color:rgba(244,246,250,0.8); padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+.nr-num { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent-bright); min-width:24px; }
+
+/* === Multi-agent === */
+.multi-agent-mem { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+.mam-scope { display:flex; flex-direction:column; gap:8px; }
+.mam-layer { padding:14px 20px; border-radius:var(--radius); font-weight:600; font-size:15px; text-align:center; }
+.mam-global { background:rgba(13,102,112,0.08); color:var(--accent); border:1px solid rgba(13,102,112,0.2); }
+.mam-project { background:rgba(30,26,120,0.06); color:#1E1A78; border:1px solid rgba(30,26,120,0.15); }
+.mam-task { background:rgba(245,165,36,0.06); color:var(--accent-amber); border:1px solid rgba(245,165,36,0.15); }
+.mam-private { background:rgba(232,74,111,0.06); color:var(--accent-rose); border:1px solid rgba(232,74,111,0.15); }
+.mam-patterns { display:flex; flex-direction:column; gap:8px; }
+.mam-p { display:flex; gap:12px; align-items:center; padding:10px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); font-size:14px; color:var(--muted); }
+.mam-tag { font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--accent); min-width:64px; }
+
+/* === Consistency === */
+.consist-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.cs-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; display:flex; flex-direction:column; gap:8px; }
+.cs-use { font-size:12px; color:var(--accent); margin-top:auto; }
+.cs-strong { border-top:3px solid var(--accent-rose); }
+.cs-ryw { border-top:3px solid var(--accent-amber); }
+.cs-eventual { border-top:3px solid var(--accent-green); }
+.cs-conflict { border-top:3px solid var(--accent); }
+
+/* === MaaS flows === */
+.maas-flow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.mf-step { font-size:14px; font-weight:600; padding:8px 14px; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; }
+.mf-arrow { color:var(--accent); font-size:14px; }
+.maas-features { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.maas-f { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+.zep-questions { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+.zq-item { padding:12px 18px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); font-style:italic; font-size:16px; color:var(--text-light); }
+.zep-key { padding:16px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+
+/* === LangMem/Letta compare === */
+.ll-compare { display:grid; grid-template-columns:1fr auto 1fr; gap:20px; align-items:stretch; }
+.ll-panel { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); overflow:hidden; }
+.ll-header { padding:14px 20px; font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:0.05em; }
+.ll-lm { background:rgba(31,181,122,0.1); color:var(--accent-green); }
+.ll-lt { background:rgba(0,184,184,0.1); color:var(--accent-bright); }
+.ll-body { padding:20px; }
+.ll-pos { font-weight:600; color:rgba(244,246,250,0.85); margin-bottom:8px; }
+.ll-vs { display:flex; align-items:center; font-weight:700; color:rgba(255,255,255,0.2); }
+
+/* === PII === */
+.pii-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.pii-item { display:flex; gap:10px; align-items:center; padding:12px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); font-size:14px; }
+.pii-icon { color:var(--accent); font-size:16px; }
+
+/* === Forget chain === */
+.forget-chain { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.fc-node { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; text-align:center; }
+.fc-node h3 { font-size:14px; }
+
+/* === Inject === */
+.inject-rules { display:flex; flex-direction:column; gap:12px; margin-top:16px; }
+.ir-item { font-size:18px; color:rgba(244,246,250,0.75); padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+
+/* === Academic === */
+.academic-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.ac-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:22px; display:flex; flex-direction:column; gap:8px; }
+.ac-detail { font-size:13px; color:var(--muted); margin-top:auto; }
+
+/* === Ref arch === */
+.ref-arch { display:flex; flex-direction:column; gap:6px; }
+.ra-layer { display:flex; align-items:center; gap:16px; padding:12px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); border-left:3px solid var(--accent); }
+.ra-num { font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--accent); min-width:24px; }
+.ra-name { font-weight:700; font-size:15px; min-width:140px; }
+.ra-q { font-size:14px; color:var(--muted); font-style:italic; }
+
+/* === Closing === */
+.closing-slide { padding:80px 120px; display:flex; flex-direction:column; justify-content:center; gap:24px; height:100%; }
+.closing-slide h1 { font-size:44px; }
+.closing-rules { display:flex; flex-direction:column; gap:8px; }
+.cl-rule { display:flex; gap:24px; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+.cl-what { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent-bright); min-width:120px; }
+.cl-answer { font-size:17px; color:rgba(244,246,250,0.75); }
+
+/* === Counter/Notes === */
+.slide-counter { position:fixed; bottom:1.2rem; right:2rem; font-family:var(--font-mono); font-size:0.75rem; color:var(--muted); z-index:100; pointer-events:none; }
+.notes-panel { display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.9); color:#fff; padding:1.5rem 2rem; font-size:0.9rem; line-height:1.5; z-index:200; max-height:30vh; overflow-y:auto; }
+.notes-panel.visible { display:block; }
+
+/* === Motion === */
+[data-anim] { opacity:1; transform:none; }
+html.motion-ready:not(.motion-static) .slide.active[data-animate="cascade"] [data-anim],
+html.motion-ready:not(.motion-static) .slide.active[data-animate="quote"] [data-anim],
+html.motion-ready:not(.motion-static) .slide.active[data-animate="data"] [data-anim],
+html.motion-ready:not(.motion-static) .slide.active[data-animate="diagram"] [data-anim] {
+  animation:anim-cascade 520ms cubic-bezier(0.2,0.8,0.2,1) both;
+  animation-delay:calc(var(--anim-index,0)*90ms);
+}
+html.motion-ready:not(.motion-static) .slide.active[data-animate="hero"] [data-anim] {
+  animation:anim-hero 720ms cubic-bezier(0.2,0.8,0.2,1) both;
+  animation-delay:calc(var(--anim-index,0)*140ms);
+}
+html.motion-ready:not(.motion-static) .slide.active[data-animate="directional"] [data-anim] {
+  animation:anim-cascade 520ms cubic-bezier(0.2,0.8,0.2,1) both;
+  animation-delay:calc(var(--anim-index,0)*120ms);
+}
+html.motion-ready:not(.motion-static) .slide.active[data-animate="directional"] [data-anim="left"] { animation-name:anim-slide-left; }
+html.motion-ready:not(.motion-static) .slide.active[data-animate="directional"] [data-anim="right"] { animation-name:anim-slide-right; }
+html.motion-ready:not(.motion-static) .slide.active[data-animate="directional"] [data-anim="divider"] { animation-name:anim-divider; }
+html.motion-ready:not(.motion-static) .slide.active[data-animate="pipeline"] [data-anim] {
+  opacity:0; transform:translateY(14px); transition:opacity 260ms ease,transform 260ms ease;
+}
+html.motion-ready:not(.motion-static) .slide.active[data-animate="pipeline"] [data-anim].revealed { opacity:1; transform:translateY(0); }
+html.motion-static [data-anim],html.motion-static .slide.active[data-animate="pipeline"] [data-anim],html.motion-static .slide * {
+  opacity:1!important; transform:none!important; animation:none!important; transition:none!important;
+}
+@keyframes anim-cascade { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+@keyframes anim-hero { from { opacity:0; transform:translateY(20px) scale(0.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes anim-slide-left { from { opacity:0; transform:translateX(-32px); } to { opacity:1; transform:translateX(0); } }
+@keyframes anim-slide-right { from { opacity:0; transform:translateX(32px); } to { opacity:1; transform:translateX(0); } }
+@keyframes anim-divider { from { opacity:0; transform:scaleY(0.2); } to { opacity:1; transform:scaleY(1); } }
+@keyframes anim-pop { from { opacity:0; transform:translateY(10px) scale(0.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+@media (prefers-reduced-motion:reduce) { .slide,.slide * { transition:none!important; animation:none!important; } [data-anim] { opacity:1!important; transform:none!important; } }
+@media print { html,body { overflow:visible; height:auto; } .slide { position:relative; opacity:1!important; pointer-events:auto; page-break-after:always; transform:none!important; } .slide * { opacity:1!important; transform:none!important; animation:none!important; transition:none!important; } .slide-counter,.notes-panel { display:none!important; } }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+  <section class="slide active" data-layout="L-COVER" data-theme="light" data-animate="hero" data-notes="">
+
+<div class="cover-slide">
+  <div class="top-bar"></div>
+  <div class="cover-nav">
+    <span class="nav-left">AGENT MEMORY</span>
+    <span class="nav-right-pills">
+      <span class="nav-pill active">Memory</span>
+      <span class="nav-pill">State</span>
+      <span class="nav-pill">Multi-Agent</span>
+      <span class="nav-pill">Safety</span>
+    </span>
+  </div>
+  <div class="cover-body">
+    <div class="kicker" data-anim>Enterprise Agent Engineering · Module 02</div>
+    <h1 data-anim>Agent 记忆<br>与状态管理</h1>
+    <p class="cover-sub" data-anim>从短期上下文窗口到长期知识图谱，从 FSM 执行状态到 Checkpoint/Resume，<br>构建 Agent 系统的记忆与状态工程闭环</p>
+    <div class="cover-kpi-strip" data-anim>
+      <div class="cover-kpi"><span class="cover-kpi-num">7</span><span class="cover-kpi-label">Memory Layers</span></div>
+      <div class="cover-kpi"><span class="cover-kpi-num">5</span><span class="cover-kpi-label">Retrieval Signals</span></div>
+      <div class="cover-kpi"><span class="cover-kpi-num">4</span><span class="cover-kpi-label">MaaS Platforms</span></div>
+      <div class="cover-kpi"><span class="cover-kpi-num">8</span><span class="cover-kpi-label">Architecture Layers</span></div>
+    </div>
+  </div>
+  <div class="cover-tags" data-anim>
+    <span class="tech-tag">Mem0</span>
+    <span class="tech-tag">Zep / Graphiti</span>
+    <span class="tech-tag">LangGraph</span>
+    <span class="tech-tag">Letta / MemGPT</span>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-STATEMENT" data-theme="dark" data-animate="quote" data-notes="">
+
+<div class="statement-block">
+  <div class="kicker" data-anim>核心问题</div>
+  <h1 data-anim>无状态 LLM 的本质限制：每次调用从零开始</h1>
+  <div class="two-col-statement" data-anim>
+    <div class="ts-card">
+      <h3>记忆</h3>
+      <p>回答 "Agent 知道什么"</p>
+      <span class="ts-sub">用户偏好 · 历史事实 · 学到的规则</span>
+    </div>
+    <div class="ts-card">
+      <h3>状态</h3>
+      <p>回答 "当前执行到哪里"</p>
+      <span class="ts-sub">工作流进度 · 检查点 · 待审批项</span>
+    </div>
+  </div>
+  <p class="lead" data-anim>这两者必须在架构上显式分离——混为一谈是最常见的设计错误</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Memory Taxonomy</div>
+  <h1 data-anim>Agent 记忆七层体系</h1>
+  <div class="mem-layers" data-anim>
+    <div class="ml-card"><span class="ml-tag ml-t1">L1</span><h3>短期记忆</h3><p>当前对话窗口 · 分钟级 · 上下文缓冲区</p></div>
+    <div class="ml-card"><span class="ml-tag ml-t2">L2</span><h3>工作记忆</h3><p>结构化临时状态 · 任务级 · Scratchpad</p></div>
+    <div class="ml-card"><span class="ml-tag ml-t3">L3</span><h3>中期记忆</h3><p>会话摘要 · 小时~天 · 压缩存储</p></div>
+    <div class="ml-card"><span class="ml-tag ml-t4">L4</span><h3>长期语义</h3><p>泛化事实与规则 · 永久 · 知识库</p></div>
+    <div class="ml-card"><span class="ml-tag ml-t5">L5</span><h3>长期情景</h3><p>具体事件记录 · 永久 · 事件日志</p></div>
+    <div class="ml-card"><span class="ml-tag ml-t6">L6</span><h3>程序性记忆</h3><p>可复用技能与策略 · 永久 · Playbook</p></div>
+    <div class="ml-card"><span class="ml-tag ml-t7">L7</span><h3>执行状态</h3><p>工作流进度 · 任务级 · 检查点</p></div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-COMPARISON" data-theme="light" data-animate="directional" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Memory Types</div>
+  <h1 data-anim>情景 → 语义 → 程序性：从原始素材到泛化技能</h1>
+  <div class="mem-compare" data-anim>
+    <div class="mc-panel" data-anim="left">
+      <div class="mc-header mc-ep">情景记忆</div>
+      <div class="mc-body">
+        <p class="mc-example">"7 月 14 日 Schema 迁移后部署失败"</p>
+        <p>具体事件 · 带时间戳 · 不可变的原始素材</p>
+      </div>
+    </div>
+    <div class="mc-arrow" data-anim="divider">→</div>
+    <div class="mc-panel" data-anim="right">
+      <div class="mc-header mc-sem">语义记忆</div>
+      <div class="mc-body">
+        <p class="mc-example">"部署前必须运行迁移验证"</p>
+        <p>泛化规则 · 从多个情景压缩而来 · 必须保留溯源链</p>
+      </div>
+    </div>
+    <div class="mc-arrow" data-anim="divider">→</div>
+    <div class="mc-panel" data-anim="right">
+      <div class="mc-header mc-proc">程序性记忆</div>
+      <div class="mc-body">
+        <p class="mc-example">完整部署检查清单 + 回滚策略</p>
+        <p>可复用技能 · 工具使用策略 · Playbook</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Short-term Memory</div>
+  <h1 data-anim>上下文窗口管理的四种策略</h1>
+  <div class="stm-grid" data-anim>
+    <div class="stm-card">
+      <h3>全窗口回放</h3>
+      <p>完整历史 → 模型</p>
+      <span class="stm-fit">适合：短对话 · 简单任务</span>
+      <span class="stm-risk">风险：Token 溢出 · 成本不可控</span>
+    </div>
+    <div class="stm-card">
+      <h3>滑动窗口</h3>
+      <p>保留最近 N 轮</p>
+      <span class="stm-fit">适合：闲聊 · 低上下文依赖</span>
+      <span class="stm-risk">风险：丢失关键早期信息</span>
+    </div>
+    <div class="stm-card">
+      <h3>Token 预算分配</h3>
+      <p>按类别分配 Token 配额</p>
+      <span class="stm-fit">适合：企业级 Agent</span>
+      <span class="stm-risk">风险：分配比例需调优</span>
+    </div>
+    <div class="stm-card">
+      <h3>摘要压缩</h3>
+      <p>旧对话 → 结构化摘要</p>
+      <span class="stm-fit">适合：长对话 · 多轮交互</span>
+      <span class="stm-risk">风险：信息损失 · 摘要幻觉</span>
+    </div>
+  </div>
+  <div class="budget-bar" data-anim>
+    <span class="bb-label">推荐 Token 预算</span>
+    <div class="bb-segments">
+      <span class="bb-seg bb-s1" style="flex:15">系统策略 15%</span>
+      <span class="bb-seg bb-s2" style="flex:20">当前任务 20%</span>
+      <span class="bb-seg bb-s3" style="flex:25">近期对话 25%</span>
+      <span class="bb-seg bb-s4" style="flex:25">检索记忆 25%</span>
+      <span class="bb-seg bb-s5" style="flex:15">工具结果 15%</span>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Summary Compression</div>
+  <h1 data-anim>摘要不是"把旧对话总结一下"——是结构化信息压缩</h1>
+  <div class="summary-format" data-anim>
+    <div class="sf-items">
+      <div class="sf-item"><span class="sf-num">01</span><div><h3>已确认事实</h3><p>经过验证的确定性信息，附来源</p></div></div>
+      <div class="sf-item"><span class="sf-num">02</span><div><h3>决策记录</h3><p>做了什么决定、基于什么证据、排除了什么选项</p></div></div>
+      <div class="sf-item"><span class="sf-num">03</span><div><h3>未解决问题</h3><p>仍需确认的事项，避免被摘要过程静默丢弃</p></div></div>
+      <div class="sf-item"><span class="sf-num">04</span><div><h3>用户偏好与承诺</h3><p>偏好设置、承诺事项、截止日期</p></div></div>
+      <div class="sf-item"><span class="sf-num">05</span><div><h3>工具结果 + 时间戳</h3><p>关键工具调用结果，附执行时间和来源标识</p></div></div>
+    </div>
+  </div>
+  <p class="insight" data-anim>摘要是派生状态而非权威原始记录——必须可溯源到原始对话</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-BULLETS" data-theme="dark" data-animate="cascade" data-notes="">
+
+<div class="content-slide dark-content">
+  <div class="kicker" data-anim>RAG-Augmented Retrieval</div>
+  <h1 data-anim>混合检索器优于单一嵌入</h1>
+  <div class="rag-signals" data-anim>
+    <div class="rs-card"><h3>语义相似度</h3><p>向量嵌入 cosine similarity</p></div>
+    <div class="rs-card"><h3>BM25 关键词</h3><p>精确匹配 · 实体名 · 术语</p></div>
+    <div class="rs-card"><h3>实体匹配</h3><p>NER 提取 → 实体链接</p></div>
+    <div class="rs-card"><h3>元数据过滤</h3><p>租户 · 时间 · 类型 · 来源</p></div>
+    <div class="rs-card"><h3>图遍历</h3><p>实体关系 · 多跳推理</p></div>
+    <div class="rs-card"><h3>重排序</h3><p>Cross-encoder · 上下文相关性</p></div>
+  </div>
+  <p class="insight dark-insight" data-anim>检索 ≠ 记忆：检索到的内容是不可信输入，不能仅因被检索就覆盖系统策略</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Prompt / Context Caching</div>
+  <h1 data-anim>缓存是成本优化手段，不是持久记忆数据库</h1>
+  <div class="cache-grid" data-anim>
+    <div class="cache-card">
+      <h3>Gemini Context Cache</h3>
+      <p>隐式 + 显式缓存 · 大上下文窗口 · 按缓存 Token 计费</p>
+    </div>
+    <div class="cache-card">
+      <h3>Claude Prompt Caching</h3>
+      <p>前缀匹配缓存 · 缓存命中成本降 90% · TTL 5min</p>
+    </div>
+    <div class="cache-card">
+      <h3>Vercel AI Gateway</h3>
+      <p>网关级自动缓存 · 请求去重 · 跨模型兼容</p>
+    </div>
+  </div>
+  <div class="cache-rule" data-anim>
+    <span class="mono-label">架构规则</span>
+    <div class="cr-split">
+      <div class="cr-item cr-static">缓存边界之前 → 静态内容<br><span>工具定义 · 策略文档 · 人设</span></div>
+      <div class="cr-divider">|</div>
+      <div class="cr-item cr-dynamic">缓存边界之后 → 动态内容<br><span>对话状态 · 工具结果 · 检索记忆</span></div>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Long-term · Vector Store</div>
+  <h1 data-anim>向量记忆的生产级元数据设计</h1>
+  <div class="vec-content" data-anim>
+    <div class="vec-platforms">
+      <span class="vp-tag">pgvector</span><span class="vp-tag">Qdrant</span><span class="vp-tag">Pinecone</span><span class="vp-tag">Weaviate</span><span class="vp-tag">Milvus</span>
+    </div>
+    <div class="vec-schema">
+      <div class="vs-row"><code>memory_id</code><span>唯一标识</span></div>
+      <div class="vs-row"><code>tenant_id</code><span>租户隔离</span></div>
+      <div class="vs-row"><code>type</code><span>episodic / semantic / procedural</span></div>
+      <div class="vs-row"><code>source_event_ids</code><span>溯源到原始事件</span></div>
+      <div class="vs-row"><code>valid_from / valid_until</code><span>时间有效性窗口</span></div>
+      <div class="vs-row"><code>confidence</code><span>置信度评分</span></div>
+      <div class="vs-row"><code>sensitivity</code><span>PII / 内部 / 公开</span></div>
+    </div>
+  </div>
+  <p class="insight" data-anim>核心陷阱：相似性 ≠ 真实性——矛盾事实可以共存于向量空间中</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-SYSTEM" data-theme="light" data-animate="diagram" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Long-term · Temporal Knowledge Graph</div>
+  <h1 data-anim>时序知识图谱用 validity interval 表示事实演变</h1>
+  <div class="kg-demo" data-anim>
+    <div class="kg-node" data-anim>用户 A</div>
+    <div class="kg-edge" data-anim>
+      <div class="kg-edge-label">使用工具</div>
+      <div class="kg-validity">2024-01 → 2024-09</div>
+    </div>
+    <div class="kg-node kg-node-accent" data-anim>Slack</div>
+    <div class="kg-edge kg-edge-new" data-anim>
+      <div class="kg-edge-label">迁移至</div>
+      <div class="kg-validity">2024-10 → now</div>
+    </div>
+    <div class="kg-node" data-anim>Teams</div>
+  </div>
+  <div class="kg-caps" data-anim>
+    <div class="kg-cap"><h3>优势</h3><p>实体关系推理 · 事实更新与失效 · 多跳检索 · 溯源</p></div>
+    <div class="kg-cap"><h3>局限</h3><p>实体抽取困难 · 模式设计复杂 · 图构建成本高</p></div>
+  </div>
+  <p class="insight" data-anim>关键区分：区分"当时为真"与"当前为真"——Zep / Graphiti 的时序边模型</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-SYSTEM" data-theme="light" data-animate="diagram" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Hybrid Memory Architecture</div>
+  <h1 data-anim>五层存储各司其职——推荐混合架构</h1>
+  <div class="hybrid-arch" data-anim>
+    <div class="ha-layer" data-anim><span class="ha-label">关系 / KV</span><span class="ha-desc">规范化事实 · 结构化查询</span></div>
+    <div class="ha-layer" data-anim><span class="ha-label">向量索引</span><span class="ha-desc">语义召回 · 相似性检索</span></div>
+    <div class="ha-layer" data-anim><span class="ha-label">知识图谱</span><span class="ha-desc">实体关系 · 时间推理</span></div>
+    <div class="ha-layer" data-anim><span class="ha-label">事件日志</span><span class="ha-desc">不可变源 · 审计追溯</span></div>
+    <div class="ha-layer" data-anim><span class="ha-label">对象存储</span><span class="ha-desc">大型产出物 · 文件附件</span></div>
+  </div>
+  <p class="insight" data-anim>向量索引和图应被视为规范事件的可重建投影——不是真实来源</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-KPI" data-theme="light" data-animate="data" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Retrieval Scoring</div>
+  <h1 data-anim>五信号加权检索评分公式</h1>
+  <div class="formula-display" data-anim>
+    <code>S(m,q) = w<sub>r</sub>·R + w<sub>t</sub>·T + w<sub>i</sub>·I + w<sub>c</sub>·C + w<sub>p</sub>·P</code>
+  </div>
+  <div class="score-signals" data-anim>
+    <div class="ss-card"><span class="ss-var">R</span><h3>相关性</h3><p>语义 + 关键词匹配</p></div>
+    <div class="ss-card"><span class="ss-var">T</span><h3>时效性</h3><p>指数衰减 · 越新越优先</p></div>
+    <div class="ss-card"><span class="ss-var">I</span><h3>重要性</h3><p>事件权重 · 决策影响度</p></div>
+    <div class="ss-card"><span class="ss-var">C</span><h3>置信度</h3><p>来源可靠性 · 验证状态</p></div>
+    <div class="ss-card"><span class="ss-var">P</span><h3>策略兼容</h3><p>权限 · 隐私 · 合规过滤</p></div>
+  </div>
+  <p class="insight" data-anim>近期传闻不应仅因更新就超越旧的权威记录——置信度和来源同样重要</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-CHART" data-theme="light" data-animate="data" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Query-Dependent Retrieval</div>
+  <h1 data-anim>不同查询类型需要不同的检索策略</h1>
+  <div class="query-table" data-anim>
+    <table>
+      <thead><tr><th>查询类型</th><th>首选策略</th><th>示例</th></tr></thead>
+      <tbody>
+        <tr><td class="qt-label">当前偏好</td><td>语义 + 最新有效事实</td><td>"用户喜欢什么格式？"</td></tr>
+        <tr><td class="qt-label">历史问题</td><td>情景 + 时间过滤</td><td>"上周那个 bug 怎么修的？"</td></tr>
+        <tr><td class="qt-label">实体关系</td><td>图遍历</td><td>"张三负责哪些项目？"</td></tr>
+        <tr><td class="qt-label">相似案例</td><td>向量相似度</td><td>"有没有类似的部署故障？"</td></tr>
+        <tr><td class="qt-label">精确值</td><td>结构化 DB 查找</td><td>"当前版本号是多少？"</td></tr>
+        <tr><td class="qt-label">策略操作</td><td>仅权威来源</td><td>"是否有权限执行退款？"</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-STATEMENT" data-theme="dark" data-animate="quote" data-notes="">
+
+<div class="statement-block">
+  <div class="kicker" data-anim>Part II · Working Memory & State</div>
+  <h1 data-anim>工作记忆不是无约束的思维转储<br>是有界、可序列化的结构</h1>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Working Memory</div>
+  <h1 data-anim>类型化状态对象取代自由文本 Scratchpad</h1>
+  <div class="wm-schema" data-anim>
+    <div class="wm-fields">
+      <div class="wm-f"><code>objective</code><span>当前任务目标</span></div>
+      <div class="wm-f"><code>plan</code><span>执行计划与步骤</span></div>
+      <div class="wm-f"><code>current_step</code><span>当前正在执行的步骤</span></div>
+      <div class="wm-f"><code>facts_confirmed</code><span>已验证的事实列表</span></div>
+      <div class="wm-f"><code>hypotheses</code><span>待验证假设（带过期时间）</span></div>
+      <div class="wm-f"><code>tool_results</code><span>工具调用结果（带来源标注）</span></div>
+      <div class="wm-f"><code>pending_approvals</code><span>等待人工审批的项目</span></div>
+      <div class="wm-f"><code>next_action</code><span>下一步行动</span></div>
+    </div>
+    <div class="wm-rules" data-anim>
+      <span class="mono-label">设计规则</span>
+      <p>分离事实与假设 · 标注工具结果来源 · 临时假设自动过期 · 状态可版本化与回滚</p>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Structured Decision Record</div>
+  <h1 data-anim>结构化决策记录取代不受限的隐藏思维链</h1>
+  <div class="decision-record" data-anim>
+    <div class="dr-item"><span class="dr-field">Decision</span><span class="dr-desc">做了什么决定</span></div>
+    <div class="dr-item"><span class="dr-field">Evidence</span><span class="dr-desc">基于什么证据</span></div>
+    <div class="dr-item"><span class="dr-field">Alternatives</span><span class="dr-desc">考虑了哪些替代方案</span></div>
+    <div class="dr-item"><span class="dr-field">Confidence</span><span class="dr-desc">置信度评分</span></div>
+    <div class="dr-item"><span class="dr-field">Approval</span><span class="dr-desc">是否需要人工审批</span></div>
+    <div class="dr-item"><span class="dr-field">Next Action</span><span class="dr-desc">下一步行动</span></div>
+  </div>
+  <p class="insight" data-anim>审计可追溯 · 恢复可重放 · 失败可定位</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-SYSTEM" data-theme="light" data-animate="diagram" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Execution State · FSM</div>
+  <h1 data-anim>有限状态机适合可预测、可审计的线性工作流</h1>
+  <div class="fsm-diagram" data-anim>
+    <div class="fsm-node" data-anim>NEW</div>
+    <div class="fsm-arrow" data-anim>→</div>
+    <div class="fsm-node" data-anim>PLANNING</div>
+    <div class="fsm-arrow" data-anim>→</div>
+    <div class="fsm-node fsm-wait" data-anim>WAITING<br>APPROVAL</div>
+    <div class="fsm-arrow" data-anim>→</div>
+    <div class="fsm-node fsm-exec" data-anim>EXECUTING</div>
+    <div class="fsm-arrow" data-anim>→</div>
+    <div class="fsm-node fsm-done" data-anim>COMPLETE</div>
+  </div>
+  <div class="fsm-retry" data-anim>
+    <span class="fsm-node fsm-fail">FAILED</span>
+    <span class="fsm-arrow">→</span>
+    <span class="fsm-node">RETRYING</span>
+    <span class="fsm-arrow">→</span>
+    <span>回到 EXECUTING</span>
+  </div>
+  <p class="insight" data-anim>适合场景：审批流 · 客服升级 · 支付处理 · 合规工作流</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Execution State · DAG Workflow</div>
+  <h1 data-anim>DAG 工作流支持分支、汇合、并行和部分完成</h1>
+  <div class="dag-content" data-anim>
+    <div class="dag-caps">
+      <div class="dag-cap"><h3>分支</h3><p>条件路由到不同执行路径</p></div>
+      <div class="dag-cap"><h3>汇合</h3><p>多路径结果合并后继续</p></div>
+      <div class="dag-cap"><h3>并行</h3><p>无依赖的节点同时执行</p></div>
+      <div class="dag-cap"><h3>依赖追踪</h3><p>自动管理节点间依赖关系</p></div>
+    </div>
+    <div class="dag-decision" data-anim>
+      <span class="mono-label">选择边界</span>
+      <div class="dag-vs">
+        <div class="dv-item dv-fsm"><span>FSM</span><p>线性流程 · 状态有限 · 可审计</p></div>
+        <div class="dv-sep">vs</div>
+        <div class="dv-item dv-dag"><span>DAG</span><p>复杂依赖 · 并行需求 · 部分完成</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-TIMELINE" data-theme="light" data-animate="pipeline" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Checkpoint / Resume</div>
+  <h1 data-anim>持久检查点必须包含的九项内容</h1>
+  <div class="ckpt-grid">
+    <div class="ck-item" data-anim><span class="ck-num">1</span><div><h3>工作流状态</h3><p>当前所在的 FSM/DAG 节点</p></div></div>
+    <div class="ck-item" data-anim><span class="ck-num">2</span><div><h3>已完成节点</h3><p>哪些步骤已成功执行</p></div></div>
+    <div class="ck-item" data-anim><span class="ck-num">3</span><div><h3>工具调用结果</h3><p>缓存的外部调用结果</p></div></div>
+    <div class="ck-item" data-anim><span class="ck-num">4</span><div><h3>重试计数器</h3><p>每个节点的重试次数</p></div></div>
+    <div class="ck-item" data-anim><span class="ck-num">5</span><div><h3>幂等键</h3><p>防止重复副作用</p></div></div>
+    <div class="ck-item" data-anim><span class="ck-num">6</span><div><h3>人工审批状态</h3><p>待审批 / 已批准 / 已拒绝</p></div></div>
+    <div class="ck-item" data-anim><span class="ck-num">7</span><div><h3>模型版本</h3><p>恢复时使用相同模型</p></div></div>
+    <div class="ck-item" data-anim><span class="ck-num">8</span><div><h3>记忆快照引用</h3><p>指向当时的记忆状态</p></div></div>
+    <div class="ck-item" data-anim><span class="ck-num">9</span><div><h3>稳定 thread_id</h3><p>跨重启的唯一标识</p></div></div>
+  </div>
+  <p class="insight" data-anim>核心规则：每个外部副作用必须是幂等的或受幂等键保护</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-STATEMENT" data-theme="dark" data-animate="quote" data-notes="">
+
+<div class="statement-block">
+  <div class="kicker" data-anim>Long-running Tasks</div>
+  <h1 data-anim>长时程任务状态管理九原则</h1>
+  <div class="nine-rules" data-anim>
+    <div class="nr-row"><span class="nr-num">1</span>追加有意义事件，不修改历史</div>
+    <div class="nr-row"><span class="nr-num">2</span>每步检查点，允许任意位置恢复</div>
+    <div class="nr-row"><span class="nr-num">3</span>稳定运行 ID，跨进程生命周期</div>
+    <div class="nr-row"><span class="nr-num">4</span>外部化大型产出物，状态只存引用</div>
+    <div class="nr-row"><span class="nr-num">5</span>审批边界安全暂停，不阻塞资源</div>
+    <div class="nr-row"><span class="nr-num">6</span>调度唤醒与重试，不轮询等待</div>
+    <div class="nr-row"><span class="nr-num">7</span>记录截止日期与租约，防止僵尸任务</div>
+    <div class="nr-row"><span class="nr-num">8</span>工具调用结果可恢复，不重复执行</div>
+    <div class="nr-row"><span class="nr-num">9</span>运维人员可检查与手动重放</div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-SYSTEM" data-theme="light" data-animate="diagram" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Multi-Agent Memory</div>
+  <h1 data-anim>分层作用域 + 五种访问模式</h1>
+  <div class="multi-agent-mem" data-anim>
+    <div class="mam-scope">
+      <div class="mam-layer mam-global" data-anim>全局策略</div>
+      <div class="mam-layer mam-project" data-anim>项目记忆</div>
+      <div class="mam-layer mam-task" data-anim>任务记忆</div>
+      <div class="mam-layer mam-private" data-anim>Agent 私有工作记忆</div>
+    </div>
+    <div class="mam-patterns" data-anim>
+      <div class="mam-p"><span class="mam-tag">黑板</span>共享读写空间</div>
+      <div class="mam-p"><span class="mam-tag">协调者</span>中介路由</div>
+      <div class="mam-p"><span class="mam-tag">事件总线</span>Pub/Sub</div>
+      <div class="mam-p"><span class="mam-tag">共享图</span>知识图谱</div>
+      <div class="mam-p"><span class="mam-tag">CRDT</span>无冲突复制</div>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Consistency Model</div>
+  <h1 data-anim>高风险系统应保留冲突并要求裁决</h1>
+  <div class="consist-grid" data-anim>
+    <div class="cs-card cs-strong"><h3>强一致性</h3><p>金融 · 权限 · 立即可见</p><span class="cs-use">适用：资金操作 · 权限变更</span></div>
+    <div class="cs-card cs-ryw"><h3>读己所写</h3><p>Agent 自身更新立即可见</p><span class="cs-use">适用：工作记忆 · 决策记录</span></div>
+    <div class="cs-card cs-eventual"><h3>最终一致性</h3><p>低风险 · 允许短暂不一致</p><span class="cs-use">适用：协作知识 · 共享偏好</span></div>
+    <div class="cs-card cs-conflict"><h3>冲突保留</h3><p>不确定事实保留所有版本</p><span class="cs-use">适用：多源矛盾 · 需要裁决</span></div>
+  </div>
+  <p class="insight" data-anim>静默"最后写入者获胜"在 Agent 系统中是危险的——保留冲突比静默覆盖安全</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>MaaS · Mem0</div>
+  <h1 data-anim>Mem0：Agent 和助手的持久记忆层</h1>
+  <div class="maas-content" data-anim>
+    <div class="maas-flow">
+      <span class="mf-step">对话输入</span>
+      <span class="mf-arrow">→</span>
+      <span class="mf-step">提取候选事实</span>
+      <span class="mf-arrow">→</span>
+      <span class="mf-step">去重与更新</span>
+      <span class="mf-arrow">→</span>
+      <span class="mf-step">作用域存储</span>
+      <span class="mf-arrow">→</span>
+      <span class="mf-step">按需检索</span>
+    </div>
+    <div class="maas-features" data-anim>
+      <div class="maas-f"><h3>部署模式</h3><p>托管云 · 自托管 · Python SDK · REST API</p></div>
+      <div class="maas-f"><h3>适合场景</h3><p>用户偏好 · 个性化 · 跨会话助手 · 框架无关</p></div>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>MaaS · Zep / Graphiti</div>
+  <h1 data-anim>Zep：上下文工程与时序知识图谱</h1>
+  <div class="zep-content" data-anim>
+    <div class="zep-questions">
+      <div class="zq-item">"上个月用户认为什么？"</div>
+      <div class="zq-item">"这段关系何时变化？"</div>
+      <div class="zq-item">"做决策时已知什么？"</div>
+    </div>
+    <div class="zep-key" data-anim>
+      <span class="mono-label">核心机制</span>
+      <p>时序边保留历史有效性而非销毁旧声明<br>每条边携带 <code>valid_from</code> / <code>valid_until</code> 和来源引用</p>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-COMPARISON" data-theme="dark" data-animate="directional" data-notes="">
+
+<div class="content-slide dark-content">
+  <div class="kicker" data-anim>MaaS · LangMem & Letta</div>
+  <h1 data-anim>两种记忆管理哲学</h1>
+  <div class="ll-compare" data-anim>
+    <div class="ll-panel" data-anim="left">
+      <div class="ll-header ll-lm">LangMem</div>
+      <div class="ll-body">
+        <p class="ll-pos">记忆管理作为编排图的显式部分</p>
+        <p>适合记忆生命周期操作必须可控的场景</p>
+        <p>与 LangGraph 深度集成</p>
+      </div>
+    </div>
+    <div class="ll-vs" data-anim="divider">VS</div>
+    <div class="ll-panel" data-anim="right">
+      <div class="ll-header ll-lt">Letta / MemGPT</div>
+      <div class="ll-body">
+        <p class="ll-pos">上下文管理即操作系统</p>
+        <p>Agent 通过工具调用在三层存储间移动信息</p>
+        <p>Memory Blocks · Recall · Archival</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Memory Safety · PII</div>
+  <h1 data-anim>在模型调用和持久化之前检测和编辑 PII</h1>
+  <div class="pii-controls" data-anim>
+    <div class="pii-grid">
+      <div class="pii-item"><span class="pii-icon">◉</span>标识符令牌化</div>
+      <div class="pii-item"><span class="pii-icon">◎</span>传输与静态加密</div>
+      <div class="pii-item"><span class="pii-icon">◈</span>租户隔离</div>
+      <div class="pii-item"><span class="pii-icon">⬡</span>字段级 ACL</div>
+      <div class="pii-item"><span class="pii-icon">◇</span>日志不存原始 Prompt</div>
+      <div class="pii-item"><span class="pii-icon">△</span>敏感性分类标签</div>
+      <div class="pii-item"><span class="pii-icon">▣</span>保留期限策略</div>
+      <div class="pii-item"><span class="pii-icon">▸</span>读写审计日志</div>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-TIMELINE" data-theme="light" data-animate="pipeline" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Right to be Forgotten</div>
+  <h1 data-anim>删除必须覆盖每个表示层</h1>
+  <div class="forget-chain">
+    <div class="fc-node" data-anim><h3>源对话</h3></div>
+    <div class="fc-node" data-anim><h3>提取记忆</h3></div>
+    <div class="fc-node" data-anim><h3>摘要</h3></div>
+    <div class="fc-node" data-anim><h3>向量嵌入</h3></div>
+    <div class="fc-node" data-anim><h3>图节点</h3></div>
+    <div class="fc-node" data-anim><h3>缓存</h3></div>
+    <div class="fc-node" data-anim><h3>日志</h3></div>
+    <div class="fc-node" data-anim><h3>备份</h3></div>
+  </div>
+  <p class="insight" data-anim>ChatGPT Memory 的教训：仅删除记忆条目不够——可能需要删除关联的源聊天和文件</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-STATEMENT" data-theme="dark" data-animate="quote" data-notes="">
+
+<div class="statement-block">
+  <div class="kicker" data-anim>Memory Safety · Injection Defense</div>
+  <h1 data-anim>检索到的记忆是不可信输入</h1>
+  <div class="inject-rules" data-anim>
+    <div class="ir-item">存储溯源，将检索内容标记为数据而非指令</div>
+    <div class="ir-item">不允许记忆记录仅因被检索就覆盖系统策略</div>
+    <div class="ir-item">对注入攻击的记忆进行异常检测和过滤</div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-CHART" data-theme="light" data-animate="data" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Production Comparison</div>
+  <h1 data-anim>生产案例架构教训对比</h1>
+  <div class="prod-table" data-anim>
+    <table>
+      <thead><tr><th>平台</th><th>记忆类型</th><th>核心教训</th></tr></thead>
+      <tbody>
+        <tr><td class="qt-label">ChatGPT Memory</td><td>用户级语义记忆</td><td>删除覆盖不完整 · 用户控制需透明</td></tr>
+        <tr><td class="qt-label">Gemini Memory</td><td>隐式上下文缓存</td><td>缓存 ≠ 持久记忆 · 需要显式管理</td></tr>
+        <tr><td class="qt-label">Claude Caching</td><td>前缀匹配缓存</td><td>静态内容前置 · 动态内容后置</td></tr>
+        <tr><td class="qt-label">LangGraph</td><td>检查点持久化</td><td>thread_id 稳定性 · 暂停/恢复设计</td></tr>
+        <tr><td class="qt-label">Letta/MemGPT</td><td>三层内存管理</td><td>Agent 自主管理上下文 · 显式分页</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Academic Frontier</div>
+  <h1 data-anim>三项学术工作定义了 Agent 记忆范式</h1>
+  <div class="academic-grid" data-anim>
+    <div class="ac-card">
+      <h3>MemGPT</h3>
+      <p>上下文窗口即有限工作记忆</p>
+      <span class="ac-detail">Agent 通过工具调用显式分页管理上下文，类比操作系统虚拟内存</span>
+    </div>
+    <div class="ac-card">
+      <h3>Generative Agents (Stanford)</h3>
+      <p>记忆流 + 检索 + 反思 + 规划</p>
+      <span class="ac-detail">25 个 Agent 在沙箱中展现涌现社会行为，记忆流是核心驱动力</span>
+    </div>
+    <div class="ac-card">
+      <h3>Reflexion</h3>
+      <p>自然语言反思存储驱动行为改善</p>
+      <span class="ac-detail">不更新模型权重，而是将失败经验存为文本记忆在后续任务中检索</span>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-SYSTEM" data-theme="light" data-animate="diagram" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Reference Architecture</div>
+  <h1 data-anim>推荐八层完整记忆与状态架构</h1>
+  <div class="ref-arch" data-anim>
+    <div class="ra-layer" data-anim><span class="ra-num">8</span><span class="ra-name">治理层</span><span class="ra-q">"此 Agent 被允许记住什么"</span></div>
+    <div class="ra-layer" data-anim><span class="ra-num">7</span><span class="ra-name">检索策略</span><span class="ra-q">"什么是相关的"</span></div>
+    <div class="ra-layer" data-anim><span class="ra-num">6</span><span class="ra-name">上下文组装器</span><span class="ra-q">"放进提示词的是什么"</span></div>
+    <div class="ra-layer" data-anim><span class="ra-num">5</span><span class="ra-name">混合长期存储</span><span class="ra-q">"什么是普遍成立的"</span></div>
+    <div class="ra-layer" data-anim><span class="ra-num">4</span><span class="ra-name">记忆提取管道</span><span class="ra-q">"从对话中提取什么"</span></div>
+    <div class="ra-layer" data-anim><span class="ra-num">3</span><span class="ra-name">持久检查点</span><span class="ra-q">"从哪里恢复"</span></div>
+    <div class="ra-layer" data-anim><span class="ra-num">2</span><span class="ra-name">类型化工作状态</span><span class="ra-q">"现在正发生什么"</span></div>
+    <div class="ra-layer" data-anim><span class="ra-num">1</span><span class="ra-name">不可变事件日志</span><span class="ra-q">"发生了什么"</span></div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-CLOSING" data-theme="dark" data-animate="hero" data-notes="">
+
+<div class="closing-slide">
+  <div class="kicker" data-anim>Summary</div>
+  <h1 data-anim>实用经验法则</h1>
+  <div class="closing-rules" data-anim>
+    <div class="cl-rule"><span class="cl-what">结构化状态</span><span class="cl-answer">"现在正发生什么"</span></div>
+    <div class="cl-rule"><span class="cl-what">事件日志</span><span class="cl-answer">"发生了什么"</span></div>
+    <div class="cl-rule"><span class="cl-what">语义记忆</span><span class="cl-answer">"什么是普遍成立的"</span></div>
+    <div class="cl-rule"><span class="cl-what">向量索引</span><span class="cl-answer">"什么是相似的"</span></div>
+    <div class="cl-rule"><span class="cl-what">知识图谱</span><span class="cl-answer">"谁 / 什么相关，以及何时"</span></div>
+    <div class="cl-rule"><span class="cl-what">检查点</span><span class="cl-answer">"从哪里恢复"</span></div>
+    <div class="cl-rule"><span class="cl-what">缓存</span><span class="cl-answer">"什么可以低成本复用"</span></div>
+    <div class="cl-rule"><span class="cl-what">策略与 ACL</span><span class="cl-answer">"此 Agent 被允许记住什么"</span></div>
+  </div>
+</div>
+
+  </section>
+</div>
+<div class="slide-counter" id="counter">1 / 32</div>
+<div class="notes-panel" id="notes"></div>
+<script>
+(function(){
+  var root=document.documentElement,slides=document.querySelectorAll('.slide'),counter=document.getElementById('counter'),notesPanel=document.getElementById('notes'),current=0,notesVisible=false,wheelLockedUntil=0;
+  root.classList.add('motion-ready');
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches)root.classList.add('motion-static');
+  function isStatic(){return root.classList.contains('motion-static');}
+  function getItems(s){return Array.from(s.querySelectorAll('[data-anim]'));}
+  function revealAll(s){getItems(s).forEach(function(i){i.classList.add('revealed');});}
+  function prep(s){var items=getItems(s);items.forEach(function(i,idx){i.style.setProperty('--anim-index',idx);i.classList.remove('revealed');});if(isStatic())revealAll(s);else if(s.dataset.animate==='pipeline'&&items.length>0)items[0].classList.add('revealed');}
+  function revealNext(s){if(isStatic()||s.dataset.animate!=='pipeline')return false;var n=getItems(s).find(function(i){return!i.classList.contains('revealed');});if(!n)return false;n.classList.add('revealed');return true;}
+  function hidePrev(s){if(isStatic()||s.dataset.animate!=='pipeline')return false;var r=getItems(s).filter(function(i){return i.classList.contains('revealed');});if(r.length<=1)return false;r[r.length-1].classList.remove('revealed');return true;}
+  function goTo(n){if(n<0||n>=slides.length)return;slides[current].classList.remove('active');current=n;slides[current].classList.add('active');prep(slides[current]);counter.textContent=(current+1)+' / '+slides.length;if(notesVisible)notesPanel.textContent=slides[current].getAttribute('data-notes')||'(No notes)';}
+  function advance(){if(revealNext(slides[current]))return;goTo(current+1);}
+  function retreat(){if(hidePrev(slides[current]))return;goTo(current-1);}
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();advance();}
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();retreat();}
+    else if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
+    else if(e.key==='p'||e.key==='P'){notesVisible=!notesVisible;notesPanel.classList.toggle('visible',notesVisible);if(notesVisible)notesPanel.textContent=slides[current].getAttribute('data-notes')||'(No notes)';}
+    else if(e.key==='b'||e.key==='B'){root.classList.toggle('motion-static');if(root.classList.contains('motion-static'))slides.forEach(revealAll);else prep(slides[current]);}
+    else if(e.key==='Home'){e.preventDefault();goTo(0);}
+    else if(e.key==='End'){e.preventDefault();goTo(slides.length-1);}
+  });
+  var touchStartX=0;
+  document.addEventListener('touchstart',function(e){touchStartX=e.changedTouches[0].screenX;});
+  document.addEventListener('touchend',function(e){var d=touchStartX-e.changedTouches[0].screenX;if(Math.abs(d)>50){d>0?advance():retreat();}});
+  document.addEventListener('wheel',function(e){if(Math.abs(e.deltaY)<30)return;var now=Date.now();if(now<wheelLockedUntil)return;wheelLockedUntil=now+450;e.preventDefault();e.deltaY>0?advance():retreat();},{passive:false});
+  slides.forEach(function(s){if(!s.dataset.animate)s.dataset.animate='cascade';});
+  counter.textContent='1 / '+slides.length;prep(slides[current]);
+})();
+</script>
+</body>
+</html>
