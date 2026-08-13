@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Agent 并发控制与调度系统</title>
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg-light: #F4F6FA; --bg-dark: #0F172A; --bg-card: #FFFFFF;
+  --text-light: #0F172A; --text-dark: #F4F6FA;
+  --accent: #0D6670; --accent-bright: #00B8B8; --accent-green: #1FB57A;
+  --accent-amber: #F5A524; --accent-rose: #E84A6F;
+  --muted: #5A6379; --muted-light: rgba(15,23,42,0.4);
+  --border: #E3E7F2; --border-strong: #C9D0E2;
+  --font-heading: 'Inter','Helvetica Neue',Arial,sans-serif;
+  --font-body: 'Inter','Helvetica Neue',Arial,sans-serif;
+  --font-mono: 'JetBrains Mono','Fira Code',monospace;
+  --transition-speed: 0.4s; --radius: 10px;
+}
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+html,body { width:100%; height:100%; overflow:hidden; background:var(--bg-dark); }
+
+.deck { position:relative; width:100%; height:100%; }
+.slide {
+  position:absolute; top:0; left:0; width:100vw; height:100vh;
+  display:flex; flex-direction:column; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity var(--transition-speed) ease; overflow:hidden;
+}
+.slide.active { opacity:1; pointer-events:auto; }
+.slide[data-theme="light"] { background:var(--bg-light); color:var(--text-light); }
+.slide[data-theme="dark"] { background:var(--bg-dark); color:var(--text-dark); }
+
+/* === Cover === */
+.cover-slide { width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; padding:80px 100px; position:relative; }
+.top-bar { position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,#0D6670 0%,#00B8B8 40%,#1FB57A 100%); }
+.cover-nav { position:absolute; top:36px; left:100px; right:100px; display:flex; justify-content:space-between; align-items:center; }
+.nav-left { font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--accent); letter-spacing:0.15em; text-transform:uppercase; }
+.nav-right-pills { display:flex; gap:20px; }
+.nav-pill { font-size:11px; font-weight:600; color:var(--muted-light); letter-spacing:0.08em; text-transform:uppercase; padding:6px 14px; border-radius:4px; }
+.nav-pill.active { color:var(--accent); background:rgba(13,102,112,0.07); border:1px solid rgba(13,102,112,0.18); }
+.cover-body { max-width:1100px; }
+.cover-slide .kicker { font-family:var(--font-mono); font-size:14px; font-weight:500; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); margin-bottom:20px; }
+.cover-slide h1 { font-size:58px; font-weight:900; line-height:1.08; color:var(--text-light); margin-bottom:24px; }
+.cover-sub { font-size:20px; line-height:1.6; color:var(--muted); max-width:780px; margin-bottom:48px; }
+.cover-kpi-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; max-width:1000px; }
+.cover-kpi { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:24px 20px; display:flex; flex-direction:column; gap:8px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+.cover-kpi-num { font-family:var(--font-mono); font-size:32px; font-weight:600; color:var(--accent); }
+.cover-kpi-label { font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
+.cover-tags { position:absolute; bottom:44px; left:100px; display:flex; gap:24px; }
+.tech-tag { font-family:var(--font-mono); font-size:11px; font-weight:500; color:var(--muted-light); padding:5px 12px; border:1px solid var(--border); border-radius:4px; background:var(--bg-card); }
+
+/* === Content === */
+.content-slide { padding:48px 100px 60px; display:flex; flex-direction:column; gap:20px; width:100%; height:100%; justify-content:center; }
+.content-slide .kicker,.statement-block .kicker,.closing-slide .kicker { font-family:var(--font-mono); font-size:13px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent); }
+.dark-content .kicker { color:var(--accent-bright); }
+.content-slide h1,.statement-block h1,.closing-slide h1 { font-family:var(--font-heading); font-size:36px; font-weight:800; line-height:1.18; max-width:1200px; }
+.content-slide h3 { font-size:17px; font-weight:700; line-height:1.3; }
+.content-slide p { font-size:15px; line-height:1.55; color:var(--muted); }
+.dark-content p { color:rgba(244,246,250,0.6); }
+.insight { font-size:14px; font-style:italic; color:var(--muted); padding-top:12px; border-top:1px solid var(--border); }
+.dark-insight { color:rgba(244,246,250,0.45); border-color:rgba(255,255,255,0.1); }
+.mono-label { font-family:var(--font-mono); font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent); margin-bottom:6px; display:block; }
+code { font-family:var(--font-mono); font-size:14px; padding:2px 6px; background:rgba(13,102,112,0.05); border-radius:3px; }
+
+/* === Statement === */
+.statement-block { padding:80px 120px; display:flex; flex-direction:column; justify-content:center; gap:24px; height:100%; }
+.statement-block h1 { font-size:44px; max-width:900px; }
+.lead { font-size:20px; color:rgba(244,246,250,0.55); max-width:700px; line-height:1.5; }
+
+/* === Cards & Grids === */
+.mem-layers { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.ml-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px 16px; display:flex; flex-direction:column; gap:6px; }
+.ml-tag { font-family:var(--font-mono); font-size:11px; font-weight:700; padding:3px 8px; border-radius:3px; width:fit-content; letter-spacing:0.08em; }
+.ml-t1 { background:rgba(13,102,112,0.1); color:var(--accent); }
+.ml-t2 { background:rgba(30,26,120,0.1); color:#1E1A78; }
+.ml-t3 { background:rgba(245,165,36,0.1); color:var(--accent-amber); }
+.ml-t4 { background:rgba(31,181,122,0.1); color:var(--accent-green); }
+.ml-t5 { background:rgba(232,74,111,0.1); color:var(--accent-rose); }
+
+/* === Numbered items === */
+.sf-items { display:flex; flex-direction:column; gap:10px; }
+.sf-item { display:flex; gap:14px; align-items:flex-start; padding:10px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+.sf-num { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent); min-width:28px; padding-top:2px; }
+
+/* === Tables === */
+table { width:100%; border-collapse:collapse; font-size:14px; background:var(--bg-card); border-radius:var(--radius); overflow:hidden; border:1px solid var(--border); }
+th { font-family:var(--font-mono); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; padding:14px 16px; text-align:left; background:rgba(13,102,112,0.05); color:var(--accent); border-bottom:2px solid var(--border); }
+td { padding:12px 16px; border-bottom:1px solid var(--border); color:var(--muted); }
+.qt-label { text-align:left; font-weight:600; color:var(--text-light); }
+
+/* === Nine rules (reused for 12 rules) === */
+.nine-rules { display:flex; flex-direction:column; gap:8px; margin-top:16px; }
+.nr-row { display:flex; gap:14px; align-items:center; font-size:16px; color:rgba(244,246,250,0.8); padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+.nr-num { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent-bright); min-width:24px; }
+
+/* === Closing === */
+.closing-slide { padding:80px 120px; display:flex; flex-direction:column; justify-content:center; gap:24px; height:100%; }
+.closing-slide h1 { font-size:44px; }
+.closing-rules { display:flex; flex-direction:column; gap:8px; }
+.cl-rule { display:flex; gap:24px; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+.cl-what { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent-bright); min-width:120px; }
+.cl-answer { font-size:17px; color:rgba(244,246,250,0.75); }
+
+/* === Ref arch === */
+.ref-arch { display:flex; flex-direction:column; gap:6px; }
+.ra-layer { display:flex; align-items:center; gap:16px; padding:12px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); border-left:3px solid var(--accent); }
+.ra-num { font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--accent); min-width:24px; }
+.ra-name { font-weight:700; font-size:15px; min-width:140px; }
+.ra-q { font-size:14px; color:var(--muted); font-style:italic; }
+
+/* === Formula === */
+.formula-display { text-align:center; padding:16px; }
+.formula-display code { font-size:20px; font-weight:500; color:var(--accent); background:none; }
+
+/* === Hybrid arch === */
+.hybrid-arch { display:flex; flex-direction:column; gap:8px; }
+.ha-layer { display:flex; align-items:center; gap:20px; padding:14px 24px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); border-left:3px solid var(--accent); }
+.ha-label { font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--accent); min-width:100px; }
+.ha-desc { font-size:14px; color:var(--muted); }
+
+/* === Counter/Notes === */
+.slide-counter { position:fixed; bottom:1.2rem; right:2rem; font-family:var(--font-mono); font-size:0.75rem; color:var(--muted); z-index:100; pointer-events:none; }
+.notes-panel { display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.9); color:#fff; padding:1.5rem 2rem; font-size:0.9rem; line-height:1.5; z-index:200; max-height:30vh; overflow-y:auto; }
+.notes-panel.visible { display:block; }
+
+/* === Motion === */
+[data-anim] { opacity:1; transform:none; }
+html.motion-ready:not(.motion-static) .slide.active[data-animate="cascade"] [data-anim],
+html.motion-ready:not(.motion-static) .slide.active[data-animate="quote"] [data-anim],
+html.motion-ready:not(.motion-static) .slide.active[data-animate="data"] [data-anim],
+html.motion-ready:not(.motion-static) .slide.active[data-animate="diagram"] [data-anim] {
+  animation:anim-cascade 520ms cubic-bezier(0.2,0.8,0.2,1) both;
+  animation-delay:calc(var(--anim-index,0)*90ms);
+}
+html.motion-ready:not(.motion-static) .slide.active[data-animate="hero"] [data-anim] {
+  animation:anim-hero 720ms cubic-bezier(0.2,0.8,0.2,1) both;
+  animation-delay:calc(var(--anim-index,0)*140ms);
+}
+html.motion-ready:not(.motion-static) .slide.active[data-animate="directional"] [data-anim] {
+  animation:anim-cascade 520ms cubic-bezier(0.2,0.8,0.2,1) both;
+  animation-delay:calc(var(--anim-index,0)*120ms);
+}
+html.motion-ready:not(.motion-static) .slide.active[data-animate="directional"] [data-anim="left"] { animation-name:anim-slide-left; }
+html.motion-ready:not(.motion-static) .slide.active[data-animate="directional"] [data-anim="right"] { animation-name:anim-slide-right; }
+html.motion-ready:not(.motion-static) .slide.active[data-animate="directional"] [data-anim="divider"] { animation-name:anim-divider; }
+html.motion-ready:not(.motion-static) .slide.active[data-animate="pipeline"] [data-anim] {
+  opacity:0; transform:translateY(14px); transition:opacity 260ms ease,transform 260ms ease;
+}
+html.motion-ready:not(.motion-static) .slide.active[data-animate="pipeline"] [data-anim].revealed { opacity:1; transform:translateY(0); }
+html.motion-static [data-anim],html.motion-static .slide.active[data-animate="pipeline"] [data-anim],html.motion-static .slide * {
+  opacity:1!important; transform:none!important; animation:none!important; transition:none!important;
+}
+@keyframes anim-cascade { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+@keyframes anim-hero { from { opacity:0; transform:translateY(20px) scale(0.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes anim-slide-left { from { opacity:0; transform:translateX(-32px); } to { opacity:1; transform:translateX(0); } }
+@keyframes anim-slide-right { from { opacity:0; transform:translateX(32px); } to { opacity:1; transform:translateX(0); } }
+@keyframes anim-divider { from { opacity:0; transform:scaleY(0.2); } to { opacity:1; transform:scaleY(1); } }
+@keyframes anim-pop { from { opacity:0; transform:translateY(10px) scale(0.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+@media (prefers-reduced-motion:reduce) { .slide,.slide * { transition:none!important; animation:none!important; } [data-anim] { opacity:1!important; transform:none!important; } }
+@media print { html,body { overflow:visible; height:auto; } .slide { position:relative; opacity:1!important; pointer-events:auto; page-break-after:always; transform:none!important; } .slide * { opacity:1!important; transform:none!important; animation:none!important; transition:none!important; } .slide-counter,.notes-panel { display:none!important; } }
+
+/* ========================================================
+   Concurrency Deck - Additional Components
+   ======================================================== */
+
+/* Contradiction cards (dark slide, vs divider) */
+.contradiction-strip { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:16px; }
+.contra-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); padding:22px 20px; text-align:center; }
+.contra-card h3 { color:var(--accent-bright); font-size:18px; margin-bottom:4px; }
+.contra-vs { font-family:var(--font-mono); font-size:12px; font-weight:700; color:rgba(255,255,255,0.25); display:block; margin:6px 0; letter-spacing:0.15em; }
+.contra-card p { font-size:14px; color:rgba(244,246,250,0.55); }
+
+/* Comparison cards (side-by-side) */
+.compare-grid { display:grid; grid-template-columns:1fr auto 1fr; gap:20px; align-items:stretch; }
+.cmp-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.cmp-header { padding:14px 20px; font-weight:700; font-size:15px; letter-spacing:0.05em; text-transform:uppercase; }
+.cmp-left-h { background:rgba(232,74,111,0.06); color:var(--accent-rose); }
+.cmp-right-h { background:rgba(13,102,112,0.06); color:var(--accent); }
+.cmp-body { padding:20px; }
+.cmp-body p { font-size:14px; margin-bottom:8px; }
+.cmp-vs { display:flex; align-items:center; font-family:var(--font-mono); font-weight:700; color:var(--border-strong); font-size:18px; }
+
+/* 4-col comparison grid */
+.diff-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.diff-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px 16px; display:flex; flex-direction:column; gap:8px; }
+.diff-card h3 { font-size:16px; }
+.diff-before { font-size:13px; color:var(--accent-rose); font-weight:600; }
+.diff-after { font-size:13px; color:var(--accent-green); font-weight:600; }
+
+/* KPI grid */
+.kpi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.kpi-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:24px 20px; text-align:center; }
+.kpi-num { font-family:var(--font-mono); font-size:28px; font-weight:700; color:var(--accent); display:block; margin-bottom:6px; }
+.kpi-label { font-size:15px; font-weight:600; display:block; margin-bottom:4px; }
+.kpi-desc { font-size:13px; color:var(--muted); }
+
+/* 5-col algorithm grid */
+.algo-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+.algo-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; display:flex; flex-direction:column; gap:6px; }
+.algo-card h3 { font-size:15px; }
+.algo-highlight { border-color:var(--accent); border-width:2px; background:rgba(13,102,112,0.03); }
+.algo-pro { font-size:12px; color:var(--accent-green); }
+.algo-con { font-size:12px; color:var(--accent-rose); }
+.algo-fit { font-size:11px; font-family:var(--font-mono); color:var(--accent); margin-top:auto; font-weight:600; }
+
+/* AIMD flow */
+.aimd-flow { display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center; margin:16px 0; }
+.aimd-node { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 18px; font-weight:600; font-size:14px; text-align:center; min-width:100px; }
+.aimd-accent { border-color:var(--accent); background:rgba(13,102,112,0.04); }
+.aimd-success { border-color:var(--accent-green); color:var(--accent-green); }
+.aimd-fail { border-color:var(--accent-rose); color:var(--accent-rose); }
+.aimd-arrow { color:var(--accent); font-size:16px; }
+.aimd-metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:8px; }
+.aimd-metric { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:12px; text-align:center; }
+.aimd-metric code { font-size:15px; font-weight:600; color:var(--accent); background:none; }
+.aimd-metric span { font-size:12px; color:var(--muted); display:block; margin-top:4px; }
+
+/* Layer arch */
+.layer-stack { display:flex; flex-direction:column; gap:6px; }
+.layer-row { display:flex; align-items:center; gap:16px; padding:14px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); border-left:3px solid var(--accent); }
+.layer-num { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent); min-width:20px; }
+.layer-name { font-weight:700; font-size:15px; min-width:90px; }
+.layer-example { font-size:13px; color:var(--muted); flex:1; }
+.layer-limit { font-family:var(--font-mono); font-size:12px; color:var(--accent-amber); font-weight:600; }
+.layer-row:nth-child(1) { border-left-color:var(--accent); }
+.layer-row:nth-child(2) { border-left-color:#1E1A78; }
+.layer-row:nth-child(3) { border-left-color:var(--accent-amber); }
+.layer-row:nth-child(4) { border-left-color:var(--accent-green); }
+.layer-row:nth-child(5) { border-left-color:var(--accent-rose); }
+
+/* DAG type cards */
+.dag-types { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.dag-type { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; display:flex; flex-direction:column; gap:6px; }
+.dag-type h3 { font-size:15px; }
+.dag-flow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; margin:12px 0; }
+.dag-step { font-size:13px; font-weight:600; padding:8px 14px; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; }
+.dag-arrow { color:var(--accent); font-size:14px; }
+
+/* Safeguard items (dark) */
+.safeguard-items { display:flex; flex-direction:column; gap:8px; }
+.sg-item { display:flex; gap:14px; align-items:flex-start; padding:12px 18px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); }
+.sg-num { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent-bright); min-width:28px; padding-top:2px; }
+.sg-text { font-size:15px; color:rgba(244,246,250,0.8); }
+.sg-text strong { color:var(--accent-bright); }
+
+/* Steps */
+.step-flow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; margin:12px 0; }
+.step-node { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 18px; font-weight:600; font-size:14px; text-align:center; }
+.step-arrow { color:var(--accent); font-size:16px; }
+
+/* Backpressure cards */
+.bp-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.bp-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; display:flex; flex-direction:column; gap:8px; }
+.bp-card h3 { font-size:15px; }
+.bp-num { font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--accent); margin-bottom:4px; display:block; }
+
+/* Lane pool cards */
+.lane-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+.lane-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; display:flex; flex-direction:column; gap:6px; border-top:3px solid var(--accent); }
+.lane-card:nth-child(1) { border-top-color:var(--accent-rose); }
+.lane-card:nth-child(2) { border-top-color:var(--accent); }
+.lane-card:nth-child(3) { border-top-color:#1E1A78; }
+.lane-card:nth-child(4) { border-top-color:var(--accent-amber); }
+.lane-card:nth-child(5) { border-top-color:var(--accent-green); }
+.lane-card h3 { font-size:14px; }
+.lane-pct { font-family:var(--font-mono); font-size:20px; font-weight:700; color:var(--accent); }
+.lane-desc { font-size:12px; color:var(--muted); }
+
+/* Timeline pipeline */
+.timeline-steps { display:flex; flex-direction:column; gap:6px; }
+.ts-step { display:flex; align-items:center; gap:16px; padding:14px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+.ts-num { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent); min-width:24px; }
+.ts-name { font-weight:700; font-size:15px; min-width:110px; }
+.ts-desc { font-size:14px; color:var(--muted); flex:1; }
+
+/* Observability KPI */
+.obs-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.obs-grid > :nth-child(n+5) { grid-column:span 1; }
+.obs-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; text-align:center; display:flex; flex-direction:column; gap:6px; }
+.obs-num { font-family:var(--font-mono); font-size:22px; font-weight:700; color:var(--accent); }
+.obs-label { font-size:14px; font-weight:600; }
+.obs-desc { font-size:12px; color:var(--muted); }
+
+/* 12 rules compact */
+.twelve-rules { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:12px; }
+.tr-rule { display:flex; gap:12px; align-items:center; padding:10px 16px; border-bottom:1px solid rgba(255,255,255,0.06); }
+.tr-idx { font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--accent-bright); min-width:24px; }
+.tr-text { font-size:15px; color:rgba(244,246,250,0.8); }
+
+/* Bullet list */
+.bullet-list { display:flex; flex-direction:column; gap:8px; }
+.bullet-item { display:flex; gap:12px; align-items:flex-start; padding:10px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); font-size:14px; color:var(--muted); }
+.bullet-item strong { color:var(--text-light); }
+.dark-bullet .bullet-item { background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.08); color:rgba(244,246,250,0.7); }
+.dark-bullet .bullet-item strong { color:var(--accent-bright); }
+.bullet-marker { font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--accent); min-width:20px; padding-top:1px; }
+.dark-bullet .bullet-marker { color:var(--accent-bright); }
+
+/* Properties strip */
+.props-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:8px; }
+.prop-item { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; text-align:center; }
+.prop-item h3 { font-size:14px; margin-bottom:4px; }
+.prop-item p { font-size:12px; color:var(--muted); }
+
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+  <section class="slide active" data-layout="L-COVER" data-theme="light" data-animate="hero" data-notes="">
+
+<div class="cover-slide">
+  <div class="top-bar"></div>
+  <div class="cover-nav">
+    <span class="nav-left">CONCURRENCY</span>
+    <span class="nav-right-pills">
+      <span class="nav-pill active">Throttling</span>
+      <span class="nav-pill">Scheduling</span>
+      <span class="nav-pill">Runtime</span>
+      <span class="nav-pill">Production</span>
+    </span>
+  </div>
+  <div class="cover-body">
+    <div class="kicker" data-anim>Enterprise Agent Engineering &middot; Module 04</div>
+    <h1 data-anim>AI Agent 开发中的<br>并发控制与调度系统</h1>
+    <p class="cover-sub" data-anim>从 Token 级限流到 DAG 编排，从 Worker 池化到分布式锁的后端工程实践</p>
+    <div class="cover-kpi-strip" data-anim>
+      <div class="cover-kpi"><span class="cover-kpi-num">5</span><span class="cover-kpi-label">限流维度</span></div>
+      <div class="cover-kpi"><span class="cover-kpi-num">4</span><span class="cover-kpi-label">调度策略</span></div>
+      <div class="cover-kpi"><span class="cover-kpi-num">3</span><span class="cover-kpi-label">并发模型</span></div>
+      <div class="cover-kpi"><span class="cover-kpi-num">12</span><span class="cover-kpi-label">生产法则</span></div>
+    </div>
+  </div>
+  <div class="cover-tags" data-anim>
+    <span class="tech-tag">Token Bucket</span>
+    <span class="tech-tag">Temporal</span>
+    <span class="tech-tag">asyncio</span>
+    <span class="tech-tag">AIMD</span>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-STATEMENT" data-theme="dark" data-animate="quote" data-notes="">
+
+<div class="statement-block">
+  <div class="kicker" data-anim>Why Agent Concurrency Is Different</div>
+  <h1 data-anim>一个用户请求 &rarr; 规划 + 多工具调用 + 检索重排 + 子代理 + 重试 &rarr; 扇出爆炸</h1>
+  <p class="lead" data-anim>传统 API 限流假设：每个请求成本均匀、延迟可控。Agent 打破了这两个假设。</p>
+  <div class="contradiction-strip" data-anim>
+    <div class="contra-card">
+      <h3>吞吐量</h3>
+      <span class="contra-vs">VS</span>
+      <h3>延迟</h3>
+      <p>批量提高吞吐，但交互延迟劣化</p>
+    </div>
+    <div class="contra-card">
+      <h3>成本</h3>
+      <span class="contra-vs">VS</span>
+      <h3>速度</h3>
+      <p>并行调用加速，但 Token 消耗翻倍</p>
+    </div>
+    <div class="contra-card">
+      <h3>公平性</h3>
+      <span class="contra-vs">VS</span>
+      <h3>优先级</h3>
+      <p>严格公平阻塞 VIP，优先级饿死长尾</p>
+    </div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Agent vs Traditional API</div>
+  <h1 data-anim>传统 QPS 限流在 Agent 场景下完全不够用</h1>
+  <div class="diff-grid" data-anim>
+    <div class="diff-card" data-anim>
+      <h3>请求成本</h3>
+      <div class="diff-before">传统：固定，差异 &lt;2x</div>
+      <div class="diff-after">Agent：50x 差异（10 token vs 500 token）</div>
+      <p>相同 QPS 下实际资源消耗天差地别</p>
+    </div>
+    <div class="diff-card" data-anim>
+      <h3>执行时间</h3>
+      <div class="diff-before">传统：毫秒级，可预测</div>
+      <div class="diff-after">Agent：秒到分钟级，方差极大</div>
+      <p>一个 Agent 任务可能占用连接数分钟</p>
+    </div>
+    <div class="diff-card" data-anim>
+      <h3>资源模型</h3>
+      <div class="diff-before">传统：CPU / 内存 / 连接数</div>
+      <div class="diff-after">Agent：Token / GPU 时间 / API 配额</div>
+      <p>瓶颈从计算转向外部 API 额度</p>
+    </div>
+    <div class="diff-card" data-anim>
+      <h3>扇出模式</h3>
+      <div class="diff-before">传统：1:1 请求-响应</div>
+      <div class="diff-after">Agent：1:N 规划-工具-子代理</div>
+      <p>一个用户请求扇出 10+ 下游调用</p>
+    </div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-KPI" data-theme="light" data-animate="data" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>From QPS to TPM</div>
+  <h1 data-anim>三个独立限流维度，任一触顶即限制</h1>
+  <div class="kpi-grid" data-anim>
+    <div class="kpi-card" data-anim>
+      <span class="kpi-num">RPM</span>
+      <span class="kpi-label">请求数 / 分钟</span>
+      <span class="kpi-desc">防止连接数爆炸，与模型无关的硬限制</span>
+    </div>
+    <div class="kpi-card" data-anim>
+      <span class="kpi-num">Input TPM</span>
+      <span class="kpi-label">输入 Token / 分钟</span>
+      <span class="kpi-desc">Prompt 长度决定预填充 GPU 时间</span>
+    </div>
+    <div class="kpi-card" data-anim>
+      <span class="kpi-num">Output TPM</span>
+      <span class="kpi-label">输出 Token / 分钟</span>
+      <span class="kpi-desc">生成长度决定解码 GPU 时间，成本主导</span>
+    </div>
+  </div>
+  <div class="formula-display" data-anim>
+    <code>可持续吞吐 = min(RPM, input_TPM / avg_input, output_TPM / avg_output)</code>
+  </div>
+  <p class="insight" data-anim>关键洞察：输出 Token 成本通常是输入的 3-4 倍，产出 TPM 往往是第一个触顶的维度。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Rate Limiting Algorithms</div>
+  <h1 data-anim>令牌桶是 LLM API 的最佳默认选择</h1>
+  <div class="algo-grid" data-anim>
+    <div class="algo-card" data-anim>
+      <h3>固定窗口</h3>
+      <span class="algo-pro">+ 实现最简单</span>
+      <span class="algo-con">- 窗口边界突刺</span>
+      <span class="algo-fit">LLM: 不推荐</span>
+    </div>
+    <div class="algo-card" data-anim>
+      <h3>滑动窗口</h3>
+      <span class="algo-pro">+ 平滑边界</span>
+      <span class="algo-con">- 内存开销大</span>
+      <span class="algo-fit">LLM: 可用</span>
+    </div>
+    <div class="algo-card algo-highlight" data-anim>
+      <h3>令牌桶</h3>
+      <span class="algo-pro">+ 允许突发 + 均匀补充</span>
+      <span class="algo-pro">+ 天然适配 Token 计量</span>
+      <span class="algo-con">- 需预估容量</span>
+      <span class="algo-fit">LLM: 最佳默认</span>
+    </div>
+    <div class="algo-card" data-anim>
+      <h3>漏桶</h3>
+      <span class="algo-pro">+ 输出极其平稳</span>
+      <span class="algo-con">- 不允许突发</span>
+      <span class="algo-fit">LLM: 批处理场景</span>
+    </div>
+    <div class="algo-card" data-anim>
+      <h3>自适应并发</h3>
+      <span class="algo-pro">+ 自动发现上限</span>
+      <span class="algo-con">- 需要反馈信号</span>
+      <span class="algo-fit">LLM: 与令牌桶组合</span>
+    </div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Token Bucket for LLM</div>
+  <h1 data-anim>多桶并行：RPM + 输入 TPM + 输出 TPM + 成本 + 租户</h1>
+  <div class="bullet-list" data-anim>
+    <div class="bullet-item" data-anim><span class="bullet-marker">01</span><strong>桶容量 (burst)</strong> &mdash; 允许的最大突发量。设为速率的 1.5-2 倍，防止冷启动饥饿。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">02</span><strong>补充速率 (refill)</strong> &mdash; 每秒向桶中添加的 Token 数。RPM 桶按请求计数，TPM 桶按 Token 计数。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">03</span><strong>多桶检查</strong> &mdash; 发送前必须同时获取 RPM 桶 + Input TPM 桶 + Output TPM 桶的许可，任一不足即等待。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">04</span><strong>输出预留</strong> &mdash; 请求前按 <code>max_tokens</code> 预留输出容量，完成后按实际消耗对账归还差额。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">05</span><strong>流式对账</strong> &mdash; 流式响应中逐块累计实际输出 Token，结束后与预留量对比并调整桶余额。</div>
+  </div>
+  <p class="insight" data-anim>核心原则：请求前预留输出容量，完成后对账实际消耗。过度预留导致利用率低，预留不足导致超额。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-SYSTEM" data-theme="light" data-animate="diagram" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Adaptive Concurrency (AIMD)</div>
+  <h1 data-anim>自适应并发控制：成功 +1，429/超时 &times;0.7</h1>
+  <div class="aimd-flow" data-anim>
+    <div class="aimd-node">初始并发=4</div>
+    <span class="aimd-arrow">&rarr;</span>
+    <div class="aimd-node aimd-accent">发送请求</div>
+    <span class="aimd-arrow">&rarr;</span>
+    <div class="aimd-node aimd-success">200 OK &rarr; limit +=1</div>
+    <span class="aimd-arrow">&rarr;</span>
+    <div class="aimd-node aimd-accent">探测上限</div>
+  </div>
+  <div class="aimd-flow" data-anim>
+    <div class="aimd-node aimd-accent">发送请求</div>
+    <span class="aimd-arrow">&rarr;</span>
+    <div class="aimd-node aimd-fail">429/超时 &rarr; limit &times;=0.7</div>
+    <span class="aimd-arrow">&rarr;</span>
+    <div class="aimd-node">退避等待</div>
+    <span class="aimd-arrow">&rarr;</span>
+    <div class="aimd-node aimd-accent">缓慢恢复</div>
+  </div>
+  <div class="aimd-metrics" data-anim>
+    <div class="aimd-metric"><code>p95 &le; 3s</code><span>延迟目标</span></div>
+    <div class="aimd-metric"><code>429 &le; 0.1%</code><span>限流比率</span></div>
+    <div class="aimd-metric"><code>queue &le; 1s</code><span>队列等待上限</span></div>
+  </div>
+  <p class="insight" data-anim>AIMD（加性增/乘性减）源自 TCP 拥塞控制，是无需先验知识即可发现最优并发度的经典算法。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-SYSTEM" data-theme="light" data-animate="diagram" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Layered Rate Limiting</div>
+  <h1 data-anim>五层分层限流：全局 &rarr; 租户 &rarr; Agent &rarr; 工具 &rarr; 提供商</h1>
+  <div class="layer-stack" data-anim>
+    <div class="layer-row" data-anim>
+      <span class="layer-num">1</span>
+      <span class="layer-name">全局层</span>
+      <span class="layer-example">保护整个平台不超过提供商总配额</span>
+      <span class="layer-limit">500K TPM</span>
+    </div>
+    <div class="layer-row" data-anim>
+      <span class="layer-num">2</span>
+      <span class="layer-name">租户层</span>
+      <span class="layer-example">每个企业客户独立配额，防止互相干扰</span>
+      <span class="layer-limit">50K TPM</span>
+    </div>
+    <div class="layer-row" data-anim>
+      <span class="layer-num">3</span>
+      <span class="layer-name">Agent 层</span>
+      <span class="layer-example">单个 Agent 实例的并发上限</span>
+      <span class="layer-limit">10 并发</span>
+    </div>
+    <div class="layer-row" data-anim>
+      <span class="layer-num">4</span>
+      <span class="layer-name">工具层</span>
+      <span class="layer-example">每种工具调用的独立限制（如搜索 API）</span>
+      <span class="layer-limit">60 RPM</span>
+    </div>
+    <div class="layer-row" data-anim>
+      <span class="layer-num">5</span>
+      <span class="layer-name">提供商层</span>
+      <span class="layer-example">适配不同 LLM 提供商的限流规则</span>
+      <span class="layer-limit">按提供商</span>
+    </div>
+  </div>
+  <div class="formula-display" data-anim>
+    <code>有效并行度 = min(所有层级限制)</code>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-SYSTEM" data-theme="light" data-animate="diagram" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>DAG Orchestration</div>
+  <h1 data-anim>任务 DAG 编排：零依赖入队 &rarr; 分发 &rarr; 完成递减 &rarr; 新零入队</h1>
+  <div class="dag-flow" data-anim>
+    <div class="dag-step">扫描零依赖节点</div>
+    <span class="dag-arrow">&rarr;</span>
+    <div class="dag-step">入队调度器</div>
+    <span class="dag-arrow">&rarr;</span>
+    <div class="dag-step">Worker 执行</div>
+    <span class="dag-arrow">&rarr;</span>
+    <div class="dag-step">完成 &rarr; 递减下游入度</div>
+    <span class="dag-arrow">&rarr;</span>
+    <div class="dag-step">新零依赖入队</div>
+  </div>
+  <div class="dag-types" data-anim>
+    <div class="dag-type" data-anim>
+      <h3>静态 DAG</h3>
+      <p>编译时确定所有节点和边。适用于固定工作流，如数据管道。</p>
+    </div>
+    <div class="dag-type" data-anim>
+      <h3>条件 DAG</h3>
+      <p>节点存在条件分支（if/else）。运行时裁剪不执行的分支。</p>
+    </div>
+    <div class="dag-type" data-anim>
+      <h3>动态 DAG</h3>
+      <p>Agent 在执行中动态添加新节点。需要严格的安全防护。</p>
+    </div>
+    <div class="dag-type" data-anim>
+      <h3>事件混合 DAG</h3>
+      <p>结合事件驱动和 DAG 编排，外部事件触发子图执行。</p>
+    </div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="dark" data-animate="cascade" data-notes="">
+
+<div class="content-slide dark-content">
+  <div class="kicker" data-anim>Dynamic DAG Safety</div>
+  <h1 data-anim>动态 DAG 的五道防护：Agent 在执行中创建新节点的失控风险</h1>
+  <div class="safeguard-items" data-anim>
+    <div class="sg-item" data-anim>
+      <span class="sg-num">01</span>
+      <span class="sg-text"><strong>环检测</strong> &mdash; 每次添加边时执行拓扑排序验证，发现环立即拒绝并回滚</span>
+    </div>
+    <div class="sg-item" data-anim>
+      <span class="sg-num">02</span>
+      <span class="sg-text"><strong>最大深度</strong> &mdash; 限制 DAG 最大深度（如 10 层），防止无限递归子任务</span>
+    </div>
+    <div class="sg-item" data-anim>
+      <span class="sg-num">03</span>
+      <span class="sg-text"><strong>节点预算</strong> &mdash; 设置总节点数上限（如 50 个），超出则强制终止并报告</span>
+    </div>
+    <div class="sg-item" data-anim>
+      <span class="sg-num">04</span>
+      <span class="sg-text"><strong>截止时间</strong> &mdash; 全局截止时间 + 单节点超时，确保不会无限等待</span>
+    </div>
+    <div class="sg-item" data-anim>
+      <span class="sg-num">05</span>
+      <span class="sg-text"><strong>工具授权检查</strong> &mdash; 新创建的节点只能使用已授权的工具集，防止权限提升</span>
+    </div>
+  </div>
+  <p class="insight dark-insight" data-anim>Bounded Gather 模式：设定扇出上限 + 超时 + 节点预算，在灵活性与安全性之间找到平衡。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-CHART" data-theme="light" data-animate="data" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Priority Scheduling</div>
+  <h1 data-anim>六种调度策略各有适用场景</h1>
+  <table data-anim>
+    <thead>
+      <tr><th>策略</th><th>行为</th><th>优点</th><th>缺点</th><th>推荐场景</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="qt-label">FIFO</td><td>先进先出</td><td>简单公平</td><td>无优先级感知</td><td>单租户/简单场景</td></tr>
+      <tr><td class="qt-label">严格优先级</td><td>高优先级总是先执行</td><td>VIP 保障</td><td>低优先级饥饿</td><td>明确 SLA 分级</td></tr>
+      <tr><td class="qt-label">加权公平</td><td>按权重分配带宽</td><td>防饥饿</td><td>实现复杂</td><td>多租户平台</td></tr>
+      <tr><td class="qt-label">赤字轮转</td><td>亏欠多者优先补偿</td><td>长期公平</td><td>短期波动</td><td>批处理混合</td></tr>
+      <tr><td class="qt-label">老化</td><td>等待越久优先级越高</td><td>自动防饥饿</td><td>紧急任务延迟</td><td>FIFO + 优先级折中</td></tr>
+      <tr><td class="qt-label">最短截止时间</td><td>deadline 最近者先执行</td><td>时效保障</td><td>需要准确预估</td><td>有明确 deadline</td></tr>
+    </tbody>
+  </table>
+  <p class="insight" data-anim>生产建议：加权公平 + 老化组合使用，兼顾租户隔离和防止长时间饥饿。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Preemption &amp; Cancellation</div>
+  <h1 data-anim>Agent 任务不能安全地 OS 级抢占 &mdash; 协作取消是唯一选择</h1>
+  <div class="step-flow" data-anim>
+    <div class="step-node">协作取消</div>
+    <span class="step-arrow">&rarr;</span>
+    <div class="step-node">await 边界停止</div>
+    <span class="step-arrow">&rarr;</span>
+    <div class="step-node">撤销排队子任务</div>
+    <span class="step-arrow">&rarr;</span>
+    <div class="step-node">checkpoint 状态</div>
+    <span class="step-arrow">&rarr;</span>
+    <div class="step-node">幂等重试</div>
+  </div>
+  <div class="bullet-list" data-anim>
+    <div class="bullet-item" data-anim><span class="bullet-marker">01</span><strong>检查频率</strong> &mdash; 在每个 await 点检查取消标志，而非仅在循环头部。LLM 调用前后必查。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">02</span><strong>传播规则</strong> &mdash; 父任务取消时，递归取消所有子任务，但允许子任务有清理窗口（如 5s）。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">03</span><strong>部分结果</strong> &mdash; 取消不等于失败。已完成的步骤结果应保留，供重试时跳过。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">04</span><strong>幂等保障</strong> &mdash; 所有工具调用必须具备幂等键，取消后重试不会产生副作用。</div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Backpressure</div>
+  <h1 data-anim>背压控制全景：四道防线层层递进</h1>
+  <div class="bp-grid" data-anim>
+    <div class="bp-card" data-anim>
+      <span class="bp-num">LINE 1</span>
+      <h3>准入控制</h3>
+      <p>入口处检查系统负载，过载时直接拒绝新请求（HTTP 503），快速失败优于排队超时。</p>
+    </div>
+    <div class="bp-card" data-anim>
+      <span class="bp-num">LINE 2</span>
+      <h3>有界队列 + 溢出策略</h3>
+      <p>队列长度有上限。溢出时可选：丢弃最新、丢弃最旧、丢弃最低优先级。</p>
+    </div>
+    <div class="bp-card" data-anim>
+      <span class="bp-num">LINE 3</span>
+      <h3>熔断器</h3>
+      <p>下游错误率超阈值时打开熔断，停止所有请求。半开状态逐步探测恢复。</p>
+    </div>
+    <div class="bp-card" data-anim>
+      <span class="bp-num">LINE 4</span>
+      <h3>重试预算</h3>
+      <p>全局重试比率 &le; 10%。超出预算时停止重试，防止重试风暴压垮系统。</p>
+    </div>
+  </div>
+  <p class="insight" data-anim>每一道防线都独立生效，形成纵深防御。最常犯的错误是只有队列没有准入控制。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Celery</div>
+  <h1 data-anim>Celery：Python 生态的经典选择</h1>
+  <div class="bullet-list" data-anim>
+    <div class="bullet-item" data-anim><span class="bullet-marker">架构</span><strong>Broker + Worker + Result Backend</strong> &mdash; Redis/RabbitMQ 作为消息队列，Worker 拉取并执行任务。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">并发</span><strong>prefork / eventlet / gevent</strong> &mdash; prefork 适合 CPU 密集，gevent 适合 I/O 密集的 LLM 调用。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">优势</span><strong>成熟稳定、生态丰富</strong> &mdash; 内置重试、定时任务、优先级队列、结果追踪。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">限制</span><strong>无内置状态持久化</strong> &mdash; 任务状态丢失后无法自动恢复，长时间工作流需要额外编排。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">场景</span><strong>短时任务、后台批处理</strong> &mdash; 适合工具调用分发、批量推理、定时清理等场景。</div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Temporal</div>
+  <h1 data-anim>Temporal：长时程有状态工作流引擎</h1>
+  <div class="bullet-list" data-anim>
+    <div class="bullet-item" data-anim><span class="bullet-marker">架构</span><strong>Workflow + Activity + Worker</strong> &mdash; Workflow 定义编排逻辑（确定性），Activity 执行副作用（可重试）。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">持久性</span><strong>事件溯源 + 自动回放</strong> &mdash; 每个 Workflow 步骤持久化，崩溃后从最后完成的 Activity 恢复。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">容错</span><strong>内置超时、重试、心跳</strong> &mdash; Activity 超时自动重试，心跳检测 Worker 存活，Saga 补偿回滚。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">审批</span><strong>Human-in-the-Loop 原生支持</strong> &mdash; Workflow 中 <code>await signal("approval")</code> 暂停等待人工审批。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">场景</span><strong>Agent 编排的最佳引擎</strong> &mdash; 多步骤规划、工具链调用、子代理编排、长时间审批流。</div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-COMPARISON" data-theme="light" data-animate="directional" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Inngest &amp; Selection</div>
+  <h1 data-anim>Inngest 与选型决策：三者怎么选</h1>
+  <div class="compare-grid" data-anim>
+    <div class="cmp-panel" data-anim="left">
+      <div class="cmp-header cmp-left-h">INNGEST</div>
+      <div class="cmp-body">
+        <p><strong>事件驱动</strong> &mdash; 函数由事件触发，天然适配 Webhook / 回调</p>
+        <p><strong>Serverless 友好</strong> &mdash; 无需 Worker 管理，按调用付费</p>
+        <p><strong>内置限流</strong> &mdash; 声明式并发控制 + 速率限制 + 去重</p>
+        <p><strong>步骤函数</strong> &mdash; step.run() 自动持久化，崩溃恢复</p>
+        <p><strong>限制</strong> &mdash; 生态较新，复杂编排能力弱于 Temporal</p>
+      </div>
+    </div>
+    <div class="cmp-vs" data-anim="divider">VS</div>
+    <div class="cmp-panel" data-anim="right">
+      <div class="cmp-header cmp-right-h">选型框架</div>
+      <div class="cmp-body">
+        <p><strong>选 Celery</strong> &mdash; 简单任务队列、已有 Python 栈、无状态要求</p>
+        <p><strong>选 Temporal</strong> &mdash; 长时工作流、需要持久化、复杂编排、Saga</p>
+        <p><strong>选 Inngest</strong> &mdash; 事件驱动、Serverless 架构、快速上手</p>
+        <p><strong>混合使用</strong> &mdash; Temporal 编排 + Celery 执行短任务 + Inngest 接收事件</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-TIMELINE" data-theme="light" data-animate="pipeline" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Distributed Locking</div>
+  <h1 data-anim>协调策略决策优先级：从无协调到数据库事务</h1>
+  <div class="timeline-steps" data-anim>
+    <div class="ts-step" data-anim>
+      <span class="ts-num">1</span>
+      <span class="ts-name">无协调</span>
+      <span class="ts-desc">操作天然幂等，无需锁。最优选择，尽量让设计走到这一步。</span>
+    </div>
+    <div class="ts-step" data-anim>
+      <span class="ts-num">2</span>
+      <span class="ts-name">乐观并发</span>
+      <span class="ts-desc">版本号/ETag，提交时冲突检测。适合冲突率 &lt;5% 的场景。</span>
+    </div>
+    <div class="ts-step" data-anim>
+      <span class="ts-num">3</span>
+      <span class="ts-name">队列序列化</span>
+      <span class="ts-desc">同一实体的操作串行入队。避免锁但保证顺序，Temporal 内建。</span>
+    </div>
+    <div class="ts-step" data-anim>
+      <span class="ts-num">4</span>
+      <span class="ts-name">租约锁</span>
+      <span class="ts-desc">Redis/Zookeeper 分布式锁 + TTL + 心跳续租 + fencing token。</span>
+    </div>
+    <div class="ts-step" data-anim>
+      <span class="ts-num">5</span>
+      <span class="ts-name">DB 事务</span>
+      <span class="ts-desc">数据库级别的强一致事务。成本最高，仅用于金融级准确性要求。</span>
+    </div>
+  </div>
+  <div class="props-strip" data-anim>
+    <div class="prop-item"><h3>唯一令牌</h3><p>每次获锁生成唯一 ID</p></div>
+    <div class="prop-item"><h3>TTL</h3><p>锁自动过期防死锁</p></div>
+    <div class="prop-item"><h3>心跳续租</h3><p>持有者定期续期</p></div>
+    <div class="prop-item"><h3>Fencing Token</h3><p>单调递增防脑裂</p></div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="dark" data-animate="cascade" data-notes="">
+
+<div class="content-slide dark-content">
+  <div class="kicker" data-anim>Semantic Locking</div>
+  <h1 data-anim>语义锁：锁实体/工作空间/目标，而非仅锁数据库行</h1>
+  <p class="lead" data-anim>场景：两个 Agent 同时对同一客户订单推理 &mdash; 数据库行级锁粒度太细，全局锁粒度太粗。</p>
+  <div class="safeguard-items" data-anim>
+    <div class="sg-item" data-anim>
+      <span class="sg-num">01</span>
+      <span class="sg-text"><strong>实体键锁</strong> &mdash; <code>lock("order:12345")</code> 锁定业务实体而非 DB 行，语义清晰</span>
+    </div>
+    <div class="sg-item" data-anim>
+      <span class="sg-num">02</span>
+      <span class="sg-text"><strong>意图声明</strong> &mdash; Agent 获锁时声明意图（读/写/推理），读-读不冲突，读-写互斥</span>
+    </div>
+    <div class="sg-item" data-anim>
+      <span class="sg-num">03</span>
+      <span class="sg-text"><strong>乐观并发</strong> &mdash; 推理阶段不加锁，提交时用版本号验证数据未被修改</span>
+    </div>
+    <div class="sg-item" data-anim>
+      <span class="sg-num">04</span>
+      <span class="sg-text"><strong>冲突解决</strong> &mdash; 版本冲突时：自动重试 &rarr; 合并 &rarr; 人工仲裁，逐级升级</span>
+    </div>
+  </div>
+  <p class="insight dark-insight" data-anim>核心原则：推理阶段宽松，提交阶段严格。让 Agent 自由思考，但写入时强制一致。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Python asyncio</div>
+  <h1 data-anim>Python asyncio：Agent 开发的默认选择</h1>
+  <div class="bullet-list" data-anim>
+    <div class="bullet-item" data-anim><span class="bullet-marker">01</span><strong>asyncio.to_thread</strong> &mdash; 将同步阻塞的工具调用（文件 I/O、SDK）放入线程池，不阻塞事件循环。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">02</span><strong>ProcessPoolExecutor</strong> &mdash; CPU 密集型操作（如嵌入计算、数据预处理）放入进程池，绕过 GIL。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">03</span><strong>TaskGroup + Semaphore</strong> &mdash; 结构化并发：TaskGroup 管理生命周期，Semaphore 控制并发度上限。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">04</span><strong>asyncio.Queue</strong> &mdash; 生产者-消费者模式，有界队列自动背压。配合 Semaphore 实现限流。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">05</span><strong>异常传播</strong> &mdash; TaskGroup 中任一子任务异常，自动取消其他子任务。确保不会泄漏协程。</div>
+  </div>
+  <p class="insight" data-anim>Python Agent 的典型瓶颈不是 GIL，而是 LLM API 延迟。asyncio 是 I/O 密集场景的正确选择。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Go Concurrency</div>
+  <h1 data-anim>Go goroutine + channel：高吞吐 Agent 服务的利器</h1>
+  <div class="bullet-list" data-anim>
+    <div class="bullet-item" data-anim><span class="bullet-marker">01</span><strong>goroutine</strong> &mdash; 2KB 初始栈，可轻松创建百万级并发。每个工具调用一个 goroutine，调度器自动管理。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">02</span><strong>errgroup</strong> &mdash; 类似 Python TaskGroup，任一 goroutine 失败自动取消 context，传播错误。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">03</span><strong>weighted semaphore</strong> &mdash; <code>semaphore.NewWeighted(N)</code> 按权重获取许可，大模型调用权重高。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">04</span><strong>channel + select</strong> &mdash; 有界 channel 天然背压，select 实现超时和取消的优雅处理。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">05</span><strong>GOMAXPROCS</strong> &mdash; 容器环境下用 <code>automaxprocs</code> 自动适配 CPU 配额，避免过度调度。</div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Rust Tokio</div>
+  <h1 data-anim>Rust Tokio：高性能 Agent Gateway 的选择</h1>
+  <div class="bullet-list" data-anim>
+    <div class="bullet-item" data-anim><span class="bullet-marker">01</span><strong>spawn_blocking</strong> &mdash; 同步阻塞操作放入专用线程池，不阻塞异步运行时。类似 asyncio.to_thread。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">02</span><strong>JoinSet</strong> &mdash; 管理一组异步任务的生命周期，支持取消和错误收集。类似 TaskGroup。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">03</span><strong>multi-thread runtime</strong> &mdash; 默认工作窃取调度器，自动在多核间负载均衡。无 GIL 问题。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">04</span><strong>tower 中间件</strong> &mdash; 限流、重试、超时、负载均衡作为可组合的 Service 层，声明式配置。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">05</span><strong>零成本抽象</strong> &mdash; async/await 编译为状态机，无运行时分配开销。适合 Gateway/Proxy 层。</div>
+  </div>
+  <p class="insight" data-anim>Rust 适合 Agent 基础设施（网关、限流器、路由器），不适合 Agent 业务逻辑（快速迭代需求）。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Worker Pool Patterns</div>
+  <h1 data-anim>分道池：防止后台工作耗尽交互容量</h1>
+  <div class="lane-grid" data-anim>
+    <div class="lane-card" data-anim>
+      <h3>交互道</h3>
+      <span class="lane-pct">40%</span>
+      <span class="lane-desc">用户实时请求。最高优先级，严格 SLA（p95 &lt; 3s）。</span>
+    </div>
+    <div class="lane-card" data-anim>
+      <h3>工具执行道</h3>
+      <span class="lane-pct">25%</span>
+      <span class="lane-desc">Agent 工具调用。中等优先级，可容忍短暂排队。</span>
+    </div>
+    <div class="lane-card" data-anim>
+      <h3>子代理道</h3>
+      <span class="lane-pct">15%</span>
+      <span class="lane-desc">子代理 LLM 调用。隔离防止子代理风暴影响主代理。</span>
+    </div>
+    <div class="lane-card" data-anim>
+      <h3>后台道</h3>
+      <span class="lane-pct">15%</span>
+      <span class="lane-desc">批量推理、索引构建。低优先级，可降级或延迟。</span>
+    </div>
+    <div class="lane-card" data-anim>
+      <h3>恢复道</h3>
+      <span class="lane-pct">5%</span>
+      <span class="lane-desc">重试、补偿、死信处理。预留容量确保故障恢复不被饿死。</span>
+    </div>
+  </div>
+  <p class="insight" data-anim>关键原则：交互道永远不被后台工作挤占。即使系统过载，用户实时请求仍有专属容量。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-COMPARISON" data-theme="light" data-animate="directional" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Batching</div>
+  <h1 data-anim>批量推理：API 批处理 vs 推理引擎连续批处理</h1>
+  <div class="compare-grid" data-anim>
+    <div class="cmp-panel" data-anim="left">
+      <div class="cmp-header cmp-left-h">API BATCH</div>
+      <div class="cmp-body">
+        <p><strong>模式</strong> &mdash; 提交异步批量作业，24h 内返回结果</p>
+        <p><strong>成本</strong> &mdash; 通常为实时价格的 50%</p>
+        <p><strong>延迟</strong> &mdash; 分钟到小时级，不适合交互场景</p>
+        <p><strong>适用</strong> &mdash; 离线评估、数据标注、批量分析</p>
+      </div>
+    </div>
+    <div class="cmp-vs" data-anim="divider">VS</div>
+    <div class="cmp-panel" data-anim="right">
+      <div class="cmp-header cmp-right-h">CONTINUOUS BATCHING</div>
+      <div class="cmp-body">
+        <p><strong>模式</strong> &mdash; 推理引擎逐步动态组批，实时返回</p>
+        <p><strong>技术</strong> &mdash; vLLM PagedAttention / TGI / TensorRT-LLM</p>
+        <p><strong>延迟</strong> &mdash; 与单请求接近，吞吐提升 2-5x</p>
+        <p><strong>适用</strong> &mdash; 自托管推理、高并发实时服务</p>
+      </div>
+    </div>
+  </div>
+  <p class="insight" data-anim>使用 API 服务时用批量接口省钱，自托管时用连续批处理提吞吐。两者并非互斥。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Retry &amp; Backoff</div>
+  <h1 data-anim>指数退避 + 抖动 + Retry-After：重试不应消耗交互容量</h1>
+  <div class="bullet-list" data-anim>
+    <div class="bullet-item" data-anim><span class="bullet-marker">01</span><strong>最大重试次数</strong> &mdash; 默认 3 次，429 可放宽到 5 次。超过后放入死信队列，不要无限重试。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">02</span><strong>截止时间</strong> &mdash; 总超时优先于重试次数。即使没到最大重试，截止时间到了就停止。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">03</span><strong>幂等键</strong> &mdash; 每个请求携带 <code>idempotency-key</code>，服务端去重，确保重试安全。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">04</span><strong>取消传播</strong> &mdash; 父任务取消后，正在等待重试的子任务立即停止退避并清理。</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">05</span><strong>熔断器联动</strong> &mdash; 重试失败触发熔断器计数。连续失败超阈值时打开熔断，停止所有请求。</div>
+  </div>
+  <p class="insight" data-anim>公式：delay = min(base * 2^attempt + random(0, base), max_delay)。始终尊重 Retry-After 头。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-KPI" data-theme="light" data-animate="data" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Observability</div>
+  <h1 data-anim>并发系统必须追踪的七项核心指标</h1>
+  <div class="obs-grid" data-anim>
+    <div class="obs-card" data-anim>
+      <span class="obs-num">RPM/TPM</span>
+      <span class="obs-label">利用率</span>
+      <span class="obs-desc">当前消耗 / 配额上限。>80% 预警。</span>
+    </div>
+    <div class="obs-card" data-anim>
+      <span class="obs-num">In-Flight</span>
+      <span class="obs-label">在途请求数</span>
+      <span class="obs-desc">当前并发数 / 最大并发度。突增预警。</span>
+    </div>
+    <div class="obs-card" data-anim>
+      <span class="obs-num">Queue Age</span>
+      <span class="obs-label">队列等待时间</span>
+      <span class="obs-desc">任务入队到开始执行的延迟。>1s 预警。</span>
+    </div>
+    <div class="obs-card" data-anim>
+      <span class="obs-num">TTFT</span>
+      <span class="obs-label">首 Token 时间</span>
+      <span class="obs-desc">用户感知延迟的关键指标。p95 目标。</span>
+    </div>
+    <div class="obs-card" data-anim>
+      <span class="obs-num">429/5xx</span>
+      <span class="obs-label">错误率</span>
+      <span class="obs-desc">限流和服务错误比率。>0.1% 调查。</span>
+    </div>
+    <div class="obs-card" data-anim>
+      <span class="obs-num">Retry Amp</span>
+      <span class="obs-label">重试放大因子</span>
+      <span class="obs-desc">总请求 / 原始请求。>1.1 需要调优。</span>
+    </div>
+    <div class="obs-card" data-anim>
+      <span class="obs-num">$/Success</span>
+      <span class="obs-label">每成功任务成本</span>
+      <span class="obs-desc">包含重试成本的真实单位经济。</span>
+    </div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-SYSTEM" data-theme="light" data-animate="diagram" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Reference Architecture</div>
+  <h1 data-anim>生产参考架构：五层调度器职责拆解</h1>
+  <div class="ref-arch" data-anim>
+    <div class="ra-layer" data-anim>
+      <span class="ra-num">1</span>
+      <span class="ra-name">API 入口</span>
+      <span class="ra-q">准入控制 + 令牌桶限流 + 认证鉴权 + 请求路由</span>
+    </div>
+    <div class="ra-layer" data-anim>
+      <span class="ra-num">2</span>
+      <span class="ra-name">工作流协调器</span>
+      <span class="ra-q">DAG 编排 + 状态持久化 + Human-in-the-Loop + Saga 补偿</span>
+    </div>
+    <div class="ra-layer" data-anim>
+      <span class="ra-num">3</span>
+      <span class="ra-name">调度器</span>
+      <span class="ra-q">优先级排队 + 分道调度 + 背压控制 + AIMD 自适应</span>
+    </div>
+    <div class="ra-layer" data-anim>
+      <span class="ra-num">4</span>
+      <span class="ra-name">Worker 分道</span>
+      <span class="ra-q">交互道 / 工具道 / 子代理道 / 后台道 / 恢复道</span>
+    </div>
+    <div class="ra-layer" data-anim>
+      <span class="ra-num">5</span>
+      <span class="ra-name">状态存储 + 追踪</span>
+      <span class="ra-q">Redis 限流状态 + PostgreSQL 持久化 + OpenTelemetry 追踪</span>
+    </div>
+  </div>
+  <p class="insight" data-anim>每一层独立可替换：API 层可选 Kong/Envoy，协调器可选 Temporal/Inngest，Worker 可选 Celery/自研。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-CLOSING" data-theme="dark" data-animate="hero" data-notes="">
+
+<div class="closing-slide">
+  <div class="kicker" data-anim>Production Rules</div>
+  <h1 data-anim>生产十二条</h1>
+  <div class="twelve-rules" data-anim>
+    <div class="tr-rule" data-anim><span class="tr-idx">01</span><span class="tr-text">按 Token 而非 QPS 限流</span></div>
+    <div class="tr-rule" data-anim><span class="tr-idx">02</span><span class="tr-text">令牌桶 + AIMD 自适应组合</span></div>
+    <div class="tr-rule" data-anim><span class="tr-idx">03</span><span class="tr-text">五层分层限流各司其职</span></div>
+    <div class="tr-rule" data-anim><span class="tr-idx">04</span><span class="tr-text">动态 DAG 必须有环检测和节点预算</span></div>
+    <div class="tr-rule" data-anim><span class="tr-idx">05</span><span class="tr-text">加权公平 + 老化防止饥饿</span></div>
+    <div class="tr-rule" data-anim><span class="tr-idx">06</span><span class="tr-text">协作取消而非强制 kill</span></div>
+    <div class="tr-rule" data-anim><span class="tr-idx">07</span><span class="tr-text">四道背压防线缺一不可</span></div>
+    <div class="tr-rule" data-anim><span class="tr-idx">08</span><span class="tr-text">长工作流选 Temporal 而非 Celery</span></div>
+    <div class="tr-rule" data-anim><span class="tr-idx">09</span><span class="tr-text">语义锁优于行级锁</span></div>
+    <div class="tr-rule" data-anim><span class="tr-idx">10</span><span class="tr-text">分道池隔离交互与后台</span></div>
+    <div class="tr-rule" data-anim><span class="tr-idx">11</span><span class="tr-text">重试必须有预算和截止时间</span></div>
+    <div class="tr-rule" data-anim><span class="tr-idx">12</span><span class="tr-text">七项指标全量可观测</span></div>
+  </div>
+</div>
+
+  </section>
+
+</div>
+<div class="slide-counter" id="counter"></div>
+<div class="notes-panel" id="notes"></div>
+<script>
+
+(function(){
+  var root=document.documentElement,slides=document.querySelectorAll('.slide'),counter=document.getElementById('counter'),notesPanel=document.getElementById('notes'),current=0,notesVisible=false,wheelLockedUntil=0;
+  root.classList.add('motion-ready');
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches)root.classList.add('motion-static');
+  function isStatic(){return root.classList.contains('motion-static');}
+  function getItems(s){return Array.from(s.querySelectorAll('[data-anim]'));}
+  function revealAll(s){getItems(s).forEach(function(i){i.classList.add('revealed');});}
+  function prep(s){var items=getItems(s);items.forEach(function(i,idx){i.style.setProperty('--anim-index',idx);i.classList.remove('revealed');});if(isStatic())revealAll(s);else if(s.dataset.animate==='pipeline'&&items.length>0)items[0].classList.add('revealed');}
+  function revealNext(s){if(isStatic()||s.dataset.animate!=='pipeline')return false;var n=getItems(s).find(function(i){return!i.classList.contains('revealed');});if(!n)return false;n.classList.add('revealed');return true;}
+  function hidePrev(s){if(isStatic()||s.dataset.animate!=='pipeline')return false;var r=getItems(s).filter(function(i){return i.classList.contains('revealed');});if(r.length<=1)return false;r[r.length-1].classList.remove('revealed');return true;}
+  function goTo(n){if(n<0||n>=slides.length)return;slides[current].classList.remove('active');current=n;slides[current].classList.add('active');prep(slides[current]);counter.textContent=(current+1)+' / '+slides.length;if(notesVisible)notesPanel.textContent=slides[current].getAttribute('data-notes')||'(No notes)';}
+  function advance(){if(revealNext(slides[current]))return;goTo(current+1);}
+  function retreat(){if(hidePrev(slides[current]))return;goTo(current-1);}
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();advance();}
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();retreat();}
+    else if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
+    else if(e.key==='p'||e.key==='P'){notesVisible=!notesVisible;notesPanel.classList.toggle('visible',notesVisible);if(notesVisible)notesPanel.textContent=slides[current].getAttribute('data-notes')||'(No notes)';}
+    else if(e.key==='b'||e.key==='B'){root.classList.toggle('motion-static');if(root.classList.contains('motion-static'))slides.forEach(revealAll);else prep(slides[current]);}
+    else if(e.key==='Home'){e.preventDefault();goTo(0);}
+    else if(e.key==='End'){e.preventDefault();goTo(slides.length-1);}
+  });
+  var touchStartX=0;
+  document.addEventListener('touchstart',function(e){touchStartX=e.changedTouches[0].screenX;});
+  document.addEventListener('touchend',function(e){var d=touchStartX-e.changedTouches[0].screenX;if(Math.abs(d)>50){d>0?advance():retreat();}});
+  document.addEventListener('wheel',function(e){if(Math.abs(e.deltaY)<30)return;var now=Date.now();if(now<wheelLockedUntil)return;wheelLockedUntil=now+450;e.preventDefault();e.deltaY>0?advance():retreat();},{passive:false});
+  slides.forEach(function(s){if(!s.dataset.animate)s.dataset.animate='cascade';});
+  counter.textContent='1 / '+slides.length;prep(slides[current]);
+})();
+
+</script>
+</body>
+</html>

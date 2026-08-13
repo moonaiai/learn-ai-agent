@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Agent 与软件工程自动化</title>
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg-light: #F4F6FA; --bg-dark: #0F172A; --bg-card: #FFFFFF;
+  --text-light: #0F172A; --text-dark: #F4F6FA;
+  --accent: #0D6670; --accent-bright: #00B8B8; --accent-green: #1FB57A;
+  --accent-amber: #F5A524; --accent-rose: #E84A6F;
+  --muted: #5A6379; --muted-light: rgba(15,23,42,0.4);
+  --border: #E3E7F2; --border-strong: #C9D0E2;
+  --font-heading: 'Inter','Helvetica Neue',Arial,sans-serif;
+  --font-body: 'Inter','Helvetica Neue',Arial,sans-serif;
+  --font-mono: 'JetBrains Mono','Fira Code',monospace;
+  --transition-speed: 0.4s; --radius: 10px;
+}
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+html,body { width:100%; height:100%; overflow:hidden; background:var(--bg-dark); }
+
+.deck { position:relative; width:100%; height:100%; }
+.slide {
+  position:absolute; top:0; left:0; width:100vw; height:100vh;
+  display:flex; flex-direction:column; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity var(--transition-speed) ease; overflow:hidden;
+}
+.slide.active { opacity:1; pointer-events:auto; }
+.slide[data-theme="light"] { background:var(--bg-light); color:var(--text-light); }
+.slide[data-theme="dark"] { background:var(--bg-dark); color:var(--text-dark); }
+
+/* === Cover === */
+.cover-slide { width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; padding:80px 100px; position:relative; }
+.top-bar { position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,#0D6670 0%,#00B8B8 40%,#1FB57A 100%); }
+.cover-nav { position:absolute; top:36px; left:100px; right:100px; display:flex; justify-content:space-between; align-items:center; }
+.nav-left { font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--accent); letter-spacing:0.15em; text-transform:uppercase; }
+.nav-right-pills { display:flex; gap:20px; }
+.nav-pill { font-size:11px; font-weight:600; color:var(--muted-light); letter-spacing:0.08em; text-transform:uppercase; padding:6px 14px; border-radius:4px; }
+.nav-pill.active { color:var(--accent); background:rgba(13,102,112,0.07); border:1px solid rgba(13,102,112,0.18); }
+.cover-body { max-width:1100px; }
+.cover-slide .kicker { font-family:var(--font-mono); font-size:14px; font-weight:500; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); margin-bottom:20px; }
+.cover-slide h1 { font-size:58px; font-weight:900; line-height:1.08; color:var(--text-light); margin-bottom:24px; }
+.cover-sub { font-size:20px; line-height:1.6; color:var(--muted); max-width:780px; margin-bottom:48px; }
+.cover-kpi-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; max-width:1000px; }
+.cover-kpi { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:24px 20px; display:flex; flex-direction:column; gap:8px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+.cover-kpi-num { font-family:var(--font-mono); font-size:32px; font-weight:600; color:var(--accent); }
+.cover-kpi-label { font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
+.cover-tags { position:absolute; bottom:44px; left:100px; display:flex; gap:24px; }
+.tech-tag { font-family:var(--font-mono); font-size:11px; font-weight:500; color:var(--muted-light); padding:5px 12px; border:1px solid var(--border); border-radius:4px; background:var(--bg-card); }
+
+/* === Content === */
+.content-slide { padding:48px 100px 60px; display:flex; flex-direction:column; gap:20px; width:100%; height:100%; justify-content:center; }
+.content-slide .kicker,.statement-block .kicker,.closing-slide .kicker { font-family:var(--font-mono); font-size:13px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent); }
+.dark-content .kicker { color:var(--accent-bright); }
+.content-slide h1,.statement-block h1,.closing-slide h1 { font-family:var(--font-heading); font-size:36px; font-weight:800; line-height:1.18; max-width:1200px; }
+.content-slide h3 { font-size:17px; font-weight:700; line-height:1.3; }
+.content-slide p { font-size:15px; line-height:1.55; color:var(--muted); }
+.dark-content p { color:rgba(244,246,250,0.6); }
+.insight { font-size:14px; font-style:italic; color:var(--muted); padding-top:12px; border-top:1px solid var(--border); }
+.dark-insight { color:rgba(244,246,250,0.45); border-color:rgba(255,255,255,0.1); }
+.mono-label { font-family:var(--font-mono); font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent); margin-bottom:6px; display:block; }
+code { font-family:var(--font-mono); font-size:14px; padding:2px 6px; background:rgba(13,102,112,0.05); border-radius:3px; }
+
+/* === Statement === */
+.statement-block { padding:80px 120px; display:flex; flex-direction:column; justify-content:center; gap:24px; height:100%; }
+.statement-block h1 { font-size:44px; max-width:900px; }
+.lead { font-size:20px; color:rgba(244,246,250,0.55); max-width:700px; line-height:1.5; }
+.two-col-statement { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:16px; }
+.ts-card { padding:28px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); }
+.ts-card h3 { color:var(--accent-bright); font-size:22px; margin-bottom:8px; }
+.ts-card p { font-size:18px; color:rgba(244,246,250,0.8); }
+.ts-sub { font-size:14px; color:rgba(244,246,250,0.4); margin-top:8px; display:block; }
+
+/* === Cards & Grids === */
+.mem-layers { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.mem-layers > :nth-child(n+5) { grid-column:span 1; }
+.ml-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px 16px; display:flex; flex-direction:column; gap:6px; }
+.ml-tag { font-family:var(--font-mono); font-size:11px; font-weight:700; padding:3px 8px; border-radius:3px; width:fit-content; letter-spacing:0.08em; }
+.ml-t1 { background:rgba(13,102,112,0.1); color:var(--accent); }
+.ml-t2 { background:rgba(30,26,120,0.1); color:#1E1A78; }
+.ml-t3 { background:rgba(245,165,36,0.1); color:var(--accent-amber); }
+.ml-t4 { background:rgba(31,181,122,0.1); color:var(--accent-green); }
+.ml-t5 { background:rgba(232,74,111,0.1); color:var(--accent-rose); }
+.ml-t6 { background:rgba(13,102,112,0.1); color:var(--accent); }
+.ml-t7 { background:rgba(30,26,120,0.1); color:#1E1A78; }
+
+/* === Compare === */
+.mem-compare { display:grid; grid-template-columns:1fr auto 1fr auto 1fr; gap:16px; align-items:stretch; }
+.mc-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.mc-header { padding:14px 20px; font-weight:700; font-size:15px; letter-spacing:0.05em; text-transform:uppercase; }
+.mc-ep { background:rgba(232,74,111,0.06); color:var(--accent-rose); }
+.mc-sem { background:rgba(13,102,112,0.06); color:var(--accent); }
+.mc-proc { background:rgba(31,181,122,0.06); color:var(--accent-green); }
+.mc-body { padding:20px; }
+.mc-example { font-style:italic; color:var(--text-light); font-weight:500; margin-bottom:8px; font-size:14px; }
+.mc-arrow { display:flex; align-items:center; color:var(--border-strong); font-size:20px; }
+
+/* === STM grid === */
+.stm-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.stm-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; display:flex; flex-direction:column; gap:6px; }
+.stm-fit { font-size:12px; color:var(--accent-green); }
+.stm-risk { font-size:12px; color:var(--accent-rose); }
+.budget-bar { margin-top:8px; }
+.bb-label { font-family:var(--font-mono); font-size:11px; font-weight:600; color:var(--accent); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px; }
+.bb-segments { display:flex; gap:2px; height:32px; border-radius:6px; overflow:hidden; }
+.bb-seg { display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; color:#fff; }
+.bb-s1 { background:#0D6670; } .bb-s2 { background:#00B8B8; } .bb-s3 { background:#1E1A78; } .bb-s4 { background:#1FB57A; } .bb-s5 { background:#F5A524; }
+
+/* === Numbered items === */
+.sf-items,.ckpt-grid { display:flex; flex-direction:column; gap:10px; }
+.sf-item,.ck-item { display:flex; gap:14px; align-items:flex-start; padding:10px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+.sf-num,.ck-num { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent); min-width:28px; padding-top:2px; }
+.ckpt-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+
+/* === RAG signals === */
+.rag-signals { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.rs-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); padding:18px; }
+.rs-card h3 { color:var(--accent-bright); }
+
+/* === Cache === */
+.cache-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.cache-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
+.cache-rule { padding:16px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+.cr-split { display:grid; grid-template-columns:1fr auto 1fr; gap:16px; margin-top:10px; }
+.cr-item { font-size:14px; }
+.cr-item span { font-size:12px; color:var(--muted); display:block; margin-top:4px; }
+.cr-static { color:var(--accent-green); font-weight:600; }
+.cr-dynamic { color:var(--accent-amber); font-weight:600; }
+.cr-divider { color:var(--border-strong); font-weight:300; }
+
+/* === Vector === */
+.vec-platforms { display:flex; gap:10px; margin-bottom:12px; }
+.vp-tag { font-family:var(--font-mono); font-size:12px; padding:5px 12px; background:rgba(13,102,112,0.06); border:1px solid var(--border); border-radius:4px; color:var(--accent); font-weight:500; }
+.vec-schema { display:grid; grid-template-columns:repeat(2,1fr); gap:6px; }
+.vs-row { display:flex; gap:12px; align-items:center; padding:8px 12px; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; font-size:14px; }
+.vs-row code { font-size:13px; min-width:170px; }
+.vs-row span { color:var(--muted); }
+
+/* === KG === */
+.kg-demo { display:flex; align-items:center; gap:12px; justify-content:center; padding:16px 0; }
+.kg-node { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px 24px; font-weight:700; font-size:16px; text-align:center; }
+.kg-node-accent { border-color:var(--accent); background:rgba(13,102,112,0.04); }
+.kg-edge { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.kg-edge-label { font-size:13px; font-weight:600; color:var(--accent); }
+.kg-validity { font-family:var(--font-mono); font-size:10px; color:var(--muted); }
+.kg-edge-new .kg-edge-label { color:var(--accent-green); }
+.kg-caps { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.kg-cap { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+
+/* === Hybrid arch === */
+.hybrid-arch { display:flex; flex-direction:column; gap:8px; }
+.ha-layer { display:flex; align-items:center; gap:20px; padding:14px 24px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); border-left:3px solid var(--accent); }
+.ha-label { font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--accent); min-width:100px; }
+.ha-desc { font-size:14px; color:var(--muted); }
+
+/* === Score signals === */
+.formula-display { text-align:center; padding:16px; }
+.formula-display code { font-size:20px; font-weight:500; color:var(--accent); background:none; }
+.score-signals { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+.ss-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; text-align:center; }
+.ss-var { font-family:var(--font-mono); font-size:24px; font-weight:700; color:var(--accent); display:block; margin-bottom:6px; }
+
+/* === Tables === */
+table { width:100%; border-collapse:collapse; font-size:14px; background:var(--bg-card); border-radius:var(--radius); overflow:hidden; border:1px solid var(--border); }
+th { font-family:var(--font-mono); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; padding:14px 16px; text-align:left; background:rgba(13,102,112,0.05); color:var(--accent); border-bottom:2px solid var(--border); }
+td { padding:12px 16px; border-bottom:1px solid var(--border); color:var(--muted); }
+.qt-label { text-align:left; font-weight:600; color:var(--text-light); }
+
+/* === WM schema === */
+.wm-schema { display:grid; grid-template-columns:1fr 280px; gap:24px; }
+.wm-fields { display:flex; flex-direction:column; gap:6px; }
+.wm-f { display:flex; gap:12px; align-items:center; padding:8px 12px; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; }
+.wm-f code { min-width:170px; font-size:13px; }
+.wm-f span { color:var(--muted); font-size:14px; }
+.wm-rules { padding:16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); height:fit-content; }
+.wm-rules p { font-size:14px; }
+
+/* === Decision record === */
+.decision-record { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+.dr-item { display:flex; gap:14px; align-items:center; padding:14px 18px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+.dr-field { font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--accent); min-width:110px; }
+.dr-desc { font-size:15px; color:var(--muted); }
+
+/* === FSM === */
+.fsm-diagram { display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center; }
+.fsm-node { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 20px; font-weight:700; font-size:14px; text-align:center; }
+.fsm-arrow { color:var(--accent); font-size:18px; }
+.fsm-wait { border-color:var(--accent-amber); }
+.fsm-exec { border-color:var(--accent); background:rgba(13,102,112,0.04); }
+.fsm-done { border-color:var(--accent-green); color:var(--accent-green); }
+.fsm-fail { border-color:var(--accent-rose); color:var(--accent-rose); }
+.fsm-retry { display:flex; align-items:center; gap:10px; justify-content:center; margin-top:8px; font-size:14px; color:var(--muted); }
+
+/* === DAG === */
+.dag-content { display:flex; flex-direction:column; gap:20px; }
+.dag-caps { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.dag-cap { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+.dag-vs { display:grid; grid-template-columns:1fr auto 1fr; gap:16px; }
+.dv-item { padding:16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+.dv-item span { font-weight:700; font-size:16px; color:var(--accent); display:block; margin-bottom:6px; }
+.dv-sep { display:flex; align-items:center; font-weight:700; color:var(--border-strong); }
+.dag-decision { padding:16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+
+/* === Nine rules === */
+.nine-rules { display:flex; flex-direction:column; gap:8px; margin-top:16px; }
+.nr-row { display:flex; gap:14px; align-items:center; font-size:16px; color:rgba(244,246,250,0.8); padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+.nr-num { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent-bright); min-width:24px; }
+
+/* === Multi-agent === */
+.multi-agent-mem { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+.mam-scope { display:flex; flex-direction:column; gap:8px; }
+.mam-layer { padding:14px 20px; border-radius:var(--radius); font-weight:600; font-size:15px; text-align:center; }
+.mam-global { background:rgba(13,102,112,0.08); color:var(--accent); border:1px solid rgba(13,102,112,0.2); }
+.mam-project { background:rgba(30,26,120,0.06); color:#1E1A78; border:1px solid rgba(30,26,120,0.15); }
+.mam-task { background:rgba(245,165,36,0.06); color:var(--accent-amber); border:1px solid rgba(245,165,36,0.15); }
+.mam-private { background:rgba(232,74,111,0.06); color:var(--accent-rose); border:1px solid rgba(232,74,111,0.15); }
+.mam-patterns { display:flex; flex-direction:column; gap:8px; }
+.mam-p { display:flex; gap:12px; align-items:center; padding:10px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); font-size:14px; color:var(--muted); }
+.mam-tag { font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--accent); min-width:64px; }
+
+/* === Consistency === */
+.consist-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.cs-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; display:flex; flex-direction:column; gap:8px; }
+.cs-use { font-size:12px; color:var(--accent); margin-top:auto; }
+.cs-strong { border-top:3px solid var(--accent-rose); }
+.cs-ryw { border-top:3px solid var(--accent-amber); }
+.cs-eventual { border-top:3px solid var(--accent-green); }
+.cs-conflict { border-top:3px solid var(--accent); }
+
+/* === MaaS flows === */
+.maas-flow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.mf-step { font-size:14px; font-weight:600; padding:8px 14px; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; }
+.mf-arrow { color:var(--accent); font-size:14px; }
+.maas-features { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.maas-f { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+.zep-questions { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+.zq-item { padding:12px 18px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); font-style:italic; font-size:16px; color:var(--text-light); }
+.zep-key { padding:16px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+
+/* === LangMem/Letta compare === */
+.ll-compare { display:grid; grid-template-columns:1fr auto 1fr; gap:20px; align-items:stretch; }
+.ll-panel { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); overflow:hidden; }
+.ll-header { padding:14px 20px; font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:0.05em; }
+.ll-lm { background:rgba(31,181,122,0.1); color:var(--accent-green); }
+.ll-lt { background:rgba(0,184,184,0.1); color:var(--accent-bright); }
+.ll-body { padding:20px; }
+.ll-pos { font-weight:600; color:rgba(244,246,250,0.85); margin-bottom:8px; }
+.ll-vs { display:flex; align-items:center; font-weight:700; color:rgba(255,255,255,0.2); }
+
+/* === PII === */
+.pii-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.pii-item { display:flex; gap:10px; align-items:center; padding:12px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); font-size:14px; }
+.pii-icon { color:var(--accent); font-size:16px; }
+
+/* === Forget chain === */
+.forget-chain { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.fc-node { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; text-align:center; }
+.fc-node h3 { font-size:14px; }
+
+/* === Inject === */
+.inject-rules { display:flex; flex-direction:column; gap:12px; margin-top:16px; }
+.ir-item { font-size:18px; color:rgba(244,246,250,0.75); padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+
+/* === Academic === */
+.academic-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.ac-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:22px; display:flex; flex-direction:column; gap:8px; }
+.ac-detail { font-size:13px; color:var(--muted); margin-top:auto; }
+
+/* === Ref arch === */
+.ref-arch { display:flex; flex-direction:column; gap:6px; }
+.ra-layer { display:flex; align-items:center; gap:16px; padding:12px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); border-left:3px solid var(--accent); }
+.ra-num { font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--accent); min-width:24px; }
+.ra-name { font-weight:700; font-size:15px; min-width:140px; }
+.ra-q { font-size:14px; color:var(--muted); font-style:italic; }
+
+/* === Closing === */
+.closing-slide { padding:80px 120px; display:flex; flex-direction:column; justify-content:center; gap:24px; height:100%; }
+.closing-slide h1 { font-size:44px; }
+.closing-rules { display:flex; flex-direction:column; gap:8px; }
+.cl-rule { display:flex; gap:24px; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+.cl-what { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent-bright); min-width:120px; }
+.cl-answer { font-size:17px; color:rgba(244,246,250,0.75); }
+
+/* === Counter/Notes === */
+.slide-counter { position:fixed; bottom:1.2rem; right:2rem; font-family:var(--font-mono); font-size:0.75rem; color:var(--muted); z-index:100; pointer-events:none; }
+.notes-panel { display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.9); color:#fff; padding:1.5rem 2rem; font-size:0.9rem; line-height:1.5; z-index:200; max-height:30vh; overflow-y:auto; }
+.notes-panel.visible { display:block; }
+
+/* === Motion === */
+[data-anim] { opacity:1; transform:none; }
+html.motion-ready:not(.motion-static) .slide.active[data-animate="cascade"] [data-anim],
+html.motion-ready:not(.motion-static) .slide.active[data-animate="quote"] [data-anim],
+html.motion-ready:not(.motion-static) .slide.active[data-animate="data"] [data-anim],
+html.motion-ready:not(.motion-static) .slide.active[data-animate="diagram"] [data-anim] {
+  animation:anim-cascade 520ms cubic-bezier(0.2,0.8,0.2,1) both;
+  animation-delay:calc(var(--anim-index,0)*90ms);
+}
+html.motion-ready:not(.motion-static) .slide.active[data-animate="hero"] [data-anim] {
+  animation:anim-hero 720ms cubic-bezier(0.2,0.8,0.2,1) both;
+  animation-delay:calc(var(--anim-index,0)*140ms);
+}
+html.motion-ready:not(.motion-static) .slide.active[data-animate="directional"] [data-anim] {
+  animation:anim-cascade 520ms cubic-bezier(0.2,0.8,0.2,1) both;
+  animation-delay:calc(var(--anim-index,0)*120ms);
+}
+html.motion-ready:not(.motion-static) .slide.active[data-animate="directional"] [data-anim="left"] { animation-name:anim-slide-left; }
+html.motion-ready:not(.motion-static) .slide.active[data-animate="directional"] [data-anim="right"] { animation-name:anim-slide-right; }
+html.motion-ready:not(.motion-static) .slide.active[data-animate="directional"] [data-anim="divider"] { animation-name:anim-divider; }
+html.motion-ready:not(.motion-static) .slide.active[data-animate="pipeline"] [data-anim] {
+  opacity:0; transform:translateY(14px); transition:opacity 260ms ease,transform 260ms ease;
+}
+html.motion-ready:not(.motion-static) .slide.active[data-animate="pipeline"] [data-anim].revealed { opacity:1; transform:translateY(0); }
+html.motion-static [data-anim],html.motion-static .slide.active[data-animate="pipeline"] [data-anim],html.motion-static .slide * {
+  opacity:1!important; transform:none!important; animation:none!important; transition:none!important;
+}
+@keyframes anim-cascade { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+@keyframes anim-hero { from { opacity:0; transform:translateY(20px) scale(0.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes anim-slide-left { from { opacity:0; transform:translateX(-32px); } to { opacity:1; transform:translateX(0); } }
+@keyframes anim-slide-right { from { opacity:0; transform:translateX(32px); } to { opacity:1; transform:translateX(0); } }
+@keyframes anim-divider { from { opacity:0; transform:scaleY(0.2); } to { opacity:1; transform:scaleY(1); } }
+@keyframes anim-pop { from { opacity:0; transform:translateY(10px) scale(0.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+@media (prefers-reduced-motion:reduce) { .slide,.slide * { transition:none!important; animation:none!important; } [data-anim] { opacity:1!important; transform:none!important; } }
+@media print { html,body { overflow:visible; height:auto; } .slide { position:relative; opacity:1!important; pointer-events:auto; page-break-after:always; transform:none!important; } .slide * { opacity:1!important; transform:none!important; animation:none!important; transition:none!important; } .slide-counter,.notes-panel { display:none!important; } }
+
+
+/* === Code Agent specific === */
+.timeline-horiz { display:flex; align-items:stretch; gap:16px; margin-top:16px; }
+.th-node { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); padding:22px 20px; flex:1; }
+.th-node h3 { color:rgba(244,246,250,0.9); font-size:18px; margin-bottom:6px; }
+.th-node p { font-size:14px; }
+.th-accent { border-color:var(--accent-bright); background:rgba(0,184,184,0.08); }
+.th-year { font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--accent-bright); display:block; margin-bottom:8px; }
+.th-arrow { display:flex; align-items:center; color:rgba(255,255,255,0.2); font-size:20px; }
+
+/* Landscape grid */
+.landscape-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.landscape-grid > :nth-child(n+5) { grid-column:span 1; }
+.ls-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; display:flex; flex-direction:column; gap:6px; }
+.ls-highlight { border-left:3px solid var(--accent); background:rgba(13,102,112,0.02); }
+.ls-type { font-family:var(--font-mono); font-size:10px; font-weight:700; color:var(--accent); letter-spacing:0.1em; text-transform:uppercase; }
+
+/* Arch compare */
+.arch-compare { display:grid; grid-template-columns:1fr auto 1fr; gap:20px; align-items:stretch; }
+.ac-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.ac-header { padding:14px 20px; font-weight:700; font-size:15px; letter-spacing:0.05em; text-transform:uppercase; }
+.ac-claude { background:rgba(13,102,112,0.06); color:var(--accent); }
+.ac-codex { background:rgba(30,26,120,0.06); color:#1E1A78; }
+.ac-body { padding:16px 20px; }
+.ac-row { display:flex; gap:12px; padding:8px 0; border-bottom:1px solid var(--border); font-size:14px; }
+.ac-row:last-child { border:none; }
+.ac-label { font-weight:600; color:var(--text-light); min-width:90px; }
+.ac-vs { display:flex; align-items:center; font-family:var(--font-mono); font-weight:700; color:var(--border-strong); }
+
+/* Agent loop */
+.agent-loop { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; }
+.al-node { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 18px; font-weight:600; font-size:14px; text-align:center; min-width:90px; }
+.al-accent { border-color:var(--accent); background:rgba(13,102,112,0.04); }
+.al-codex { border-color:#1E1A78; background:rgba(30,26,120,0.04); }
+.al-arrow { color:var(--accent); font-size:16px; }
+.loop-features { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+.lf-item { display:flex; gap:10px; align-items:center; font-size:14px; color:var(--muted); }
+.lf-tag { font-family:var(--font-mono); font-size:11px; font-weight:700; color:var(--accent); padding:3px 10px; background:rgba(13,102,112,0.07); border-radius:4px; min-width:80px; text-align:center; }
+.lf-codex { color:#1E1A78; background:rgba(30,26,120,0.07); }
+
+/* Tool detail */
+.td-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.td-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; display:flex; flex-direction:column; gap:4px; }
+.td-use { font-size:12px; color:var(--accent); margin-top:auto; }
+
+/* Instruction compare */
+.instr-compare { display:grid; grid-template-columns:1fr 2px 1fr; gap:20px; }
+.ic-panel { }
+.ic-header { font-weight:700; font-size:15px; margin-bottom:12px; padding:10px 16px; border-radius:var(--radius); }
+.ic-claude { background:rgba(13,102,112,0.06); color:var(--accent); }
+.ic-codex { background:rgba(30,26,120,0.06); color:#1E1A78; }
+.ic-stack { display:flex; flex-direction:column; gap:4px; }
+.ic-layer { padding:10px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; font-size:14px; text-align:center; }
+.ic-l1 { border-left:3px solid var(--accent-rose); }
+.ic-l2 { border-left:3px solid var(--accent-amber); }
+.ic-l3 { border-left:3px solid var(--accent); }
+.ic-l4 { border-left:3px solid var(--accent-green); }
+.ic-l5 { border-left:3px solid var(--accent-bright); }
+.ic-l6 { border-left:3px solid #1E1A78; }
+.ic-vs { background:var(--border); }
+
+/* MD compare */
+.md-compare { display:grid; grid-template-columns:1fr auto 1fr; gap:20px; }
+.md-panel { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); overflow:hidden; }
+.md-header { padding:14px 20px; font-weight:700; font-size:15px; }
+.md-claude { background:rgba(13,102,112,0.12); color:var(--accent-bright); }
+.md-codex { background:rgba(30,26,120,0.12); color:#8888FF; }
+.md-body { padding:16px 20px; }
+.md-item { display:flex; gap:12px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:14px; }
+.md-item:last-child { border:none; }
+.md-label { font-weight:600; min-width:60px; color:rgba(244,246,250,0.7); }
+.md-vs { display:flex; align-items:center; font-family:var(--font-mono); font-weight:700; color:rgba(255,255,255,0.15); }
+
+/* Permission */
+.perm-compare { display:grid; grid-template-columns:1fr auto 1fr; gap:20px; }
+.pm-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.pm-header { padding:14px 20px; font-weight:700; font-size:14px; }
+.pm-claude { background:rgba(13,102,112,0.06); color:var(--accent); }
+.pm-codex { background:rgba(30,26,120,0.06); color:#1E1A78; }
+.pm-body { padding:16px 20px; }
+.pm-rule { display:flex; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); font-size:14px; color:var(--muted); }
+.pm-rule span { font-family:var(--font-mono); font-size:12px; font-weight:700; min-width:70px; padding:4px 10px; border-radius:4px; text-align:center; }
+.pm-allow span { background:rgba(31,181,122,0.1); color:var(--accent-green); }
+.pm-ask span { background:rgba(245,165,36,0.1); color:var(--accent-amber); }
+.pm-deny span { background:rgba(232,74,111,0.1); color:var(--accent-rose); }
+.pm-s1 span { background:rgba(13,102,112,0.1); color:var(--accent); }
+.pm-s2 span { background:rgba(30,26,120,0.1); color:#1E1A78; }
+.pm-note { font-size:12px; color:var(--muted); margin-top:8px; }
+.pm-vs { display:flex; align-items:center; font-family:var(--font-mono); font-weight:700; color:var(--border-strong); }
+
+/* Sandbox */
+.sandbox-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.sb-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+.sb-can { border-top:3px solid var(--accent-green); }
+.sb-cannot { border-top:3px solid var(--accent-rose); }
+
+/* Hooks */
+.hooks-types { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:12px; }
+.ht-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+.he-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:8px; }
+.he-item { font-size:13px; padding:8px 14px; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; }
+
+/* Security baseline */
+.sec-baseline { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.sec-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; display:flex; flex-direction:column; gap:4px; }
+.sec-num { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent); }
+
+/* Context compare */
+.ctx-compare { display:grid; grid-template-columns:1fr auto 1fr; gap:20px; }
+.ctx-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.ctx-header { padding:14px 20px; font-weight:700; font-size:14px; }
+.ctx-claude { background:rgba(13,102,112,0.06); color:var(--accent); }
+.ctx-codex { background:rgba(30,26,120,0.06); color:#1E1A78; }
+.ctx-body { padding:16px 20px; }
+.ctx-item { padding:8px 0; border-bottom:1px solid var(--border); font-size:14px; color:var(--muted); }
+.ctx-vs { display:flex; align-items:center; font-family:var(--font-mono); font-weight:700; color:var(--border-strong); }
+
+/* Degradation */
+.degrade-solutions { display:flex; flex-direction:column; gap:12px; margin-top:16px; }
+.ds-item { display:flex; gap:12px; align-items:center; font-size:15px; color:rgba(244,246,250,0.75); }
+.ds-tag { font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--accent-bright); padding:4px 12px; background:rgba(0,184,184,0.1); border-radius:4px; min-width:100px; text-align:center; }
+.ds-codex { color:#8888FF; background:rgba(30,26,120,0.15); }
+
+/* MCP */
+.mcp-compare { display:grid; grid-template-columns:1fr auto 1fr; gap:20px; }
+.mcp-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.mcp-header { padding:14px 20px; font-weight:700; font-size:14px; }
+.mcp-claude { background:rgba(13,102,112,0.06); color:var(--accent); }
+.mcp-codex { background:rgba(30,26,120,0.06); color:#1E1A78; }
+.mcp-body { padding:16px 20px; }
+.mcp-item { padding:8px 0; border-bottom:1px solid var(--border); font-size:14px; color:var(--muted); }
+.mcp-vs { display:flex; align-items:center; font-family:var(--font-mono); font-weight:700; color:var(--border-strong); }
+
+/* GHA */
+.gha-tg { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+.gt-item { font-size:13px; padding:6px 12px; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; }
+.gha-uc { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:8px; }
+.uc-item { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; }
+
+/* Codex CI */
+.cci-steps { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:8px; }
+.cf-step { font-size:13px; font-weight:600; padding:8px 12px; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; }
+.cf-arrow { color:var(--accent); font-size:12px; }
+.cci-mode-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px; }
+.cci-mode { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; }
+
+/* Bench scores */
+.bench-scores { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.bs-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; text-align:center; }
+.bs-val { font-family:var(--font-mono); font-size:28px; font-weight:700; color:var(--accent); display:block; }
+.bs-label { font-size:14px; font-weight:600; display:block; margin-top:6px; }
+.bs-test { font-family:var(--font-mono); font-size:10px; color:var(--muted); display:block; margin-top:4px; }
+.bench-warning { padding:16px 20px; background:rgba(245,165,36,0.04); border:1px solid rgba(245,165,36,0.15); border-radius:var(--radius); }
+
+/* Real eval */
+.re-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.re-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); padding:16px; }
+.re-card h3 { color:var(--accent-bright); }
+
+/* Limitations */
+.limits-compare { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.lm-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.lm-header { padding:14px 20px; font-weight:700; font-size:14px; }
+.lm-claude { background:rgba(13,102,112,0.06); color:var(--accent); }
+.lm-codex { background:rgba(30,26,120,0.06); color:#1E1A78; }
+.lm-items { padding:16px 20px; }
+.lm-item { padding:8px 0; border-bottom:1px solid var(--border); font-size:14px; color:var(--muted); }
+
+/* TCO */
+.tco-formula { padding:14px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); margin-top:8px; }
+.tco-formula code { font-size:15px; color:var(--accent); background:none; }
+
+/* Selection grid */
+.select-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.sel-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; display:flex; flex-direction:column; gap:6px; }
+.sel-highlight { border-left:3px solid var(--accent); }
+.sel-scenario { font-family:var(--font-mono); font-size:10px; font-weight:700; color:var(--accent); letter-spacing:0.1em; text-transform:uppercase; }
+
+/* Trends */
+.tr-items { display:flex; flex-direction:column; gap:10px; }
+.tr-item { display:flex; gap:14px; align-items:flex-start; padding:10px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+.tr-num { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent); min-width:28px; padding-top:2px; }
+
+/* Closing extras */
+.closing-statement { margin-top:16px; }
+.closing-statement p { font-size:20px; color:rgba(244,246,250,0.7); line-height:1.6; }
+.closing-bottom { margin-top:12px; }
+.closing-note { font-size:16px; color:rgba(244,246,250,0.5); line-height:1.6; }
+.closing-note strong { color:var(--accent-bright); }
+
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+  <section class="slide active" data-layout="L-COVER" data-theme="light" data-animate="hero" data-notes="">
+
+<div class="cover-slide">
+  <div class="top-bar"></div>
+  <div class="cover-nav">
+    <span class="nav-left">CODE AGENT</span>
+    <span class="nav-right-pills">
+      <span class="nav-pill active">Architecture</span>
+      <span class="nav-pill">Security</span>
+      <span class="nav-pill">CI/CD</span>
+      <span class="nav-pill">Evaluation</span>
+    </span>
+  </div>
+  <div class="cover-body">
+    <div class="kicker" data-anim>Enterprise Agent Engineering · Module 03</div>
+    <h1 data-anim>Code Agent 与<br>软件工程自动化</h1>
+    <p class="cover-sub" data-anim>以 Claude Code 与 Codex 为核心——从代理循环到安全沙箱，<br>从 CI/CD 集成到生产评估的深度解析</p>
+    <div class="cover-kpi-strip" data-anim>
+      <div class="cover-kpi"><span class="cover-kpi-num">2</span><span class="cover-kpi-label">Deep Dives</span></div>
+      <div class="cover-kpi"><span class="cover-kpi-num">7</span><span class="cover-kpi-label">Agent Landscape</span></div>
+      <div class="cover-kpi"><span class="cover-kpi-num">80.9%</span><span class="cover-kpi-label">SWE-bench Top</span></div>
+      <div class="cover-kpi"><span class="cover-kpi-num">8</span><span class="cover-kpi-label">Security Controls</span></div>
+    </div>
+  </div>
+  <div class="cover-tags" data-anim>
+    <span class="tech-tag">Claude Code</span>
+    <span class="tech-tag">OpenAI Codex</span>
+    <span class="tech-tag">MCP</span>
+    <span class="tech-tag">GitHub Actions</span>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-STATEMENT" data-theme="dark" data-animate="quote" data-notes="">
+
+<div class="statement-block">
+  <div class="kicker" data-anim>Paradigm Shift</div>
+  <h1 data-anim>从"建议下一行"到"接手整个任务"</h1>
+  <div class="timeline-horiz" data-anim>
+    <div class="th-node"><span class="th-year">2021-23</span><h3>代码补全</h3><p>Copilot · CodeWhisperer<br>逐行建议 · 人类驱动</p></div>
+    <div class="th-arrow">→</div>
+    <div class="th-node"><span class="th-year">2024</span><h3>Agent 萌芽</h3><p>Devin POC · Cursor Agent<br>多步执行 · 人类审批</p></div>
+    <div class="th-arrow">→</div>
+    <div class="th-node th-accent"><span class="th-year">2025-26</span><h3>自主执行</h3><p>规划→编辑→测试→PR<br>Agent 主导 · 人类监管</p></div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Landscape</div>
+  <h1 data-anim>七大 Code Agent 速览——聚焦两个终端型标杆</h1>
+  <div class="landscape-grid" data-anim>
+    <div class="ls-card ls-highlight"><span class="ls-type">终端型</span><h3>Claude Code</h3><p>Anthropic · 终端原生 + MCP · 仓库级推理最强</p></div>
+    <div class="ls-card ls-highlight"><span class="ls-type">终端型</span><h3>OpenAI Codex</h3><p>OpenAI · CLI + 云端双模 · 执行环境统一</p></div>
+    <div class="ls-card"><span class="ls-type">IDE 型</span><h3>Cursor</h3><p>VS Code fork · 多模型路由 · 交互体验最佳</p></div>
+    <div class="ls-card"><span class="ls-type">云端型</span><h3>Devin</h3><p>Cognition · 持久化工作区 · 最高自主委派</p></div>
+    <div class="ls-card"><span class="ls-type">云端型</span><h3>Copilot Agent</h3><p>GitHub · 原生集成最深 · 企业采购友好</p></div>
+    <div class="ls-card"><span class="ls-type">云端型</span><h3>Amazon Q</h3><p>AWS · IaC + 安全扫描 + 现代化迁移</p></div>
+    <div class="ls-card"><span class="ls-type">云端型</span><h3>Jules</h3><p>Google · 轻量异步 PR · 按任务配额</p></div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-COMPARISON" data-theme="light" data-animate="directional" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Architecture Overview</div>
+  <h1 data-anim>Claude Code vs Codex：总体架构对比</h1>
+  <div class="arch-compare" data-anim>
+    <div class="ac-panel" data-anim="left">
+      <div class="ac-header ac-claude">Claude Code</div>
+      <div class="ac-body">
+        <div class="ac-row"><span class="ac-label">形态</span>终端原生代理</div>
+        <div class="ac-row"><span class="ac-label">执行位置</span>本机 / CI / 容器</div>
+        <div class="ac-row"><span class="ac-label">原生工具</span>Glob · Grep · Edit · Bash · Task</div>
+        <div class="ac-row"><span class="ac-label">配置入口</span>CLAUDE.md + settings.json</div>
+        <div class="ac-row"><span class="ac-label">核心优势</span>仓库级推理 · MCP 扩展</div>
+      </div>
+    </div>
+    <div class="ac-vs" data-anim="divider">VS</div>
+    <div class="ac-panel" data-anim="right">
+      <div class="ac-header ac-codex">Codex</div>
+      <div class="ac-body">
+        <div class="ac-row"><span class="ac-label">形态</span>开源 CLI + 托管云端</div>
+        <div class="ac-row"><span class="ac-label">执行位置</span>本地沙箱 / 云端隔离环境</div>
+        <div class="ac-row"><span class="ac-label">原生工具</span>Shell · File R/W · 网络受限</div>
+        <div class="ac-row"><span class="ac-label">配置入口</span>AGENTS.md + config.toml</div>
+        <div class="ac-row"><span class="ac-label">核心优势</span>环境统一 · 云端任务</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-SYSTEM" data-theme="light" data-animate="diagram" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Claude Code Agent Loop</div>
+  <h1 data-anim>Claude Code 代理循环：工具调用是一等公民</h1>
+  <div class="agent-loop" data-anim>
+    <div class="al-node" data-anim>用户目标</div>
+    <div class="al-arrow" data-anim>→</div>
+    <div class="al-node" data-anim>加载<br>CLAUDE.md</div>
+    <div class="al-arrow" data-anim>→</div>
+    <div class="al-node al-accent" data-anim>Glob/Grep<br>探索代码</div>
+    <div class="al-arrow" data-anim>→</div>
+    <div class="al-node al-accent" data-anim>Edit/Write<br>修改文件</div>
+    <div class="al-arrow" data-anim>→</div>
+    <div class="al-node al-accent" data-anim>Bash<br>运行测试</div>
+    <div class="al-arrow" data-anim>→</div>
+    <div class="al-node" data-anim>读错误<br>修复/确认</div>
+  </div>
+  <div class="loop-features" data-anim>
+    <div class="lf-item"><span class="lf-tag">子代理</span>Task 工具创建独立上下文子代理</div>
+    <div class="lf-item"><span class="lf-tag">持久化</span>CLAUDE.md 存储仓库规范与记忆</div>
+    <div class="lf-item"><span class="lf-tag">自动压缩</span>接近窗口上限时自动压缩历史</div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Claude Code Tools Deep Dive</div>
+  <h1 data-anim>Claude Code 内置工具链详解</h1>
+  <div class="tool-detail" data-anim>
+    <div class="td-grid">
+      <div class="td-card"><h3>Glob</h3><p>快速文件模式匹配 · 支持 **/*.ts</p><span class="td-use">定位目标文件</span></div>
+      <div class="td-card"><h3>Grep</h3><p>内容搜索 · 正则支持 · 行号定位</p><span class="td-use">查找符号引用</span></div>
+      <div class="td-card"><h3>Read</h3><p>精确行范围读取 · 避免全文加载</p><span class="td-use">精读关键代码</span></div>
+      <div class="td-card"><h3>Edit</h3><p>精确字符串替换 · 非 diff patch</p><span class="td-use">修改现有代码</span></div>
+      <div class="td-card"><h3>Write</h3><p>创建新文件 · 整体覆写</p><span class="td-use">新增文件</span></div>
+      <div class="td-card"><h3>Bash</h3><p>Shell 命令 · 可配置允许/拒绝</p><span class="td-use">运行测试 · 构建</span></div>
+      <div class="td-card"><h3>Task</h3><p>启动子代理 · 独立上下文</p><span class="td-use">分治复杂任务</span></div>
+      <div class="td-card"><h3>MCP</h3><p>外部工具服务器 · 懒加载</p><span class="td-use">连接外部系统</span></div>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-SYSTEM" data-theme="light" data-animate="diagram" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Codex Agent Loop</div>
+  <h1 data-anim>Codex 代理循环：执行环境先于工具权限</h1>
+  <div class="agent-loop" data-anim>
+    <div class="al-node" data-anim>用户目标</div>
+    <div class="al-arrow" data-anim>→</div>
+    <div class="al-node" data-anim>读取<br>AGENTS.md</div>
+    <div class="al-arrow" data-anim>→</div>
+    <div class="al-node al-codex" data-anim>Sandbox<br>读取/修改</div>
+    <div class="al-arrow" data-anim>→</div>
+    <div class="al-node al-codex" data-anim>运行测试<br>stdout/stderr</div>
+    <div class="al-arrow" data-anim>→</div>
+    <div class="al-node al-codex" data-anim>根据错误<br>修复</div>
+    <div class="al-arrow" data-anim>→</div>
+    <div class="al-node" data-anim>输出 diff<br>+ 测试结果</div>
+  </div>
+  <div class="loop-features" data-anim>
+    <div class="lf-item"><span class="lf-tag lf-codex">双模式</span>CLI 本地执行 + 云端托管任务</div>
+    <div class="lf-item"><span class="lf-tag lf-codex">codex exec</span>非交互模式 · 适合 CI/CD</div>
+    <div class="lf-item"><span class="lf-tag lf-codex">沙箱隔离</span>审批策略与 sandbox 模式分离</div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-COMPARISON" data-theme="light" data-animate="directional" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Instruction Hierarchy</div>
+  <h1 data-anim>指令层级对比：行为规范 vs 执行策略</h1>
+  <div class="instr-compare" data-anim>
+    <div class="ic-panel" data-anim="left">
+      <div class="ic-header ic-claude">Claude Code 指令层级</div>
+      <div class="ic-stack">
+        <div class="ic-layer ic-l1">Anthropic 系统提示</div>
+        <div class="ic-layer ic-l2">内置安全规则</div>
+        <div class="ic-layer ic-l3">全局配置 (~/.claude)</div>
+        <div class="ic-layer ic-l4">项目 CLAUDE.md</div>
+        <div class="ic-layer ic-l5">目录级 CLAUDE.md</div>
+        <div class="ic-layer ic-l6">当前任务指令</div>
+      </div>
+    </div>
+    <div class="ic-vs" data-anim="divider"></div>
+    <div class="ic-panel" data-anim="right">
+      <div class="ic-header ic-codex">Codex 指令层级</div>
+      <div class="ic-stack">
+        <div class="ic-layer ic-l1">模型系统指令</div>
+        <div class="ic-layer ic-l2">Agent Runtime</div>
+        <div class="ic-layer ic-l3">Sandbox + 审批策略</div>
+        <div class="ic-layer ic-l4">config.toml</div>
+        <div class="ic-layer ic-l5">AGENTS.md</div>
+        <div class="ic-layer ic-l6">用户任务</div>
+      </div>
+    </div>
+  </div>
+  <p class="insight" data-anim>Claude Code 强调"行为规范+项目记忆"，Codex 强调"执行策略+环境隔离"</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-COMPARISON" data-theme="dark" data-animate="directional" data-notes="">
+
+<div class="content-slide dark-content">
+  <div class="kicker" data-anim>CLAUDE.md vs AGENTS.md</div>
+  <h1 data-anim>项目指令文件：写法、作用域与最佳实践</h1>
+  <div class="md-compare" data-anim>
+    <div class="md-panel" data-anim="left">
+      <div class="md-header md-claude">CLAUDE.md</div>
+      <div class="md-body">
+        <div class="md-item"><span class="md-label">作用域</span>项目根 + 子目录继承</div>
+        <div class="md-item"><span class="md-label">内容</span>项目规范 · 工作流规则 · 记忆</div>
+        <div class="md-item"><span class="md-label">写法</span>自然语言 · Markdown · 具体</div>
+        <div class="md-item"><span class="md-label">陷阱</span>过长降低效果 · 矛盾规则</div>
+      </div>
+    </div>
+    <div class="md-vs" data-anim="divider">VS</div>
+    <div class="md-panel" data-anim="right">
+      <div class="md-header md-codex">AGENTS.md</div>
+      <div class="md-body">
+        <div class="md-item"><span class="md-label">作用域</span>项目根 + 目录级覆盖</div>
+        <div class="md-item"><span class="md-label">内容</span>任务描述 · 执行约束 · 测试指令</div>
+        <div class="md-item"><span class="md-label">写法</span>结构化 · 命令式 · 可执行</div>
+        <div class="md-item"><span class="md-label">陷阱</span>非安全边界 · 可被忽略</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-COMPARISON" data-theme="light" data-animate="directional" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Permission Model</div>
+  <h1 data-anim>权限模型：三层规则 vs 两层分离</h1>
+  <div class="perm-compare" data-anim>
+    <div class="pm-panel" data-anim="left">
+      <div class="pm-header pm-claude">Claude Code: Allow / Ask / Deny</div>
+      <div class="pm-body">
+        <div class="pm-rule pm-allow"><span>Allow</span>自动执行，不提示</div>
+        <div class="pm-rule pm-ask"><span>Ask</span>每次询问用户</div>
+        <div class="pm-rule pm-deny"><span>Deny</span>完全禁止</div>
+        <p class="pm-note">按工具名 + 通配符匹配 · 规则继承</p>
+      </div>
+    </div>
+    <div class="pm-vs" data-anim="divider">VS</div>
+    <div class="pm-panel" data-anim="right">
+      <div class="pm-header pm-codex">Codex: Sandbox × Approval</div>
+      <div class="pm-body">
+        <div class="pm-rule pm-s1"><span>Sandbox</span>read-only / write / full</div>
+        <div class="pm-rule pm-s2"><span>Approval</span>suggest / auto-edit / full-auto</div>
+        <p class="pm-note">两层正交组合 · 独立配置</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Sandbox Architecture</div>
+  <h1 data-anim>沙箱隔离：能防什么，不能防什么</h1>
+  <div class="sandbox-grid" data-anim>
+    <div class="sb-card sb-can"><h3>macOS 沙箱</h3><p>Seatbelt · 两者都使用 · 文件系统 + 网络限制</p></div>
+    <div class="sb-card sb-can"><h3>Linux 沙箱</h3><p>Claude Code: 容器/bubblewrap<br>Codex: Landlock/bubblewrap</p></div>
+    <div class="sb-card sb-can"><h3>网络限制</h3><p>Claude Code: 权限规则<br>Codex: 受信域名白名单</p></div>
+    <div class="sb-card sb-cannot"><h3>⚠ 恶意仓库注入</h3><p>仓库中的恶意指令可能被 Agent 执行</p></div>
+    <div class="sb-card sb-cannot"><h3>⚠ 测试脚本逃逸</h3><p>测试脚本可读取环境变量和 secrets</p></div>
+    <div class="sb-card sb-cannot"><h3>⚠ Token 权限过大</h3><p>GitHub token 的实际权限可能超出需要</p></div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Hooks Mechanism</div>
+  <h1 data-anim>Hooks：Claude Code 的差异化治理能力</h1>
+  <div class="hooks-content" data-anim>
+    <div class="hooks-types">
+      <div class="ht-card"><h3>PreToolUse</h3><p>工具执行前拦截 · 可阻止危险操作</p></div>
+      <div class="ht-card"><h3>PostToolUse</h3><p>工具执行后触发 · 自动格式化/lint</p></div>
+      <div class="ht-card"><h3>SessionStart</h3><p>会话开始时 · 加载环境/检查依赖</p></div>
+      <div class="ht-card"><h3>SessionEnd</h3><p>会话结束时 · 清理/审计日志</p></div>
+    </div>
+    <div class="hooks-examples" data-anim>
+      <span class="mono-label">实用案例</span>
+      <div class="he-grid">
+        <span class="he-item">提交前跑 lint + 类型检查</span>
+        <span class="he-item">写文件后自动格式化</span>
+        <span class="he-item">阻止修改锁文件</span>
+        <span class="he-item">每次操作写审计日志</span>
+      </div>
+    </div>
+  </div>
+  <p class="insight" data-anim>Codex hooks 对比：仅支持 SessionStart/Stop + MCP 观测，成熟度差距明显</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Security Baseline</div>
+  <h1 data-anim>推荐安全基线八条——两个 Agent 各自如何实现</h1>
+  <div class="sec-baseline" data-anim>
+    <div class="sec-card"><span class="sec-num">1</span><h3>短期 Token</h3><p>CC: GitHub App token<br>CX: 环境变量 scope</p></div>
+    <div class="sec-card"><span class="sec-num">2</span><h3>隔离工作区</h3><p>CC: 容器/Seatbelt<br>CX: Landlock sandbox</p></div>
+    <div class="sec-card"><span class="sec-num">3</span><h3>网络出口限制</h3><p>CC: Allow/Deny 规则<br>CX: 受信域名白名单</p></div>
+    <div class="sec-card"><span class="sec-num">4</span><h3>PR 审查</h3><p>CC: PR + 人工 review<br>CX: PR + CI gate</p></div>
+    <div class="sec-card"><span class="sec-num">5</span><h3>Diff 扫描</h3><p>CC: PostToolUse hook<br>CX: 输出 patch 审查</p></div>
+    <div class="sec-card"><span class="sec-num">6</span><h3>密钥管理</h3><p>CC: 不存储 token<br>CX: 环境隔离</p></div>
+    <div class="sec-card"><span class="sec-num">7</span><h3>日志审计</h3><p>CC: Hooks 审计<br>CX: 云端日志</p></div>
+    <div class="sec-card"><span class="sec-num">8</span><h3>最小权限</h3><p>CC: 三层 Allow/Ask/Deny<br>CX: Sandbox mode 分级</p></div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-COMPARISON" data-theme="light" data-animate="directional" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Context Management</div>
+  <h1 data-anim>上下文管理策略对比</h1>
+  <div class="ctx-compare" data-anim>
+    <div class="ctx-panel" data-anim="left">
+      <div class="ctx-header ctx-claude">Claude Code</div>
+      <div class="ctx-body">
+        <div class="ctx-item">Glob/Grep 定位 → 精读相关代码</div>
+        <div class="ctx-item">长任务自动压缩历史</div>
+        <div class="ctx-item">Task 子代理独立上下文</div>
+        <div class="ctx-item">MCP 工具懒加载</div>
+        <div class="ctx-item">~200K token 窗口</div>
+      </div>
+    </div>
+    <div class="ctx-vs" data-anim="divider">VS</div>
+    <div class="ctx-panel" data-anim="right">
+      <div class="ctx-header ctx-codex">Codex</div>
+      <div class="ctx-body">
+        <div class="ctx-item">AGENTS.md 持久化规则</div>
+        <div class="ctx-item">分层目录指令</div>
+        <div class="ctx-item">云端任务独立上下文</div>
+        <div class="ctx-item">沙箱环境自带依赖</div>
+        <div class="ctx-item">模型窗口 + 环境隔离</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-STATEMENT" data-theme="dark" data-animate="quote" data-notes="">
+
+<div class="statement-block">
+  <div class="kicker" data-anim>Context Degradation</div>
+  <h1 data-anim>60-70% 窗口利用率后开始退化<br>任务时长 ×2 → 失败率 ×4</h1>
+  <p class="lead" data-anim>更大的上下文窗口 ≠ 解决漂移——问题本质是注意力分配，不是容量</p>
+  <div class="degrade-solutions" data-anim>
+    <div class="ds-item"><span class="ds-tag">Claude Code</span>Task 子代理分治 + 自动压缩 + CLAUDE.md 外化状态</div>
+    <div class="ds-item"><span class="ds-tag ds-codex">Codex</span>任务级隔离 + AGENTS.md 外化 + 云端状态保存</div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-COMPARISON" data-theme="light" data-animate="directional" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>MCP Support</div>
+  <h1 data-anim>MCP 工具协议支持对比</h1>
+  <div class="mcp-compare" data-anim>
+    <div class="mcp-panel" data-anim="left">
+      <div class="mcp-header mcp-claude">Claude Code MCP</div>
+      <div class="mcp-body">
+        <div class="mcp-item">本地 + 远程 MCP server</div>
+        <div class="mcp-item">工具结果参与计划/修改/验证全流程</div>
+        <div class="mcp-item">stdio + SSE 传输</div>
+        <div class="mcp-item">项目级 + 全局级配置</div>
+      </div>
+    </div>
+    <div class="mcp-vs" data-anim="divider">VS</div>
+    <div class="mcp-panel" data-anim="right">
+      <div class="mcp-header mcp-codex">Codex MCP</div>
+      <div class="mcp-body">
+        <div class="mcp-item">config.toml 声明 MCP server</div>
+        <div class="mcp-item">支持远程 URL + Bearer token</div>
+        <div class="mcp-item">主要用于数据查询和验证</div>
+        <div class="mcp-item">沙箱内工具调用受限</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Claude Code × GitHub Actions</div>
+  <h1 data-anim>Claude Code GitHub 集成：@claude 评论式交互</h1>
+  <div class="gha-content" data-anim>
+    <div class="gha-triggers">
+      <span class="mono-label">触发方式</span>
+      <div class="gha-tg">
+        <span class="gt-item">PR 评论 @claude</span>
+        <span class="gt-item">Issue 评论 @claude</span>
+        <span class="gt-item">pull_request 事件</span>
+        <span class="gt-item">workflow_dispatch 手动</span>
+        <span class="gt-item">schedule 定时</span>
+      </div>
+    </div>
+    <div class="gha-usecases" data-anim>
+      <span class="mono-label">典型场景</span>
+      <div class="gha-uc">
+        <div class="uc-item"><h3>PR Review</h3><p>自动审查代码变更 · 提出修改建议</p></div>
+        <div class="uc-item"><h3>Issue → Bug Fix</h3><p>读 Issue 描述 → 定位 → 修复 → 提 PR</p></div>
+        <div class="uc-item"><h3>CI 失败分析</h3><p>读失败日志 → 分析根因 → 自动修复</p></div>
+        <div class="uc-item"><h3>自动补测试</h3><p>分析覆盖率缺口 → 生成测试用例</p></div>
+      </div>
+    </div>
+  </div>
+  <p class="insight" data-anim>Action: anthropics/claude-code-action@v1 · 权限最小化：contents:write + pull-requests:write</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Codex × GitHub Actions</div>
+  <h1 data-anim>Codex CI 集成：codex exec 非交互执行</h1>
+  <div class="codex-ci" data-anim>
+    <div class="cci-flow">
+      <span class="mono-label">典型 CI 工作流</span>
+      <div class="cci-steps">
+        <span class="cf-step">checkout</span>
+        <span class="cf-arrow">→</span>
+        <span class="cf-step">设置 OPENAI_API_KEY</span>
+        <span class="cf-arrow">→</span>
+        <span class="cf-step">安装 codex CLI</span>
+        <span class="cf-arrow">→</span>
+        <span class="cf-step">codex exec</span>
+        <span class="cf-arrow">→</span>
+        <span class="cf-step">运行测试</span>
+        <span class="cf-arrow">→</span>
+        <span class="cf-step">创建 PR</span>
+      </div>
+    </div>
+    <div class="cci-modes" data-anim>
+      <span class="mono-label">两种执行路径</span>
+      <div class="cci-mode-grid">
+        <div class="cci-mode"><h3>CI Runner</h3><p>在 GitHub Actions runner 内执行 · 资源受 runner 限制</p></div>
+        <div class="cci-mode"><h3>云端任务</h3><p>API 创建云端任务 · 隔离环境 · 异步执行</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-CHART" data-theme="light" data-animate="data" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>CI/CD Integration Summary</div>
+  <h1 data-anim>GitHub 正在成为 Code Agent 的控制平面</h1>
+  <div class="ci-summary" data-anim>
+    <table>
+      <thead><tr><th>维度</th><th>Claude Code</th><th>Codex</th></tr></thead>
+      <tbody>
+        <tr><td class="qt-label">交互式 PR 体验</td><td class="cell-yes">●●● @claude 评论</td><td>●○○ 需手动触发</td></tr>
+        <tr><td class="qt-label">非交互执行</td><td>●●○ CLI + Action</td><td class="cell-yes">●●● codex exec</td></tr>
+        <tr><td class="qt-label">云端代理</td><td>●○○ 需自建容器</td><td class="cell-yes">●●● 原生云端任务</td></tr>
+        <tr><td class="qt-label">MCP 工具链</td><td class="cell-yes">●●● 深度集成</td><td>●●○ 基础支持</td></tr>
+        <tr><td class="qt-label">Hooks 治理</td><td class="cell-yes">●●● 4 种 hook</td><td>●○○ 有限</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="insight" data-anim>成本组成：模型 Token + GitHub Runner 分钟 + 云计算 + 人工审查 + 返工成本</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-KPI" data-theme="light" data-animate="data" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>SWE-bench Performance</div>
+  <h1 data-anim>SWE-bench 表现——数字不能直接比较</h1>
+  <div class="bench-scores" data-anim>
+    <div class="bs-card"><span class="bs-val">80.9%</span><span class="bs-label">Claude Opus 4.6</span><span class="bs-test">SWE-bench Verified</span></div>
+    <div class="bs-card"><span class="bs-val">72.0%</span><span class="bs-label">GPT-5.3 Codex</span><span class="bs-test">SWE-bench Verified</span></div>
+    <div class="bs-card"><span class="bs-val">60.4%</span><span class="bs-label">Claude Code</span><span class="bs-test">SWE-rebench</span></div>
+    <div class="bs-card"><span class="bs-val">56.8%</span><span class="bs-label">Codex</span><span class="bs-test">SWE-bench Pro</span></div>
+  </div>
+  <div class="bench-warning" data-anim>
+    <span class="mono-label">⚠ 关键警告</span>
+    <p>SWE-bench Verified / Pro Public / rebench 是不同测试集 · 分数受模型版本、Agent 脚手架、补丁筛选策略影响 · Pro 约三成任务存在有效性问题</p>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-BULLETS" data-theme="dark" data-animate="cascade" data-notes="">
+
+<div class="content-slide dark-content">
+  <div class="kicker" data-anim>Beyond Benchmarks</div>
+  <h1 data-anim>超越分数：真实评估应该看什么</h1>
+  <div class="real-eval" data-anim>
+    <div class="re-grid">
+      <div class="re-card"><h3>PR 合并率</h3><p>Agent 提交的 PR 中实际被合并的比例</p></div>
+      <div class="re-card"><h3>回归率</h3><p>Agent 引入的变更导致其他测试失败的比例</p></div>
+      <div class="re-card"><h3>无人干预完成率</h3><p>完全不需要人工修改就能合并的比例</p></div>
+      <div class="re-card"><h3>人工审查时间</h3><p>审查 Agent PR 比人工 PR 节省多少时间</p></div>
+      <div class="re-card"><h3>每个合并 PR 成本</h3><p>Token + 计算 + 审查人力的总成本</p></div>
+      <div class="re-card"><h3>Pass^k</h3><p>单次 90% → 连续 5 次全部成功仅 59%</p></div>
+    </div>
+  </div>
+  <p class="insight dark-insight" data-anim>选型关键不是 SWE-bench 分数，而是：集成深度 × 安全治理 × 成本可预测性 × 团队工作流匹配度</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Known Limitations</div>
+  <h1 data-anim>已知局限性——没有完美的 Code Agent</h1>
+  <div class="limits-compare" data-anim>
+    <div class="lm-panel">
+      <div class="lm-header lm-claude">Claude Code 局限</div>
+      <div class="lm-items">
+        <div class="lm-item">上下文非无限 · 压缩丢细节</div>
+        <div class="lm-item">Allow/Ask/Deny 继承规则复杂</div>
+        <div class="lm-item">可能过度修改（超出要求范围）</div>
+        <div class="lm-item">MCP 工具质量参差不齐</div>
+        <div class="lm-item">本地执行 · 需要自建 CI 容器</div>
+      </div>
+    </div>
+    <div class="lm-panel">
+      <div class="lm-header lm-codex">Codex 局限</div>
+      <div class="lm-items">
+        <div class="lm-item">模型/套餐变化快 · 功能不稳定</div>
+        <div class="lm-item">Sandbox ≠ 完整 VM 安全边界</div>
+        <div class="lm-item">Full access 模式风险高</div>
+        <div class="lm-item">云任务数据治理问题</div>
+        <div class="lm-item">AGENTS.md 非强制安全策略</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-CHART" data-theme="light" data-animate="data" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Cost & Pricing</div>
+  <h1 data-anim>定价模型与总拥有成本</h1>
+  <div class="cost-table" data-anim>
+    <table>
+      <thead><tr><th>维度</th><th>Claude Code</th><th>Codex</th></tr></thead>
+      <tbody>
+        <tr><td class="qt-label">CLI 软件</td><td>随订阅 · npm install</td><td>开源免费 · npm install</td></tr>
+        <tr><td class="qt-label">订阅档位</td><td>Pro $20 · Max $100/$200</td><td>Plus $20 · Pro $200</td></tr>
+        <tr><td class="qt-label">Max 无限量</td><td class="cell-yes">Max 计划含 Agent 无限用量</td><td>按 token 计费</td></tr>
+        <tr><td class="qt-label">CI/CD 成本</td><td>API token + runner 分钟</td><td>API token + runner 分钟</td></tr>
+        <tr><td class="qt-label">云端任务</td><td>需自建</td><td>原生 · 包含在 Pro 计划</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="tco-formula" data-anim>
+    <span class="mono-label">TCO 公式</span>
+    <code>总成本 = 订阅 + API 用量 + CI 分钟 + 云计算 + 人工审查 + 返工成本</code>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Selection Framework</div>
+  <h1 data-anim>按需求场景选择 Code Agent</h1>
+  <div class="select-grid" data-anim>
+    <div class="sel-card sel-highlight"><span class="sel-scenario">终端 + 复杂代码库</span><h3>Claude Code</h3><p>仓库级推理 · MCP 扩展 · Hooks 治理</p></div>
+    <div class="sel-card sel-highlight"><span class="sel-scenario">沙箱化 + 自动执行</span><h3>Codex</h3><p>环境隔离 · codex exec · 云端任务</p></div>
+    <div class="sel-card"><span class="sel-scenario">IDE 交互开发</span><h3>Cursor</h3><p>实时补全 · 多模型路由 · 最佳日常体验</p></div>
+    <div class="sel-card"><span class="sel-scenario">Issue 级委派</span><h3>Devin</h3><p>持久化工作区 · 并行任务 · 最高自主</p></div>
+    <div class="sel-card"><span class="sel-scenario">组织统一采购</span><h3>Copilot Agent</h3><p>GitHub 原生 · 企业合规 · 第三方路由</p></div>
+    <div class="sel-card"><span class="sel-scenario">轻量 PR 自动化</span><h3>Jules</h3><p>异步 GitHub PR · 按任务配额 · 快速上手</p></div>
+  </div>
+  <p class="insight" data-anim>最佳实践：组合使用多个 Agent + GitHub branch protection 作为统一收口</p>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>2025-2026 Trends</div>
+  <h1 data-anim>六大关键趋势正在重塑 Code Agent 格局</h1>
+  <div class="trends-content" data-anim>
+    <div class="tr-items">
+      <div class="tr-item"><span class="tr-num">01</span><div><h3>IDE 与云端 Agent 融合</h3><p>Cursor 加 Background Agent · Codex 加 CLI · 边界模糊</p></div></div>
+      <div class="tr-item"><span class="tr-num">02</span><div><h3>模型选择与产品选择解耦</h3><p>Cursor 支持多模型 · Copilot 引入第三方 Agent · 用户不被绑定</p></div></div>
+      <div class="tr-item"><span class="tr-num">03</span><div><h3>安全/治理成为核心产品特性</h3><p>Hooks · Sandbox mode · Approval policy · 不再是附加功能</p></div></div>
+      <div class="tr-item"><span class="tr-num">04</span><div><h3>Benchmark 区分度递减</h3><p>SWE-bench Pro 有效性问题 · 厂商转向真实仓库评估</p></div></div>
+      <div class="tr-item"><span class="tr-num">05</span><div><h3>GitHub 成为 Code Agent 控制平面</h3><p>Issue → Branch → PR → Review → Actions · 所有 Agent 收口于此</p></div></div>
+      <div class="tr-item"><span class="tr-num">06</span><div><h3>下一前沿：Agent 舰队管理</h3><p>多 Agent 并行处理不同 Issue · 优先级调度 · 资源配额</p></div></div>
+    </div>
+  </div>
+</div>
+
+  </section>
+
+  <section class="slide" data-layout="L-CLOSING" data-theme="dark" data-animate="hero" data-notes="">
+
+<div class="closing-slide">
+  <div class="kicker" data-anim>Core Judgment</div>
+  <h1 data-anim>核心判断</h1>
+  <div class="closing-rules" data-anim>
+    <div class="cl-rule"><span class="cl-what">Claude Code</span><span class="cl-answer">核心竞争力 = 代理工作流深度 + 仓库级推理</span></div>
+    <div class="cl-rule"><span class="cl-what">Codex</span><span class="cl-answer">核心竞争力 = 执行环境 + 模型服务 + 云端任务的统一</span></div>
+  </div>
+  <div class="closing-statement" data-anim>
+    <p>Code Agent 已从"能不能写代码"进化到<br>"能不能安全、高效、可控地接管工程任务"</p>
+  </div>
+  <div class="closing-bottom" data-anim>
+    <p class="closing-note">两者都应被当作<strong>受权限和测试约束的自动化系统</strong>，<br>而非可以直接获得生产权限的自主工程师</p>
+  </div>
+</div>
+
+  </section>
+</div>
+<div class="slide-counter" id="counter">1 / 26</div>
+<div class="notes-panel" id="notes"></div>
+<script>
+
+(function(){
+  var root=document.documentElement,slides=document.querySelectorAll('.slide'),counter=document.getElementById('counter'),notesPanel=document.getElementById('notes'),current=0,notesVisible=false,wheelLockedUntil=0;
+  root.classList.add('motion-ready');
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches)root.classList.add('motion-static');
+  function isStatic(){return root.classList.contains('motion-static');}
+  function getItems(s){return Array.from(s.querySelectorAll('[data-anim]'));}
+  function revealAll(s){getItems(s).forEach(function(i){i.classList.add('revealed');});}
+  function prep(s){var items=getItems(s);items.forEach(function(i,idx){i.style.setProperty('--anim-index',idx);i.classList.remove('revealed');});if(isStatic())revealAll(s);else if(s.dataset.animate==='pipeline'&&items.length>0)items[0].classList.add('revealed');}
+  function revealNext(s){if(isStatic()||s.dataset.animate!=='pipeline')return false;var n=getItems(s).find(function(i){return!i.classList.contains('revealed');});if(!n)return false;n.classList.add('revealed');return true;}
+  function hidePrev(s){if(isStatic()||s.dataset.animate!=='pipeline')return false;var r=getItems(s).filter(function(i){return i.classList.contains('revealed');});if(r.length<=1)return false;r[r.length-1].classList.remove('revealed');return true;}
+  function goTo(n){if(n<0||n>=slides.length)return;slides[current].classList.remove('active');current=n;slides[current].classList.add('active');prep(slides[current]);counter.textContent=(current+1)+' / '+slides.length;if(notesVisible)notesPanel.textContent=slides[current].getAttribute('data-notes')||'(No notes)';}
+  function advance(){if(revealNext(slides[current]))return;goTo(current+1);}
+  function retreat(){if(hidePrev(slides[current]))return;goTo(current-1);}
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();advance();}
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();retreat();}
+    else if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
+    else if(e.key==='p'||e.key==='P'){notesVisible=!notesVisible;notesPanel.classList.toggle('visible',notesVisible);if(notesVisible)notesPanel.textContent=slides[current].getAttribute('data-notes')||'(No notes)';}
+    else if(e.key==='b'||e.key==='B'){root.classList.toggle('motion-static');if(root.classList.contains('motion-static'))slides.forEach(revealAll);else prep(slides[current]);}
+    else if(e.key==='Home'){e.preventDefault();goTo(0);}
+    else if(e.key==='End'){e.preventDefault();goTo(slides.length-1);}
+  });
+  var touchStartX=0;
+  document.addEventListener('touchstart',function(e){touchStartX=e.changedTouches[0].screenX;});
+  document.addEventListener('touchend',function(e){var d=touchStartX-e.changedTouches[0].screenX;if(Math.abs(d)>50){d>0?advance():retreat();}});
+  document.addEventListener('wheel',function(e){if(Math.abs(e.deltaY)<30)return;var now=Date.now();if(now<wheelLockedUntil)return;wheelLockedUntil=now+450;e.preventDefault();e.deltaY>0?advance():retreat();},{passive:false});
+  slides.forEach(function(s){if(!s.dataset.animate)s.dataset.animate='cascade';});
+  counter.textContent='1 / '+slides.length;prep(slides[current]);
+})();
+
+</script>
+</body>
+</html>

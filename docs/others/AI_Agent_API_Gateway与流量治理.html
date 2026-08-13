@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Agent API Gateway 与流量治理</title>
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg-light: #F4F6FA; --bg-dark: #0F172A; --bg-card: #FFFFFF;
+  --text-light: #0F172A; --text-dark: #F4F6FA;
+  --accent: #0D6670; --accent-bright: #00B8B8; --accent-green: #1FB57A;
+  --accent-amber: #F5A524; --accent-rose: #E84A6F;
+  --muted: #5A6379; --muted-light: rgba(15,23,42,0.4);
+  --border: #E3E7F2; --border-strong: #C9D0E2;
+  --font-heading: 'Inter','Helvetica Neue',Arial,sans-serif;
+  --font-body: 'Inter','Helvetica Neue',Arial,sans-serif;
+  --font-mono: 'JetBrains Mono','Fira Code',monospace;
+  --transition-speed: 0.4s; --radius: 10px;
+}
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+html,body { width:100%; height:100%; overflow:hidden; background:var(--bg-dark); }
+
+.deck { position:relative; width:100%; height:100%; }
+.slide {
+  position:absolute; top:0; left:0; width:100vw; height:100vh;
+  display:flex; flex-direction:column; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity var(--transition-speed) ease; overflow:hidden;
+}
+.slide.active { opacity:1; pointer-events:auto; }
+.slide[data-theme="light"] { background:var(--bg-light); color:var(--text-light); }
+.slide[data-theme="dark"] { background:var(--bg-dark); color:var(--text-dark); }
+
+/* === Cover === */
+.cover-slide { width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; padding:80px 100px; position:relative; }
+.top-bar { position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,#0D6670 0%,#00B8B8 40%,#1FB57A 100%); }
+.cover-nav { position:absolute; top:36px; left:100px; right:100px; display:flex; justify-content:space-between; align-items:center; }
+.nav-left { font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--accent); letter-spacing:0.15em; text-transform:uppercase; }
+.nav-right-pills { display:flex; gap:20px; }
+.nav-pill { font-size:11px; font-weight:600; color:var(--muted-light); letter-spacing:0.08em; text-transform:uppercase; padding:6px 14px; border-radius:4px; }
+.nav-pill.active { color:var(--accent); background:rgba(13,102,112,0.07); border:1px solid rgba(13,102,112,0.18); }
+.cover-body { max-width:1100px; }
+.cover-slide .kicker { font-family:var(--font-mono); font-size:14px; font-weight:500; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); margin-bottom:20px; }
+.cover-slide h1 { font-size:58px; font-weight:900; line-height:1.08; color:var(--text-light); margin-bottom:24px; }
+.cover-sub { font-size:20px; line-height:1.6; color:var(--muted); max-width:780px; margin-bottom:48px; }
+.cover-kpi-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; max-width:1000px; }
+.cover-kpi { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:24px 20px; display:flex; flex-direction:column; gap:8px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+.cover-kpi-num { font-family:var(--font-mono); font-size:32px; font-weight:600; color:var(--accent); }
+.cover-kpi-label { font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
+.cover-tags { position:absolute; bottom:44px; left:100px; display:flex; gap:24px; }
+.tech-tag { font-family:var(--font-mono); font-size:11px; font-weight:500; color:var(--muted-light); padding:5px 12px; border:1px solid var(--border); border-radius:4px; background:var(--bg-card); }
+
+/* === Content === */
+.content-slide { padding:48px 100px 60px; display:flex; flex-direction:column; gap:20px; width:100%; height:100%; justify-content:center; }
+.content-slide .kicker,.statement-block .kicker,.closing-slide .kicker { font-family:var(--font-mono); font-size:13px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent); }
+.dark-content .kicker { color:var(--accent-bright); }
+.content-slide h1,.statement-block h1,.closing-slide h1 { font-family:var(--font-heading); font-size:36px; font-weight:800; line-height:1.18; max-width:1200px; }
+.content-slide h3 { font-size:17px; font-weight:700; line-height:1.3; }
+.content-slide p { font-size:15px; line-height:1.55; color:var(--muted); }
+.dark-content p { color:rgba(244,246,250,0.6); }
+.insight { font-size:14px; font-style:italic; color:var(--muted); padding-top:12px; border-top:1px solid var(--border); }
+.dark-insight { color:rgba(244,246,250,0.45); border-color:rgba(255,255,255,0.1); }
+.mono-label { font-family:var(--font-mono); font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent); margin-bottom:6px; display:block; }
+code { font-family:var(--font-mono); font-size:14px; padding:2px 6px; background:rgba(13,102,112,0.05); border-radius:3px; }
+
+/* === Statement === */
+.statement-block { padding:80px 120px; display:flex; flex-direction:column; justify-content:center; gap:24px; height:100%; }
+.statement-block h1 { font-size:44px; max-width:900px; }
+.lead { font-size:20px; color:rgba(244,246,250,0.55); max-width:700px; line-height:1.5; }
+
+/* === Cards & Grids === */
+.mem-layers { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.ml-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px 16px; display:flex; flex-direction:column; gap:6px; }
+.ml-tag { font-family:var(--font-mono); font-size:11px; font-weight:700; padding:3px 8px; border-radius:3px; width:fit-content; letter-spacing:0.08em; }
+.ml-t1 { background:rgba(13,102,112,0.1); color:var(--accent); }
+.ml-t2 { background:rgba(30,26,120,0.1); color:#1E1A78; }
+.ml-t3 { background:rgba(245,165,36,0.1); color:var(--accent-amber); }
+.ml-t4 { background:rgba(31,181,122,0.1); color:var(--accent-green); }
+.ml-t5 { background:rgba(232,74,111,0.1); color:var(--accent-rose); }
+
+/* === Numbered items === */
+.sf-items { display:flex; flex-direction:column; gap:10px; }
+.sf-item { display:flex; gap:14px; align-items:flex-start; padding:10px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+.sf-num { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent); min-width:28px; padding-top:2px; }
+
+/* === Tables === */
+table { width:100%; border-collapse:collapse; font-size:14px; background:var(--bg-card); border-radius:var(--radius); overflow:hidden; border:1px solid var(--border); }
+th { font-family:var(--font-mono); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; padding:14px 16px; text-align:left; background:rgba(13,102,112,0.05); color:var(--accent); border-bottom:2px solid var(--border); }
+td { padding:12px 16px; border-bottom:1px solid var(--border); color:var(--muted); }
+.qt-label { text-align:left; font-weight:600; color:var(--text-light); }
+
+/* === Contradiction cards (dark slide) === */
+.contradiction-strip { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:16px; }
+.contra-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); padding:22px 20px; text-align:center; }
+.contra-card h3 { color:var(--accent-bright); font-size:18px; margin-bottom:4px; }
+.contra-vs { font-family:var(--font-mono); font-size:12px; font-weight:700; color:rgba(255,255,255,0.25); display:block; margin:6px 0; letter-spacing:0.15em; }
+.contra-card p { font-size:14px; color:rgba(244,246,250,0.55); }
+
+/* === Comparison grid === */
+.compare-grid { display:grid; grid-template-columns:1fr auto 1fr; gap:20px; align-items:stretch; }
+.cmp-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.cmp-header { padding:14px 20px; font-weight:700; font-size:15px; letter-spacing:0.05em; text-transform:uppercase; }
+.cmp-left-h { background:rgba(232,74,111,0.06); color:var(--accent-rose); }
+.cmp-right-h { background:rgba(13,102,112,0.06); color:var(--accent); }
+.cmp-body { padding:20px; }
+.cmp-body p { font-size:14px; margin-bottom:8px; }
+.cmp-vs { display:flex; align-items:center; font-family:var(--font-mono); font-weight:700; color:var(--border-strong); font-size:18px; }
+
+/* === Diff grid (4 col) === */
+.diff-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.diff-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px 16px; display:flex; flex-direction:column; gap:8px; }
+.diff-card h3 { font-size:16px; }
+.diff-before { font-size:13px; color:var(--accent-rose); font-weight:600; }
+.diff-after { font-size:13px; color:var(--accent-green); font-weight:600; }
+
+/* === KPI grid === */
+.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.kpi-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:24px 20px; text-align:center; }
+.kpi-num { font-family:var(--font-mono); font-size:28px; font-weight:700; color:var(--accent); display:block; margin-bottom:6px; }
+.kpi-label { font-size:15px; font-weight:600; display:block; margin-bottom:4px; }
+.kpi-desc { font-size:13px; color:var(--muted); }
+
+/* === Layer stack === */
+.layer-stack { display:flex; flex-direction:column; gap:6px; }
+.layer-row { display:flex; align-items:center; gap:16px; padding:14px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); border-left:3px solid var(--accent); }
+.layer-num { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent); min-width:20px; }
+.layer-name { font-weight:700; font-size:15px; min-width:90px; }
+.layer-example { font-size:13px; color:var(--muted); flex:1; }
+.layer-limit { font-family:var(--font-mono); font-size:12px; color:var(--accent-amber); font-weight:600; }
+
+/* === Ref arch === */
+.ref-arch { display:flex; flex-direction:column; gap:6px; }
+.ra-layer { display:flex; align-items:center; gap:16px; padding:12px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); border-left:3px solid var(--accent); }
+.ra-num { font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--accent); min-width:24px; }
+.ra-name { font-weight:700; font-size:15px; min-width:140px; }
+.ra-q { font-size:14px; color:var(--muted); font-style:italic; }
+
+/* === Formula === */
+.formula-display { text-align:center; padding:16px; }
+.formula-display code { font-size:20px; font-weight:500; color:var(--accent); background:none; }
+
+/* === Timeline steps === */
+.timeline-steps { display:flex; flex-direction:column; gap:6px; }
+.ts-step { display:flex; align-items:center; gap:16px; padding:14px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+.ts-num { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent); min-width:24px; }
+.ts-name { font-weight:700; font-size:15px; min-width:110px; }
+.ts-desc { font-size:14px; color:var(--muted); flex:1; }
+
+/* === Bullet list === */
+.bullet-list { display:flex; flex-direction:column; gap:8px; }
+.bullet-item { display:flex; gap:12px; align-items:flex-start; padding:10px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); font-size:14px; color:var(--muted); }
+.bullet-item strong { color:var(--text-light); }
+.dark-bullet .bullet-item { background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.08); color:rgba(244,246,250,0.7); }
+.dark-bullet .bullet-item strong { color:var(--accent-bright); }
+.bullet-marker { font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--accent); min-width:20px; padding-top:1px; }
+.dark-bullet .bullet-marker { color:var(--accent-bright); }
+
+/* === Closing === */
+.closing-slide { padding:80px 120px; display:flex; flex-direction:column; justify-content:center; gap:24px; height:100%; }
+.closing-slide h1 { font-size:44px; }
+.closing-rules { display:flex; flex-direction:column; gap:8px; }
+.cl-rule { display:flex; gap:24px; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+.cl-what { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent-bright); min-width:120px; }
+.cl-answer { font-size:17px; color:rgba(244,246,250,0.75); }
+
+/* === Twelve rules (2-col) === */
+.twelve-rules { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:12px; }
+.tr-rule { display:flex; gap:12px; align-items:center; padding:10px 16px; border-bottom:1px solid rgba(255,255,255,0.06); }
+.tr-idx { font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--accent-bright); min-width:24px; }
+.tr-text { font-size:15px; color:rgba(244,246,250,0.8); }
+
+/* === Safeguard items (dark) === */
+.safeguard-items { display:flex; flex-direction:column; gap:8px; }
+.sg-item { display:flex; gap:14px; align-items:flex-start; padding:12px 18px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); }
+.sg-num { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--accent-bright); min-width:28px; padding-top:2px; }
+.sg-text { font-size:15px; color:rgba(244,246,250,0.8); }
+.sg-text strong { color:var(--accent-bright); }
+
+/* === Step flow === */
+.step-flow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; margin:12px 0; }
+.step-node { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 18px; font-weight:600; font-size:14px; text-align:center; }
+.step-arrow { color:var(--accent); font-size:16px; }
+
+/* === Observability grid === */
+.obs-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.obs-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; text-align:center; display:flex; flex-direction:column; gap:6px; }
+.obs-num { font-family:var(--font-mono); font-size:22px; font-weight:700; color:var(--accent); }
+.obs-label { font-size:14px; font-weight:600; }
+.obs-desc { font-size:12px; color:var(--muted); }
+
+/* === Counter/Notes === */
+.slide-counter { position:fixed; bottom:1.2rem; right:2rem; font-family:var(--font-mono); font-size:0.75rem; color:var(--muted); z-index:100; pointer-events:none; }
+.notes-panel { display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,0.9); color:#fff; padding:1.5rem 2rem; font-size:0.9rem; line-height:1.5; z-index:200; max-height:30vh; overflow-y:auto; }
+.notes-panel.visible { display:block; }
+
+/* === Motion === */
+[data-anim] { opacity:1; transform:none; }
+html.motion-ready:not(.motion-static) .slide.active[data-animate="cascade"] [data-anim],
+html.motion-ready:not(.motion-static) .slide.active[data-animate="quote"] [data-anim],
+html.motion-ready:not(.motion-static) .slide.active[data-animate="data"] [data-anim],
+html.motion-ready:not(.motion-static) .slide.active[data-animate="diagram"] [data-anim] {
+  animation:anim-cascade 520ms cubic-bezier(0.2,0.8,0.2,1) both;
+  animation-delay:calc(var(--anim-index,0)*90ms);
+}
+html.motion-ready:not(.motion-static) .slide.active[data-animate="hero"] [data-anim] {
+  animation:anim-hero 720ms cubic-bezier(0.2,0.8,0.2,1) both;
+  animation-delay:calc(var(--anim-index,0)*140ms);
+}
+html.motion-ready:not(.motion-static) .slide.active[data-animate="directional"] [data-anim] {
+  animation:anim-cascade 520ms cubic-bezier(0.2,0.8,0.2,1) both;
+  animation-delay:calc(var(--anim-index,0)*120ms);
+}
+html.motion-ready:not(.motion-static) .slide.active[data-animate="directional"] [data-anim="left"] { animation-name:anim-slide-left; }
+html.motion-ready:not(.motion-static) .slide.active[data-animate="directional"] [data-anim="right"] { animation-name:anim-slide-right; }
+html.motion-ready:not(.motion-static) .slide.active[data-animate="directional"] [data-anim="divider"] { animation-name:anim-divider; }
+html.motion-ready:not(.motion-static) .slide.active[data-animate="pipeline"] [data-anim] {
+  opacity:0; transform:translateY(14px); transition:opacity 260ms ease,transform 260ms ease;
+}
+html.motion-ready:not(.motion-static) .slide.active[data-animate="pipeline"] [data-anim].revealed { opacity:1; transform:translateY(0); }
+html.motion-static [data-anim],html.motion-static .slide.active[data-animate="pipeline"] [data-anim],html.motion-static .slide * {
+  opacity:1!important; transform:none!important; animation:none!important; transition:none!important;
+}
+@keyframes anim-cascade { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+@keyframes anim-hero { from { opacity:0; transform:translateY(20px) scale(0.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes anim-slide-left { from { opacity:0; transform:translateX(-32px); } to { opacity:1; transform:translateX(0); } }
+@keyframes anim-slide-right { from { opacity:0; transform:translateX(32px); } to { opacity:1; transform:translateX(0); } }
+@keyframes anim-divider { from { opacity:0; transform:scaleY(0.2); } to { opacity:1; transform:scaleY(1); } }
+@keyframes anim-pop { from { opacity:0; transform:translateY(10px) scale(0.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+@media (prefers-reduced-motion:reduce) { .slide,.slide * { transition:none!important; animation:none!important; } [data-anim] { opacity:1!important; transform:none!important; } }
+@media print { html,body { overflow:visible; height:auto; } .slide { position:relative; opacity:1!important; pointer-events:auto; page-break-after:always; transform:none!important; } .slide * { opacity:1!important; transform:none!important; animation:none!important; transition:none!important; } .slide-counter,.notes-panel { display:none!important; } }
+
+
+/* ========================================================
+   Gateway Deck - Additional Components
+   ======================================================== */
+
+/* 10-layer architecture */
+.gw-layer-stack { display:flex; flex-direction:column; gap:5px; }
+.gw-layer-row { display:flex; align-items:center; gap:14px; padding:11px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); border-left:3px solid var(--accent); }
+.gw-layer-row:nth-child(odd) { border-left-color:var(--accent); }
+.gw-layer-row:nth-child(even) { border-left-color:var(--accent-bright); }
+.gw-layer-num { font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--accent); min-width:22px; }
+.gw-layer-name { font-weight:700; font-size:14px; min-width:110px; }
+.gw-layer-desc { font-size:13px; color:var(--muted); flex:1; }
+
+/* 6-dim rate limit cards */
+.rl-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.rl-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px 16px; display:flex; flex-direction:column; gap:6px; border-top:3px solid var(--accent); }
+.rl-card:nth-child(1) { border-top-color:var(--accent-rose); }
+.rl-card:nth-child(2) { border-top-color:var(--accent); }
+.rl-card:nth-child(3) { border-top-color:#1E1A78; }
+.rl-card:nth-child(4) { border-top-color:var(--accent-amber); }
+.rl-card:nth-child(5) { border-top-color:var(--accent-green); }
+.rl-card:nth-child(6) { border-top-color:var(--accent-bright); }
+.rl-card h3 { font-size:15px; }
+.rl-metrics { font-family:var(--font-mono); font-size:12px; color:var(--accent); margin-top:auto; }
+
+/* Circuit breaker states */
+.cb-states { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:12px; }
+.cb-state { background:var(--bg-card); border:2px solid var(--border); border-radius:var(--radius); padding:20px; text-align:center; }
+.cb-state h3 { font-size:16px; margin-bottom:8px; }
+.cb-state.cb-closed { border-color:var(--accent-green); }
+.cb-state.cb-closed h3 { color:var(--accent-green); }
+.cb-state.cb-open { border-color:var(--accent-rose); }
+.cb-state.cb-open h3 { color:var(--accent-rose); }
+.cb-state.cb-half { border-color:var(--accent-amber); }
+.cb-state.cb-half h3 { color:var(--accent-amber); }
+.cb-arrow { display:flex; align-items:center; justify-content:center; font-size:20px; color:var(--accent); padding:8px; }
+
+/* Priority pool cards */
+.pp-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.pp-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:18px 16px; display:flex; flex-direction:column; gap:6px; }
+.pp-card h3 { font-size:15px; }
+.pp-level { font-family:var(--font-mono); font-size:20px; font-weight:700; color:var(--accent); margin-bottom:4px; }
+.pp-card:nth-child(1) .pp-level { color:var(--accent-rose); }
+.pp-card:nth-child(2) .pp-level { color:var(--accent-amber); }
+.pp-card:nth-child(3) .pp-level { color:var(--accent); }
+.pp-card:nth-child(4) .pp-level { color:var(--accent-green); }
+
+/* Cache tier comparison */
+.cache-compare { display:grid; grid-template-columns:1fr auto 1fr; gap:20px; align-items:stretch; }
+.cache-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.cache-header { padding:14px 20px; font-weight:700; font-size:15px; letter-spacing:0.05em; text-transform:uppercase; }
+.cache-left-h { background:rgba(13,102,112,0.06); color:var(--accent); }
+.cache-right-h { background:rgba(0,184,184,0.06); color:var(--accent-bright); }
+.cache-body { padding:20px; }
+.cache-body p { font-size:14px; margin-bottom:8px; color:var(--muted); }
+.cache-vs { display:flex; align-items:center; font-family:var(--font-mono); font-weight:700; color:var(--border-strong); font-size:18px; }
+
+/* Dark grid cards */
+.dark-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.dark-gcard { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); padding:20px 18px; display:flex; flex-direction:column; gap:8px; }
+.dark-gcard h3 { color:var(--accent-bright); font-size:16px; }
+.dark-gcard p { font-size:14px; color:rgba(244,246,250,0.55); }
+.dark-gcard .dg-sub { font-size:12px; color:rgba(244,246,250,0.35); font-style:italic; }
+
+/* 3-col grid */
+.grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.g3-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:20px 18px; display:flex; flex-direction:column; gap:8px; }
+.g3-card h3 { font-size:16px; }
+.g3-card p { font-size:14px; color:var(--muted); }
+
+/* Canary stages */
+.canary-stages { display:flex; flex-direction:column; gap:5px; }
+.canary-row { display:flex; align-items:center; gap:16px; padding:12px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); }
+.canary-pct { font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--accent); min-width:60px; }
+.canary-name { font-weight:700; font-size:14px; min-width:100px; }
+.canary-desc { font-size:13px; color:var(--muted); flex:1; }
+.canary-guard { font-family:var(--font-mono); font-size:11px; color:var(--accent-rose); font-weight:600; }
+
+/* Closing 5 stages */
+.closing-stages { display:flex; flex-direction:column; gap:8px; }
+.cs-stage { display:flex; gap:24px; align-items:center; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+.cs-num { font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--accent-bright); min-width:36px; }
+.cs-title { font-weight:700; font-size:16px; color:rgba(244,246,250,0.9); min-width:180px; }
+.cs-desc { font-size:15px; color:rgba(244,246,250,0.55); }
+
+/* SSE comparison */
+.sse-compare { display:grid; grid-template-columns:1fr auto 1fr; gap:20px; align-items:stretch; }
+.sse-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.sse-header { padding:14px 20px; font-weight:700; font-size:15px; letter-spacing:0.05em; text-transform:uppercase; }
+.sse-left-h { background:rgba(13,102,112,0.06); color:var(--accent); }
+.sse-right-h { background:rgba(0,184,184,0.06); color:var(--accent-bright); }
+.sse-body { padding:20px; }
+.sse-body p { font-size:14px; margin-bottom:8px; color:var(--muted); }
+.sse-vs { display:flex; align-items:center; font-family:var(--font-mono); font-weight:700; color:var(--border-strong); font-size:18px; }
+
+/* Tenant hierarchy */
+.tenant-hier { display:flex; flex-direction:column; gap:5px; }
+.th-row { display:flex; align-items:center; gap:16px; padding:12px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); border-left:3px solid var(--accent); }
+.th-row:nth-child(1) { border-left-color:var(--accent-rose); }
+.th-row:nth-child(2) { border-left-color:var(--accent); }
+.th-row:nth-child(3) { border-left-color:#1E1A78; }
+.th-row:nth-child(4) { border-left-color:var(--accent-amber); }
+.th-row:nth-child(5) { border-left-color:var(--accent-green); }
+.th-row:nth-child(6) { border-left-color:var(--accent-bright); }
+.th-name { font-weight:700; font-size:14px; min-width:100px; }
+.th-desc { font-size:13px; color:var(--muted); flex:1; }
+
+/* LB table */
+.lb-table { width:100%; border-collapse:collapse; font-size:13px; background:var(--bg-card); border-radius:var(--radius); overflow:hidden; border:1px solid var(--border); }
+.lb-table th { font-size:11px; padding:10px 14px; }
+.lb-table td { padding:10px 14px; font-size:13px; }
+.lb-table td:first-child { font-weight:600; color:var(--text-light); }
+
+/* Fields grid */
+.fields-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.field-item { display:flex; gap:10px; align-items:center; padding:8px 14px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); font-size:13px; }
+.field-item code { font-size:12px; color:var(--accent); background:rgba(13,102,112,0.06); }
+.field-desc { font-size:12px; color:var(--muted); }
+
+/* Stream arch layers */
+.stream-layers { display:flex; flex-direction:column; gap:5px; }
+.sl-row { display:flex; align-items:center; gap:16px; padding:12px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); border-left:3px solid var(--accent-bright); }
+.sl-num { font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--accent); min-width:22px; }
+.sl-name { font-weight:700; font-size:14px; min-width:140px; }
+.sl-desc { font-size:13px; color:var(--muted); flex:1; }
+
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+  <section class="slide active" data-layout="L-COVER" data-theme="light" data-animate="hero" data-notes="">
+
+<div class="cover-slide">
+  <div class="top-bar"></div>
+  <div class="cover-nav">
+    <span class="nav-left">AI GATEWAY</span>
+    <span class="nav-right-pills">
+      <span class="nav-pill active">Routing</span>
+      <span class="nav-pill">Throttling</span>
+      <span class="nav-pill">Streaming</span>
+      <span class="nav-pill">Security</span>
+    </span>
+  </div>
+  <div class="cover-body">
+    <div class="kicker" data-anim>Enterprise Agent Engineering &middot; Module 05</div>
+    <h1 data-anim>AI Agent 开发中的<br>API Gateway 与流量治理</h1>
+    <p class="cover-sub" data-anim>从模型感知路由到 Token 级限流，从多 Provider Failover 到语义缓存的网关工程实践</p>
+    <div class="cover-kpi-strip" data-anim>
+      <div class="cover-kpi"><span class="cover-kpi-num">10</span><span class="cover-kpi-label">Layers (网关十层)</span></div>
+      <div class="cover-kpi"><span class="cover-kpi-num">6</span><span class="cover-kpi-label">Dimensions (限流维度)</span></div>
+      <div class="cover-kpi"><span class="cover-kpi-num">4</span><span class="cover-kpi-label">Fallback Levels (降级层级)</span></div>
+      <div class="cover-kpi"><span class="cover-kpi-num">2</span><span class="cover-kpi-label">Cache Tiers (缓存两级)</span></div>
+    </div>
+  </div>
+  <div class="cover-tags" data-anim>
+    <span class="tech-tag">Kong AI</span>
+    <span class="tech-tag">LiteLLM</span>
+    <span class="tech-tag">Portkey</span>
+    <span class="tech-tag">vLLM</span>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-STATEMENT" data-theme="dark" data-animate="quote" data-notes="">
+
+<div class="statement-block">
+  <div class="kicker" data-anim>Traditional vs AI Gateway</div>
+  <h1 data-anim>请求不等权、响应是流式的、路由维度从 URL 变成模型能力</h1>
+  <p class="lead" data-anim>AI Gateway 不是 API Gateway 的简单扩展，而是围绕 LLM 调用特性重新设计的流量治理层。</p>
+  <div class="contradiction-strip" data-anim>
+    <div class="contra-card" data-anim>
+      <h3>请求权重</h3>
+      <span class="contra-vs">VS</span>
+      <p>固定 &rarr; 50x 差异</p>
+    </div>
+    <div class="contra-card" data-anim>
+      <h3>响应模式</h3>
+      <span class="contra-vs">VS</span>
+      <p>同步 JSON &rarr; SSE 流</p>
+    </div>
+    <div class="contra-card" data-anim>
+      <h3>路由维度</h3>
+      <span class="contra-vs">VS</span>
+      <p>URL path &rarr; 模型能力+成本+延迟</p>
+    </div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-SYSTEM" data-theme="light" data-animate="diagram" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Architecture Position</div>
+  <h1 data-anim>AI Gateway 十层架构：无状态、低延迟、可水平扩展</h1>
+  <div class="gw-layer-stack" data-anim>
+    <div class="gw-layer-row" data-anim><span class="gw-layer-num">01</span><span class="gw-layer-name">Auth</span><span class="gw-layer-desc">API Key / OAuth / JWT 认证鉴权，租户识别</span></div>
+    <div class="gw-layer-row" data-anim><span class="gw-layer-num">02</span><span class="gw-layer-name">请求标准化</span><span class="gw-layer-desc">统一 OpenAI / Anthropic / Gemini 协议为内部标准格式</span></div>
+    <div class="gw-layer-row" data-anim><span class="gw-layer-num">03</span><span class="gw-layer-name">Token 预检</span><span class="gw-layer-desc">Prompt 长度估算、max_tokens 校验、上下文窗口检查</span></div>
+    <div class="gw-layer-row" data-anim><span class="gw-layer-num">04</span><span class="gw-layer-name">策略 / 配额</span><span class="gw-layer-desc">RPM / TPM / 并发 / 成本配额检查与预留</span></div>
+    <div class="gw-layer-row" data-anim><span class="gw-layer-num">05</span><span class="gw-layer-name">模型路由</span><span class="gw-layer-desc">模型别名解析 → 能力过滤 → 评分排序 → 最优选择</span></div>
+    <div class="gw-layer-row" data-anim><span class="gw-layer-num">06</span><span class="gw-layer-name">LoRA 解析</span><span class="gw-layer-desc">adapter_id → base_model 映射 → GPU pool 路由</span></div>
+    <div class="gw-layer-row" data-anim><span class="gw-layer-num">07</span><span class="gw-layer-name">Provider Failover</span><span class="gw-layer-desc">优先级池 → 健康检查 → 熔断 → 自动降级</span></div>
+    <div class="gw-layer-row" data-anim><span class="gw-layer-num">08</span><span class="gw-layer-name">安全防护</span><span class="gw-layer-desc">Prompt 注入检测、PII 过滤、内容审核</span></div>
+    <div class="gw-layer-row" data-anim><span class="gw-layer-num">09</span><span class="gw-layer-name">流式计量</span><span class="gw-layer-desc">SSE chunk 级 Token 计数、实时用量追踪</span></div>
+    <div class="gw-layer-row" data-anim><span class="gw-layer-num">10</span><span class="gw-layer-name">审计追踪</span><span class="gw-layer-desc">全链路 Trace、成本归因、合规审计日志</span></div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Product Landscape</div>
+  <h1 data-anim>四大 AI Gateway 产品各有侧重</h1>
+  <div class="diff-grid" data-anim>
+    <div class="diff-card" data-anim>
+      <h3>Kong AI Gateway</h3>
+      <div class="diff-after">企业治理入口</div>
+      <p>插件生态丰富，与现有 API 网关无缝集成，支持 Kubernetes Ingress</p>
+    </div>
+    <div class="diff-card" data-anim>
+      <h3>LiteLLM</h3>
+      <div class="diff-after">开源模型路由</div>
+      <p>100+ Provider 统一接口，Auto Router 自动选择最优模型，Python 原生</p>
+    </div>
+    <div class="diff-card" data-anim>
+      <h3>Portkey</h3>
+      <div class="diff-after">托管 Provider 抽象</div>
+      <p>条件路由引擎，内置 Guardrails，托管部署零运维</p>
+    </div>
+    <div class="diff-card" data-anim>
+      <h3>Cloudflare AI Gateway</h3>
+      <div class="diff-after">边缘代理</div>
+      <p>全球 CDN 边缘部署，内置成本观测与缓存，Workers AI 集成</p>
+    </div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Recommended Stack</div>
+  <h1 data-anim>三种推荐组合方案</h1>
+  <div class="grid-3" data-anim>
+    <div class="g3-card" data-anim>
+      <h3>企业 K8s 栈</h3>
+      <div class="step-flow">
+        <span class="step-node">Kong</span>
+        <span class="step-arrow">&rarr;</span>
+        <span class="step-node">LiteLLM</span>
+        <span class="step-arrow">&rarr;</span>
+        <span class="step-node">vLLM</span>
+      </div>
+      <p>适合自建推理集群的企业，完整治理 + 高性能推理</p>
+    </div>
+    <div class="g3-card" data-anim>
+      <h3>快速上线栈</h3>
+      <div class="step-flow">
+        <span class="step-node">Agent</span>
+        <span class="step-arrow">&rarr;</span>
+        <span class="step-node">Portkey</span>
+        <span class="step-arrow">&rarr;</span>
+        <span class="step-node">多 Provider</span>
+      </div>
+      <p>适合快速验证的团队，托管免运维，一行代码接入</p>
+    </div>
+    <div class="g3-card" data-anim>
+      <h3>Cloudflare 栈</h3>
+      <div class="step-flow">
+        <span class="step-node">Worker</span>
+        <span class="step-arrow">&rarr;</span>
+        <span class="step-node">CF Gateway</span>
+        <span class="step-arrow">&rarr;</span>
+        <span class="step-node">Workers AI</span>
+      </div>
+      <p>适合全球部署的产品，边缘缓存 + 低延迟 + 成本可控</p>
+    </div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Infrastructure</div>
+  <h1 data-anim>四件基础设施支撑 AI Gateway</h1>
+  <div class="diff-grid" data-anim>
+    <div class="diff-card" data-anim>
+      <h3>PostgreSQL</h3>
+      <div class="diff-after">持久化存储</div>
+      <p>租户配置、API Key 管理、策略规则、审计日志的权威数据源</p>
+    </div>
+    <div class="diff-card" data-anim>
+      <h3>Redis</h3>
+      <div class="diff-after">实时计数器</div>
+      <p>RPM/TPM 令牌桶、并发计数器、熔断状态、会话缓存</p>
+    </div>
+    <div class="diff-card" data-anim>
+      <h3>Kafka</h3>
+      <div class="diff-after">事件总线</div>
+      <p>用量事件流、异步计费、审计事件、实时分析管道</p>
+    </div>
+    <div class="diff-card" data-anim>
+      <h3>OpenTelemetry</h3>
+      <div class="diff-after">可观测性</div>
+      <p>分布式 Trace、延迟直方图、错误率监控、成本归因</p>
+    </div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-SYSTEM" data-theme="light" data-animate="diagram" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Multi-Stage Routing</div>
+  <h1 data-anim>硬过滤先于评分 &mdash; 六阶段路由流程</h1>
+  <div class="step-flow" data-anim>
+    <span class="step-node" data-anim>租户权限</span>
+    <span class="step-arrow" data-anim>&rarr;</span>
+    <span class="step-node" data-anim>能力过滤</span>
+    <span class="step-arrow" data-anim>&rarr;</span>
+    <span class="step-node" data-anim>类型过滤</span>
+    <span class="step-arrow" data-anim>&rarr;</span>
+    <span class="step-node" data-anim>成本约束</span>
+    <span class="step-arrow" data-anim>&rarr;</span>
+    <span class="step-node" data-anim>性能排序</span>
+    <span class="step-arrow" data-anim>&rarr;</span>
+    <span class="step-node" data-anim>最终选择</span>
+  </div>
+  <div class="bullet-list" data-anim>
+    <div class="bullet-item" data-anim><span class="bullet-marker">01</span><strong>租户权限</strong> &mdash; 检查租户可用模型白名单，排除未授权模型</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">02</span><strong>能力过滤</strong> &mdash; 按 function_calling / vision / json_mode 等能力标签硬过滤</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">03</span><strong>类型过滤</strong> &mdash; chat / completion / embedding / rerank 类型匹配</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">04</span><strong>成本约束</strong> &mdash; 剩余预算 &lt; 单次调用预估成本则排除高价模型</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">05</span><strong>性能排序</strong> &mdash; 通过过滤的候选集按评分公式排序</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">06</span><strong>最终选择</strong> &mdash; Top-1 + fallback 列表，记录选择理由用于审计</div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Routing Score</div>
+  <h1 data-anim>路由评分公式：质量、延迟、可用性、成本、Token 压力、风险</h1>
+  <div class="formula-display" data-anim>
+    <code>score = w<sub>q</sub>&times;quality + w<sub>l</sub>&times;latency + w<sub>a</sub>&times;availability - w<sub>c</sub>&times;cost - w<sub>t</sub>&times;token_pressure - w<sub>r</sub>&times;risk</code>
+  </div>
+  <div class="bullet-list" data-anim>
+    <div class="bullet-item" data-anim><span class="bullet-marker">Q</span><strong>quality</strong> &mdash; 模型基准评分 + 业务评测分数，0-1 归一化</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">L</span><strong>latency</strong> &mdash; p50 TTFT 倒数归一化，越快得分越高</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">A</span><strong>availability</strong> &mdash; 近 5 分钟成功率 EWMA，熔断中为 0</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">C</span><strong>cost</strong> &mdash; $/1K tokens 归一化，越贵扣分越多</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">T</span><strong>token_pressure</strong> &mdash; 当前 TPM 使用率 / 配额，接近上限时大幅扣分</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">R</span><strong>risk</strong> &mdash; 最近 429/5xx 频率，高风险降权</div>
+  </div>
+  <p class="insight" data-anim>模型别名机制：业务代码使用 "fast-chat" / "deep-reason" 等别名，网关负责解析到具体 provider:model:version。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>LoRA Routing</div>
+  <h1 data-anim>LoRA 路由：adapter_id &rarr; base_model &rarr; GPU pool &rarr; loading status</h1>
+  <div class="step-flow" data-anim>
+    <span class="step-node" data-anim>adapter_id</span>
+    <span class="step-arrow" data-anim>&rarr;</span>
+    <span class="step-node" data-anim>base_model</span>
+    <span class="step-arrow" data-anim>&rarr;</span>
+    <span class="step-node" data-anim>GPU pool</span>
+    <span class="step-arrow" data-anim>&rarr;</span>
+    <span class="step-node" data-anim>loading check</span>
+    <span class="step-arrow" data-anim>&rarr;</span>
+    <span class="step-node" data-anim>inference</span>
+  </div>
+  <div class="bullet-list" data-anim>
+    <div class="bullet-item" data-anim><span class="bullet-marker">01</span><strong>adapter 注册</strong> &mdash; 每个 LoRA adapter 关联 base_model、版本、大小、最大并发</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">02</span><strong>strict_lora 策略</strong> &mdash; 仅路由到已加载目标 adapter 的实例，不回退到 base model</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">03</span><strong>热加载检查</strong> &mdash; 若目标实例未加载 adapter，先触发异步加载再排队等待</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">04</span><strong>架构拆分建议</strong> &mdash; 网关负责 adapter &rarr; pool 映射，vLLM 负责 adapter 热加载管理</div>
+  </div>
+  <p class="insight" data-anim>推荐架构：AI Gateway 做路由决策，vLLM / SGLang 做 LoRA 热加载与推理，职责清晰可独立扩展。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Token Rate Limiting</div>
+  <h1 data-anim>六层限流维度：从用户级到全局级</h1>
+  <div class="rl-grid" data-anim>
+    <div class="rl-card" data-anim>
+      <h3>用户级</h3>
+      <p>单用户 RPM / TPM / 并发数上限</p>
+      <span class="rl-metrics">RPM:60 TPM:100K Conc:5</span>
+    </div>
+    <div class="rl-card" data-anim>
+      <h3>API Key 级</h3>
+      <p>按 Key 独立计量，支持不同 Key 不同配额</p>
+      <span class="rl-metrics">RPM:200 TPM:500K</span>
+    </div>
+    <div class="rl-card" data-anim>
+      <h3>租户级</h3>
+      <p>组织维度总量控制，所有 Key 共享</p>
+      <span class="rl-metrics">RPM:1K TPM:2M $/day:500</span>
+    </div>
+    <div class="rl-card" data-anim>
+      <h3>模型级</h3>
+      <p>保护单模型不被热点租户独占</p>
+      <span class="rl-metrics">RPM:5K TPM:10M</span>
+    </div>
+    <div class="rl-card" data-anim>
+      <h3>供应商级</h3>
+      <p>适配 Provider 官方配额上限</p>
+      <span class="rl-metrics">RPM:10K TPM:50M</span>
+    </div>
+    <div class="rl-card" data-anim>
+      <h3>全局级</h3>
+      <p>网关总吞吐硬上限，防止雪崩</p>
+      <span class="rl-metrics">RPM:50K TPM:200M</span>
+    </div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Rate Limiting Algorithm</div>
+  <h1 data-anim>令牌桶 + 多桶并行：RPM + 输入 TPM + 输出 TPM + 成本 + 租户</h1>
+  <div class="step-flow" data-anim>
+    <span class="step-node" data-anim>估算 Token</span>
+    <span class="step-arrow" data-anim>&rarr;</span>
+    <span class="step-node" data-anim>预留配额</span>
+    <span class="step-arrow" data-anim>&rarr;</span>
+    <span class="step-node" data-anim>调用模型</span>
+    <span class="step-arrow" data-anim>&rarr;</span>
+    <span class="step-node" data-anim>记录实际</span>
+    <span class="step-arrow" data-anim>&rarr;</span>
+    <span class="step-node" data-anim>对账归还</span>
+  </div>
+  <div class="bullet-list" data-anim>
+    <div class="bullet-item" data-anim><span class="bullet-marker">01</span><strong>估算 (Estimate)</strong> &mdash; 用 tiktoken 快速估算输入 Token 数，按 max_tokens 预估输出</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">02</span><strong>预留 (Reserve)</strong> &mdash; 同时从 RPM 桶扣 1、Input TPM 桶扣估算值、Output TPM 桶扣 max_tokens</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">03</span><strong>调用 (Call)</strong> &mdash; 转发到选定 Provider，开始流式接收</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">04</span><strong>记录 (Record)</strong> &mdash; 流式完成后统计实际输入/输出 Token 数</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">05</span><strong>对账 (Reconcile)</strong> &mdash; 将预留与实际的差额归还桶中，避免配额泄漏</div>
+  </div>
+  <p class="insight" data-anim>核心原则：请求前预留输出容量，完成后对账实际消耗。过度预留导致利用率低，预留不足导致超额。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-SYSTEM" data-theme="light" data-animate="diagram" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Circuit Breaker</div>
+  <h1 data-anim>熔断器按 provider &times; region &times; model &times; credential 独立维护</h1>
+  <div class="cb-states" data-anim>
+    <div class="cb-state cb-closed" data-anim>
+      <h3>Closed</h3>
+      <p>正常放行，统计失败率</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px;">失败率 &gt; 50% (20 次窗口) &rarr; Open</p>
+    </div>
+    <div class="cb-state cb-open" data-anim>
+      <h3>Open</h3>
+      <p>拒绝所有请求，直接 Failover</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px;">30s 后 &rarr; Half-Open</p>
+    </div>
+    <div class="cb-state cb-half" data-anim>
+      <h3>Half-Open</h3>
+      <p>放行 10% 探测流量</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px;">3 次连续成功 &rarr; Closed</p>
+    </div>
+  </div>
+  <div class="bullet-list" data-anim style="margin-top:16px;">
+    <div class="bullet-item" data-anim><span class="bullet-marker">&bull;</span><strong>触发条件</strong> &mdash; 连续 5xx、超时率 &gt; 30%、429 持续 &gt; 60s、延迟 p99 &gt; 3x baseline</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">&bull;</span><strong>粒度维度</strong> &mdash; provider &times; region &times; model &times; credential，四维独立熔断</div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-TIMELINE" data-theme="light" data-animate="pipeline" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Degradation Strategy</div>
+  <h1 data-anim>四级降级：同供应商 &rarr; 跨供应商 &rarr; 能力降级 &rarr; 非 LLM 兜底</h1>
+  <div class="timeline-steps" data-anim>
+    <div class="ts-step" data-anim>
+      <span class="ts-num">L1</span>
+      <span class="ts-name">同供应商降级</span>
+      <span class="ts-desc">同 Provider 切换 region / credential / 副本实例</span>
+    </div>
+    <div class="ts-step" data-anim>
+      <span class="ts-num">L2</span>
+      <span class="ts-name">跨供应商降级</span>
+      <span class="ts-desc">OpenAI &rarr; Anthropic &rarr; Google，协议适配层自动转换</span>
+    </div>
+    <div class="ts-step" data-anim>
+      <span class="ts-num">L3</span>
+      <span class="ts-name">能力降级</span>
+      <span class="ts-desc">GPT-4o &rarr; GPT-4o-mini，牺牲质量保可用性</span>
+    </div>
+    <div class="ts-step" data-anim>
+      <span class="ts-num">L4</span>
+      <span class="ts-name">非 LLM 兜底</span>
+      <span class="ts-desc">模板回复 / 规则引擎 / 缓存命中 / 友好提示</span>
+    </div>
+  </div>
+  <p class="insight" data-anim>关键洞察：流式输出开始后 Failover 极危险 &mdash; 用户已看到部分内容，切换 Provider 会导致语义断裂。应在首 Token 前完成 Failover 决策。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="dark" data-animate="cascade" data-notes="">
+
+<div class="content-slide dark-content">
+  <div class="kicker" data-anim>429 Handling</div>
+  <h1 data-anim>区分三种 429：临时超限 vs 额度耗尽 vs 预算耗尽</h1>
+  <div class="bullet-list dark-bullet" data-anim>
+    <div class="bullet-item" data-anim><span class="bullet-marker">A</span><strong>临时超限 (Rate Limited)</strong> &mdash; RPM/TPM 暂时用完，指数退避后重试。wait = min(base &times; 2<sup>n</sup> + jitter, max_wait)</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">B</span><strong>额度耗尽 (Quota Exhausted)</strong> &mdash; 月度配额用完，不应重试，直接 Failover 到备用 Provider</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">C</span><strong>预算耗尽 (Budget Exceeded)</strong> &mdash; 租户预算上限触达，返回 402 给调用方，不重试不降级</div>
+  </div>
+  <div class="formula-display" data-anim>
+    <code style="color:var(--accent-bright);">wait = min(base &times; 2<sup>n</sup> + random(0, base), max_wait)</code>
+  </div>
+  <p class="insight dark-insight" data-anim>黄金法则：重试只在网关层做，Agent 层不应有独立重试逻辑。双层重试 = 重试风暴。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Priority Model Pool</div>
+  <h1 data-anim>四级优先级模型池：只有当前级全部不健康才进入下一级</h1>
+  <div class="pp-grid" data-anim>
+    <div class="pp-card" data-anim>
+      <span class="pp-level">P0</span>
+      <h3>主力 Provider</h3>
+      <p>首选模型 + 首选区域，最优质量与延迟</p>
+    </div>
+    <div class="pp-card" data-anim>
+      <span class="pp-level">P1</span>
+      <h3>备用区域 / Key</h3>
+      <p>同 Provider 不同区域或备用 API Key</p>
+    </div>
+    <div class="pp-card" data-anim>
+      <span class="pp-level">P2</span>
+      <h3>较低成本模型</h3>
+      <p>跨 Provider 同能力模型，成本更低</p>
+    </div>
+    <div class="pp-card" data-anim>
+      <span class="pp-level">P3</span>
+      <h3>本地 / 静态兜底</h3>
+      <p>本地小模型 / 模板回复 / 缓存结果</p>
+    </div>
+  </div>
+  <p class="insight" data-anim>每级内部使用负载均衡策略分配流量；跨级切换需记录 fallback 事件用于后续分析与报警。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-CHART" data-theme="light" data-animate="data" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Load Balancing</div>
+  <h1 data-anim>六种负载均衡策略与综合评分公式</h1>
+  <table class="lb-table" data-anim>
+    <thead>
+      <tr><th>策略</th><th>原理</th><th>优势</th><th>适用场景</th></tr>
+    </thead>
+    <tbody>
+      <tr data-anim><td>加权轮询</td><td>按权重依次分配</td><td>简单可预测</td><td>固定容量部署</td></tr>
+      <tr data-anim><td>Least Busy</td><td>选择在途请求最少的节点</td><td>自动负载均衡</td><td>请求延迟差异大</td></tr>
+      <tr data-anim><td>P2C</td><td>随机选 2 个，取负载低者</td><td>避免惊群效应</td><td>大规模集群</td></tr>
+      <tr data-anim><td>Latency-aware</td><td>按 p50 延迟倒数加权</td><td>延迟最优</td><td>交互式场景</td></tr>
+      <tr data-anim><td>EWMA</td><td>指数加权移动平均延迟</td><td>平滑抖动</td><td>延迟波动大的 Provider</td></tr>
+      <tr data-anim><td>Token-aware</td><td>按剩余 TPM 配额占比分配</td><td>配额利用率最优</td><td>多 Key/多 Provider</td></tr>
+    </tbody>
+  </table>
+  <div class="formula-display" data-anim>
+    <code>LB_score = w1&times;(1 - busy_ratio) + w2&times;latency_rank + w3&times;(remaining_tpm / total_tpm)</code>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-COMPARISON" data-theme="light" data-animate="directional" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>SSE vs WebSocket</div>
+  <h1 data-anim>SSE 是主流 LLM 流式协议，WebSocket 用于实时交互</h1>
+  <div class="sse-compare" data-anim>
+    <div class="sse-panel" data-anim="left">
+      <div class="sse-header sse-left-h">SSE (Server-Sent Events)</div>
+      <div class="sse-body">
+        <p><strong>协议：</strong>HTTP/1.1+ 单向流</p>
+        <p><strong>优势：</strong>天然兼容代理 / CDN / 负载均衡</p>
+        <p><strong>格式：</strong>text/event-stream, data: JSON</p>
+        <p><strong>适用：</strong>Chat Completion 流式输出</p>
+        <p><strong>重连：</strong>浏览器原生 EventSource 自动重连</p>
+      </div>
+    </div>
+    <div class="sse-vs" data-anim="divider">VS</div>
+    <div class="sse-panel" data-anim="right">
+      <div class="sse-header sse-right-h">WebSocket</div>
+      <div class="sse-body">
+        <p><strong>协议：</strong>全双工长连接</p>
+        <p><strong>优势：</strong>双向实时通信，低延迟</p>
+        <p><strong>格式：</strong>自定义二进制 / JSON</p>
+        <p><strong>适用：</strong>实时语音、协同编辑、游戏 Agent</p>
+        <p><strong>注意：</strong>需要连接管理和心跳机制</p>
+      </div>
+    </div>
+  </div>
+  <div class="bullet-list" data-anim style="margin-top:16px;">
+    <div class="bullet-item" data-anim><span class="bullet-marker">&bull;</span><strong>四种超时</strong> &mdash; 连接超时(5s)、首 Token 超时(30s)、流式心跳超时(15s)、总请求超时(300s)</div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-SYSTEM" data-theme="light" data-animate="diagram" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Stream Architecture</div>
+  <h1 data-anim>流式连接六层架构</h1>
+  <div class="stream-layers" data-anim>
+    <div class="sl-row" data-anim><span class="sl-num">01</span><span class="sl-name">Client SDK</span><span class="sl-desc">EventSource / fetch + ReadableStream，自动重连与缓冲</span></div>
+    <div class="sl-row" data-anim><span class="sl-num">02</span><span class="sl-name">Gateway Proxy</span><span class="sl-desc">SSE 透传，禁用响应缓冲，Transfer-Encoding: chunked</span></div>
+    <div class="sl-row" data-anim><span class="sl-num">03</span><span class="sl-name">Session Manager</span><span class="sl-desc">会话关联、断线重连状态、Token 计数器维护</span></div>
+    <div class="sl-row" data-anim><span class="sl-num">04</span><span class="sl-name">Router</span><span class="sl-desc">首 Token 前可 Failover，首 Token 后锁定 Provider</span></div>
+    <div class="sl-row" data-anim><span class="sl-num">05</span><span class="sl-name">Provider Adapter</span><span class="sl-desc">协议转换：不同 Provider SSE 格式 &rarr; 统一内部事件流</span></div>
+    <div class="sl-row" data-anim><span class="sl-num">06</span><span class="sl-name">Stream Normalizer</span><span class="sl-desc">text.delta / tool.call / usage / error / done 统一事件模型</span></div>
+  </div>
+  <p class="insight" data-anim>关键设计：Gateway 必须禁用 nginx proxy_buffering，否则流式响应会变成批量响应，TTFT 严重劣化。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-COMPARISON" data-theme="light" data-animate="directional" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Two-Tier Cache</div>
+  <h1 data-anim>L1 精确缓存 + L2 语义缓存：两级命中策略</h1>
+  <div class="cache-compare" data-anim>
+    <div class="cache-panel" data-anim="left">
+      <div class="cache-header cache-left-h">L1 精确缓存</div>
+      <div class="cache-body">
+        <p><strong>匹配：</strong>SHA-256(prompt + model + params) 精确哈希</p>
+        <p><strong>命中率：</strong>低 (5-15%)，但零误判</p>
+        <p><strong>延迟：</strong>&lt; 1ms (Redis GET)</p>
+        <p><strong>适用：</strong>相同 Prompt 重复调用</p>
+        <p><strong>TTL：</strong>按场景 5min - 24h</p>
+      </div>
+    </div>
+    <div class="cache-vs" data-anim="divider">+</div>
+    <div class="cache-panel" data-anim="right">
+      <div class="cache-header cache-right-h">L2 语义缓存</div>
+      <div class="cache-body">
+        <p><strong>匹配：</strong>Embedding 向量 + cosine similarity &gt; 0.95</p>
+        <p><strong>命中率：</strong>中 (15-40%)，需调阈值</p>
+        <p><strong>延迟：</strong>5-20ms (向量搜索)</p>
+        <p><strong>适用：</strong>语义相似的不同表述</p>
+        <p><strong>风险：</strong>相似 &ne; 等价，需业务校验</p>
+      </div>
+    </div>
+  </div>
+  <p class="insight" data-anim>查询顺序：L1 精确命中 &rarr; L2 语义命中 &rarr; Cache Miss &rarr; 调用模型 &rarr; 同时写入 L1 + L2。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-GRID" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Cache Policy</div>
+  <h1 data-anim>语义相似 &ne; 业务结果可复用 &mdash; 严格定义缓存边界</h1>
+  <div class="grid-3" data-anim>
+    <div class="g3-card" data-anim>
+      <h3>适合缓存</h3>
+      <p><strong>FAQ 问答</strong> &mdash; 固定知识库的标准回答</p>
+      <p><strong>文档摘要</strong> &mdash; 同文档同指令的摘要结果</p>
+      <p><strong>固定翻译</strong> &mdash; 术语表驱动的翻译任务</p>
+      <p><strong>分类标注</strong> &mdash; temperature=0 的确定性输出</p>
+    </div>
+    <div class="g3-card" data-anim>
+      <h3>不适合缓存</h3>
+      <p><strong>权限相关</strong> &mdash; 不同用户应看到不同内容</p>
+      <p><strong>实时数据</strong> &mdash; 股价、天气等时效性信息</p>
+      <p><strong>敏感信息</strong> &mdash; PII / PHI 数据不可共享</p>
+      <p><strong>写操作</strong> &mdash; 工具调用、状态变更不可幂等</p>
+    </div>
+    <div class="g3-card" data-anim>
+      <h3>缓存键要素</h3>
+      <p><code>tenant_id</code> &mdash; 租户隔离</p>
+      <p><code>scope</code> &mdash; 缓存作用域</p>
+      <p><code>model + version</code> &mdash; 模型版本</p>
+      <p><code>prompt_version</code> &mdash; Prompt 模板版本</p>
+      <p><code>tool_hash</code> &mdash; 工具定义签名</p>
+      <p><code>temperature</code> &mdash; 采样参数</p>
+    </div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Protocol Adaptation</div>
+  <h1 data-anim>统一 OpenAI / Anthropic / Gemini / Bedrock 的协议差异</h1>
+  <div class="bullet-list" data-anim>
+    <div class="bullet-item" data-anim><span class="bullet-marker">01</span><strong>请求格式</strong> &mdash; messages[] (OpenAI) vs content[] (Anthropic) vs contents[] (Gemini) vs body{} (Bedrock)</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">02</span><strong>流式格式</strong> &mdash; data: JSON (OpenAI SSE) vs event: (Anthropic SSE) vs chunks (Bedrock) vs array (Gemini)</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">03</span><strong>工具调用</strong> &mdash; function_call (OpenAI) vs tool_use (Anthropic) vs functionCall (Gemini)，参数 schema 差异</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">04</span><strong>用量字段</strong> &mdash; usage.prompt_tokens vs input_tokens vs usageMetadata，命名与位置不同</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">05</span><strong>错误格式</strong> &mdash; error.message vs error.type vs detail，状态码语义不完全一致</div>
+  </div>
+  <div class="formula-display" data-anim>
+    <code>统一内部事件模型：text.delta | tool.call | tool.result | usage | error | done</code>
+  </div>
+  <p class="insight" data-anim>协议适配层的核心价值：业务代码只对接一种格式，Provider 切换对上层完全透明。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-GRID" data-theme="dark" data-animate="cascade" data-notes="">
+
+<div class="content-slide dark-content">
+  <div class="kicker" data-anim>Prompt Injection Defense</div>
+  <h1 data-anim>Prompt 注入四层防护</h1>
+  <div class="dark-grid" data-anim>
+    <div class="dark-gcard" data-anim>
+      <h3>入站 Prompt</h3>
+      <span class="dg-sub">直接注入</span>
+      <p>正则 + ML 分类器检测恶意指令注入，拦截 &ldquo;ignore previous&rdquo; 类攻击</p>
+    </div>
+    <div class="dark-gcard" data-anim>
+      <h3>外部上下文</h3>
+      <span class="dg-sub">间接注入</span>
+      <p>RAG 检索内容、网页抓取、文件上传中嵌入的隐藏指令检测</p>
+    </div>
+    <div class="dark-gcard" data-anim>
+      <h3>工具调用前</h3>
+      <span class="dg-sub">参数校验</span>
+      <p>模型生成的工具参数 JSON Schema 校验、SQL/命令注入防护</p>
+    </div>
+    <div class="dark-gcard" data-anim>
+      <h3>模型输出后</h3>
+      <span class="dg-sub">PII / 违规</span>
+      <p>输出 PII 脱敏、内容合规审核、敏感词过滤、版权检测</p>
+    </div>
+  </div>
+  <p class="insight dark-insight" data-anim>四层防护形成纵深防御：任一层被绕过，后续层仍有机会拦截。宁可过度防护也不可有盲区。</p>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Per-Call Fields</div>
+  <h1 data-anim>每次 LLM 调用必须记录的 15 个字段</h1>
+  <div class="fields-grid" data-anim>
+    <div class="field-item" data-anim><code>request_id</code><span class="field-desc">唯一请求标识</span></div>
+    <div class="field-item" data-anim><code>trace_id</code><span class="field-desc">分布式追踪 ID</span></div>
+    <div class="field-item" data-anim><code>tenant_id</code><span class="field-desc">租户标识</span></div>
+    <div class="field-item" data-anim><code>model_requested</code><span class="field-desc">请求的模型别名</span></div>
+    <div class="field-item" data-anim><code>model_selected</code><span class="field-desc">实际路由到的模型</span></div>
+    <div class="field-item" data-anim><code>provider</code><span class="field-desc">Provider + region</span></div>
+    <div class="field-item" data-anim><code>input_tokens</code><span class="field-desc">实际输入 Token 数</span></div>
+    <div class="field-item" data-anim><code>output_tokens</code><span class="field-desc">实际输出 Token 数</span></div>
+    <div class="field-item" data-anim><code>cost_usd</code><span class="field-desc">本次调用成本</span></div>
+    <div class="field-item" data-anim><code>ttft_ms</code><span class="field-desc">首 Token 延迟</span></div>
+    <div class="field-item" data-anim><code>total_latency_ms</code><span class="field-desc">端到端延迟</span></div>
+    <div class="field-item" data-anim><code>status_code</code><span class="field-desc">HTTP 状态码</span></div>
+    <div class="field-item" data-anim><code>fallback_chain</code><span class="field-desc">降级路径记录</span></div>
+    <div class="field-item" data-anim><code>cache_hit</code><span class="field-desc">L1/L2/Miss</span></div>
+    <div class="field-item" data-anim><code>retry_count</code><span class="field-desc">重试次数</span></div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-KPI" data-theme="light" data-animate="data" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Key Metrics</div>
+  <h1 data-anim>八项核心指标驱动网关运营</h1>
+  <div class="obs-grid" data-anim>
+    <div class="obs-card" data-anim>
+      <span class="obs-num">TTFT</span>
+      <span class="obs-label">首 Token 时间</span>
+      <span class="obs-desc">用户感知延迟。p95 &lt; 800ms 为目标。</span>
+    </div>
+    <div class="obs-card" data-anim>
+      <span class="obs-num">$/Req</span>
+      <span class="obs-label">单请求成本</span>
+      <span class="obs-desc">含重试与降级成本的真实单位经济。</span>
+    </div>
+    <div class="obs-card" data-anim>
+      <span class="obs-num">Fallback%</span>
+      <span class="obs-label">降级率</span>
+      <span class="obs-desc">触发 Failover 的请求占比。&gt;5% 告警。</span>
+    </div>
+    <div class="obs-card" data-anim>
+      <span class="obs-num">Cache Hit</span>
+      <span class="obs-label">缓存命中率</span>
+      <span class="obs-desc">L1 + L2 综合命中。目标 &gt;30%。</span>
+    </div>
+    <div class="obs-card" data-anim>
+      <span class="obs-num">429 Rate</span>
+      <span class="obs-label">限流触发率</span>
+      <span class="obs-desc">被限流的请求占比。&gt;1% 需扩容。</span>
+    </div>
+    <div class="obs-card" data-anim>
+      <span class="obs-num">TPM Util</span>
+      <span class="obs-label">配额利用率</span>
+      <span class="obs-desc">当前 TPM / 总配额。&gt;80% 预警。</span>
+    </div>
+    <div class="obs-card" data-anim>
+      <span class="obs-num">CB Open</span>
+      <span class="obs-label">熔断开启数</span>
+      <span class="obs-desc">处于 Open 状态的熔断器数量。</span>
+    </div>
+    <div class="obs-card" data-anim>
+      <span class="obs-num">Retry Amp</span>
+      <span class="obs-label">重试放大因子</span>
+      <span class="obs-desc">总请求 / 原始请求。&gt;1.1 需调优。</span>
+    </div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-SYSTEM" data-theme="light" data-animate="diagram" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Multi-Tenant Model</div>
+  <h1 data-anim>六层租户模型与五层配额体系</h1>
+  <div class="tenant-hier" data-anim>
+    <div class="th-row" data-anim><span class="th-name">Tenant</span><span class="th-desc">顶层租户：独立计费、独立配额上限、独立审计</span></div>
+    <div class="th-row" data-anim><span class="th-name">Organization</span><span class="th-desc">组织：跨团队预算共享，组织级策略继承</span></div>
+    <div class="th-row" data-anim><span class="th-name">Team</span><span class="th-desc">团队：按部门分配子配额，成员管理</span></div>
+    <div class="th-row" data-anim><span class="th-name">Project</span><span class="th-desc">项目：独立模型白名单、独立成本追踪</span></div>
+    <div class="th-row" data-anim><span class="th-name">Environment</span><span class="th-desc">环境：dev / staging / prod 独立配额与路由规则</span></div>
+    <div class="th-row" data-anim><span class="th-name">API Keys</span><span class="th-desc">密钥：最细粒度的限流与审计单元</span></div>
+  </div>
+  <div class="bullet-list" data-anim style="margin-top:12px;">
+    <div class="bullet-item" data-anim><span class="bullet-marker">&bull;</span><strong>五层配额</strong> &mdash; RPM / TPM / 并发数 / 日成本上限 / 月度预算，层层嵌套向上汇聚</div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-BULLETS" data-theme="light" data-animate="cascade" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>A/B Testing</div>
+  <h1 data-anim>五种分流方式与六项评估指标</h1>
+  <div class="bullet-list" data-anim>
+    <div class="bullet-item" data-anim><span class="bullet-marker">01</span><strong>用户 ID 哈希</strong> &mdash; 确保同一用户始终命中同一分组，消除体验跳变</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">02</span><strong>租户级分流</strong> &mdash; 整个租户进入实验组或对照组，适合 B2B 场景</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">03</span><strong>请求级随机</strong> &mdash; 每次请求随机分配，适合无状态场景快速采样</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">04</span><strong>地理区域分流</strong> &mdash; 按用户地理位置分组，验证区域性 Provider 差异</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">05</span><strong>特征标记分流</strong> &mdash; 按 feature flag 组合分流，支持多维交叉实验</div>
+  </div>
+  <div class="bullet-list" data-anim style="margin-top:12px;">
+    <div class="bullet-item" data-anim><span class="bullet-marker">M1</span><strong>质量评分</strong> &mdash; 输出质量人工/自动评测分数</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">M2</span><strong>延迟 p50/p95</strong> &mdash; TTFT 与端到端延迟对比</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">M3</span><strong>成本差异</strong> &mdash; 实验组 vs 对照组的单请求成本</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">M4</span><strong>错误率</strong> &mdash; 5xx / 429 / 超时率对比</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">M5</span><strong>用户满意度</strong> &mdash; 点赞/踩比率、会话完成率</div>
+    <div class="bullet-item" data-anim><span class="bullet-marker">M6</span><strong>Token 效率</strong> &mdash; 达成同等质量所需的 Token 消耗</div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-TIMELINE" data-theme="light" data-animate="pipeline" data-notes="">
+
+<div class="content-slide">
+  <div class="kicker" data-anim>Canary Release</div>
+  <h1 data-anim>七阶段灰度发布：Shadow(0%) &rarr; Full(100%)</h1>
+  <div class="canary-stages" data-anim>
+    <div class="canary-row" data-anim>
+      <span class="canary-pct">0%</span>
+      <span class="canary-name">Shadow</span>
+      <span class="canary-desc">复制流量到新模型，对比输出但不上线</span>
+      <span class="canary-guard">质量 &lt; baseline &rarr; STOP</span>
+    </div>
+    <div class="canary-row" data-anim>
+      <span class="canary-pct">1%</span>
+      <span class="canary-name">Canary</span>
+      <span class="canary-desc">极小流量验证，仅内部用户</span>
+      <span class="canary-guard">error &gt; 1% &rarr; ROLLBACK</span>
+    </div>
+    <div class="canary-row" data-anim>
+      <span class="canary-pct">5%</span>
+      <span class="canary-name">Early Adopter</span>
+      <span class="canary-desc">扩展到愿意尝鲜的外部用户</span>
+      <span class="canary-guard">latency &gt; 2x &rarr; ROLLBACK</span>
+    </div>
+    <div class="canary-row" data-anim>
+      <span class="canary-pct">25%</span>
+      <span class="canary-name">Limited GA</span>
+      <span class="canary-desc">稳定运行 24h 后扩大范围</span>
+      <span class="canary-guard">cost &gt; 1.5x &rarr; PAUSE</span>
+    </div>
+    <div class="canary-row" data-anim>
+      <span class="canary-pct">50%</span>
+      <span class="canary-name">Half Traffic</span>
+      <span class="canary-desc">A/B 对比新旧模型综合表现</span>
+      <span class="canary-guard">quality &lt; 95% &rarr; PAUSE</span>
+    </div>
+    <div class="canary-row" data-anim>
+      <span class="canary-pct">90%</span>
+      <span class="canary-name">Near Full</span>
+      <span class="canary-desc">保留 10% 旧模型作为对照与回滚备份</span>
+      <span class="canary-guard">any anomaly &rarr; ROLLBACK</span>
+    </div>
+    <div class="canary-row" data-anim>
+      <span class="canary-pct">100%</span>
+      <span class="canary-name">Full GA</span>
+      <span class="canary-desc">全量上线，旧模型配置保留 7 天</span>
+      <span class="canary-guard">monitor 7d &rarr; CLEANUP</span>
+    </div>
+  </div>
+</div>
+
+  </section>
+  <section class="slide" data-layout="L-CLOSING" data-theme="dark" data-animate="hero" data-notes="">
+
+<div class="closing-slide">
+  <div class="kicker" data-anim>Landing Path</div>
+  <h1 data-anim>五阶段渐进落地</h1>
+  <div class="closing-stages" data-anim>
+    <div class="cs-stage" data-anim>
+      <span class="cs-num">01</span>
+      <span class="cs-title">LiteLLM + 基础设施</span>
+      <span class="cs-desc">统一接口 + Redis 限流 + PostgreSQL 配置，一周内跑通核心链路</span>
+    </div>
+    <div class="cs-stage" data-anim>
+      <span class="cs-num">02</span>
+      <span class="cs-title">模型别名 + 灰度</span>
+      <span class="cs-desc">业务代码解耦具体模型，支持 Shadow 测试与 Canary 发布</span>
+    </div>
+    <div class="cs-stage" data-anim>
+      <span class="cs-num">03</span>
+      <span class="cs-title">Policy Engine</span>
+      <span class="cs-desc">多租户配额、熔断降级、语义缓存，形成完整治理能力</span>
+    </div>
+    <div class="cs-stage" data-anim>
+      <span class="cs-num">04</span>
+      <span class="cs-title">A/B 实验平台</span>
+      <span class="cs-desc">模型评测闭环，数据驱动模型选择与 Prompt 优化</span>
+    </div>
+    <div class="cs-stage" data-anim>
+      <span class="cs-num">05</span>
+      <span class="cs-title">企业治理</span>
+      <span class="cs-desc">Kong 入口网关 + 合规审计 + 成本中心 + 安全防护全链路</span>
+    </div>
+  </div>
+  <p class="insight dark-insight" data-anim style="margin-top:20px;">推荐终态架构：Kong(入口治理) + LiteLLM(模型路由) + vLLM(推理引擎) &mdash; 三层各司其职，可独立演进。</p>
+</div>
+
+  </section>
+</div>
+<div class="slide-counter" id="counter"></div>
+<div class="notes-panel" id="notes"></div>
+<script>
+
+(function(){
+  var root=document.documentElement,slides=document.querySelectorAll('.slide'),counter=document.getElementById('counter'),notesPanel=document.getElementById('notes'),current=0,notesVisible=false,wheelLockedUntil=0;
+  root.classList.add('motion-ready');
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches)root.classList.add('motion-static');
+  function isStatic(){return root.classList.contains('motion-static');}
+  function getItems(s){return Array.from(s.querySelectorAll('[data-anim]'));}
+  function revealAll(s){getItems(s).forEach(function(i){i.classList.add('revealed');});}
+  function prep(s){var items=getItems(s);items.forEach(function(i,idx){i.style.setProperty('--anim-index',idx);i.classList.remove('revealed');});if(isStatic())revealAll(s);else if(s.dataset.animate==='pipeline'&&items.length>0)items[0].classList.add('revealed');}
+  function revealNext(s){if(isStatic()||s.dataset.animate!=='pipeline')return false;var n=getItems(s).find(function(i){return!i.classList.contains('revealed');});if(!n)return false;n.classList.add('revealed');return true;}
+  function hidePrev(s){if(isStatic()||s.dataset.animate!=='pipeline')return false;var r=getItems(s).filter(function(i){return i.classList.contains('revealed');});if(r.length<=1)return false;r[r.length-1].classList.remove('revealed');return true;}
+  function goTo(n){if(n<0||n>=slides.length)return;slides[current].classList.remove('active');current=n;slides[current].classList.add('active');prep(slides[current]);counter.textContent=(current+1)+' / '+slides.length;if(notesVisible)notesPanel.textContent=slides[current].getAttribute('data-notes')||'(No notes)';}
+  function advance(){if(revealNext(slides[current]))return;goTo(current+1);}
+  function retreat(){if(hidePrev(slides[current]))return;goTo(current-1);}
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();advance();}
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();retreat();}
+    else if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
+    else if(e.key==='p'||e.key==='P'){notesVisible=!notesVisible;notesPanel.classList.toggle('visible',notesVisible);if(notesVisible)notesPanel.textContent=slides[current].getAttribute('data-notes')||'(No notes)';}
+    else if(e.key==='b'||e.key==='B'){root.classList.toggle('motion-static');if(root.classList.contains('motion-static'))slides.forEach(revealAll);else prep(slides[current]);}
+    else if(e.key==='Home'){e.preventDefault();goTo(0);}
+    else if(e.key==='End'){e.preventDefault();goTo(slides.length-1);}
+  });
+  var touchStartX=0;
+  document.addEventListener('touchstart',function(e){touchStartX=e.changedTouches[0].screenX;});
+  document.addEventListener('touchend',function(e){var d=touchStartX-e.changedTouches[0].screenX;if(Math.abs(d)>50){d>0?advance():retreat();}});
+  document.addEventListener('wheel',function(e){if(Math.abs(e.deltaY)<30)return;var now=Date.now();if(now<wheelLockedUntil)return;wheelLockedUntil=now+450;e.preventDefault();e.deltaY>0?advance():retreat();},{passive:false});
+  slides.forEach(function(s){if(!s.dataset.animate)s.dataset.animate='cascade';});
+  counter.textContent='1 / '+slides.length;prep(slides[current]);
+})();
+
+</script>
+</body>
+</html>
