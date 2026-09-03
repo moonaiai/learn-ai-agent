@@ -58,16 +58,17 @@
 | Karpathy 2026 | [Software 3.0 与可验证性：Karpathy 的自动化新法则](docs/karpathy-2026/software-3.0-与可验证性.md) | 基于《Verifiability》与《Sequoia Ascent 2026》沉淀，拆解「可描述→可验证」的判断标准转移、可验证性三条件（可重置/高效/可奖励）、RLVR 爆发原因、锯齿智能、Vibe coding 与 Agentic engineering 的分野，以及 agent-native 基础设施清单。 |
 | Karpathy 2026 | [后 RAG 时代的 Agent 记忆：Karpathy 的 LLM Wiki 模式](docs/karpathy-2026/后RAG时代的Agent记忆-LLM-Wiki模式.md) | 基于 Karpathy LLM Wiki gist 沉淀，拆解「知识编译一次、持续保鲜」对 RAG「每次查询重新检索」的替代，三层架构（raw/wiki/schema）与 Ingest/Query/Lint 闭环，以及在本仓库/Claude Code 的落地骨架。 |
 | Harness Engineering | [Harness Engineering：当 Agent 工程的重心从「提示词」转向「环境设计」](docs/harness-engineering/harness-engineering.md) | 基于 Weng / Horthy / Anthropic / Osmani / swyx / Trivedy 六源交叉沉淀，拆解「Agent = Model + Harness」定义、上下文管理（dumb zone、intentional compaction、trajectory poisoning）、三智能体编排（Planner/Generator/Evaluator）、「组件即对模型能力假设」原则，以及 2–3x 而非 10x 的冷静提效判断。 |
+| DeepSeek Harness | [DeepSeek Harness 原理：把「模型之外的一切」做成可证明、可热替换的插件系统](docs/deepseek-harness/deepseek-harness.md) | 基于官方 monorepo 文档、92 页 arXiv 论文与 HN 社区讨论沉淀，8 张本地架构图拆解：Everything is a Plugin 总架构、Cordis 五概念、时空可组合性（可逆效应 / 响应式余效应 / context paradigm）、profile / bundle / patch 分层、事件溯源会话日志（model-visible means logged）、turn/step 循环、工具 schema 白名单与策略外挂管线、capability seam 三角色、LLM 适配器硬契约、四种 runtime mode、与 Claude Code 对比及独立评测信号。 |
 
 ## 学习路径
 
-这个仓库会按 AI Agent 工程能力的成长路线持续补齐内容。当前已沉淀二十九份文档，后续新增文档后，会把对应节点回填到这张路线图中。
+这个仓库会按 AI Agent 工程能力的成长路线持续补齐内容。当前已沉淀三十份文档，后续新增文档后，会把对应节点回填到这张路线图中。
 
 | 阶段 | 学习主题 | 需要掌握的问题 | 当前状态 |
 |---:|---|---|---|
 | 1 | 大模型基础原理 | Transformer Self-Attention、Decoder-Only、Tokenization、位置编码、KV Cache、LoRA/QLoRA、Embedding 选型等开发岗面试常考点的工程化梳理。 | 已沉淀：[Attention Is All You Need：Transformer 与纯注意力架构](docs/transformer/02-attention-is-all-you-need.md)、[Transformer Self-Attention：Q/K/V 与注意力怎么算](docs/transformer/01-transformer-self-attention.md)、[GPT vs BERT：为什么 LLM 都用 Decoder-Only](docs/gpt/01-decoder-only-vs-encoder-decoder.md)、[Tokenization：BPE / WordPiece / Unigram 怎么选](docs/tokenization/01-bpe-wordpiece-unigram.md)、[RoPE：旋转位置编码与相对注意力](docs/positional-encoding/01-rope-relative-position.md)、[推理采样参数：temperature / top_p / top_k](docs/sampling/01-temperature-top-p-top-k.md)、[KV Cache：自回归推理的工程加速](docs/kv-cache/01-kv-cache-inference.md)、[LoRA：低秩适配微调](docs/lora/01-lora-low-rank-adaptation.md)、[QLoRA：把 65B 微调压进单张 24GB 显卡](docs/qlora/01-qlora-quantized-lora.md)、[Embedding 模型选型：从 MTEB 排名到工程落地](docs/embedding/01-embedding-model-selection.md) |
 | 1.x | 大模型基础代码路径 | 跟着 Karpathy "Zero to Hero" 视频系列从零手写 micrograd / makemore / nanoGPT / minbpe。 | 已沉淀：[Karpathy Zero to Hero：讲座列表与学习顺序](docs/zero-to-hero/01-karpathy-zero-to-hero-learning-path.md) |
-| 2 | Agent 基础模型 | Agent loop 如何运转，模型、工具、状态和控制流如何配合。 | 已沉淀：[12-Factor Agents 设计原则](docs/12-factor-agents/12-factor-agents-principles.md)、[ReAct 框架：从推理行动循环到可控 Agent](docs/react-framework/react-framework.md) |
+| 2 | Agent 基础模型 | Agent loop 如何运转，模型、工具、状态和控制流如何配合。 | 已沉淀：[12-Factor Agents 设计原则](docs/12-factor-agents/12-factor-agents-principles.md)、[ReAct 框架：从推理行动循环到可控 Agent](docs/react-framework/react-framework.md)、[DeepSeek Harness 原理](docs/deepseek-harness/deepseek-harness.md) |
 | 3 | Tool Calling 与工具系统 | Tool schema 如何设计，工具权限、失败、重试和审计如何处理。 | 已沉淀：[Tool Card 模板](docs/react-framework/tool-card-template.md)、[Writing Effective Tools for Agents：Agent 工具设计原则](docs/writing-tools-for-agents/writing-tools-for-agents.md) |
 | 4 | Context Engineering | 什么信息应该进入上下文，如何压缩、隔离、检索和复用上下文。 | 已沉淀：[长文深度解析：大模型的上下文陷阱与 6 大修复技巧](docs/context-engineering/context-engineering.md)、[Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md)、[Agent 架构综述：从 Prompt 到上下文工程构建 AI Agent](docs/build-agent-context-engineering/build-agent-context-engineering.md)、[Harness Engineering：从提示词到环境设计](docs/harness-engineering/harness-engineering.md) |
 | 5 | Memory 与 RAG | 短期记忆、长期记忆、RAG、向量检索和知识库如何支撑 agent。 | 已沉淀：[Agent Memory 综述：Forms、Functions 与 Dynamics](docs/agent-memory-survey/agent-memory-survey.md)、[后 RAG 时代的 Agent 记忆：Karpathy 的 LLM Wiki 模式](docs/karpathy-2026/后RAG时代的Agent记忆-LLM-Wiki模式.md) |
@@ -109,6 +110,7 @@
 27. [Software 3.0 与可验证性：Karpathy 的自动化新法则](docs/karpathy-2026/software-3.0-与可验证性.md)：理解判断自动化的标准为何从「可描述」转向「可验证」，掌握可验证性三条件、RLVR 爆发的原因、锯齿智能的经验事实，以及 Vibe coding 与 Agentic engineering 的分野和 agent-native 基础设施清单。
 28. [后 RAG 时代的 Agent 记忆：Karpathy 的 LLM Wiki 模式](docs/karpathy-2026/后RAG时代的Agent记忆-LLM-Wiki模式.md)：理解 LLM Wiki 如何用「知识编译一次、持续保鲜」替代 RAG 的「每次查询重新检索」，掌握三层架构与 Ingest/Query/Lint 闭环，以及在本仓库/Claude Code 的落地骨架。
 29. [Harness Engineering：当 Agent 工程的重心从「提示词」转向「环境设计」](docs/harness-engineering/harness-engineering.md)：理解「Agent = Model + Harness」的范式转移，掌握上下文管理（dumb zone、intentional compaction、trajectory poisoning）、三智能体编排（Planner/Generator/Evaluator）、「组件即对模型能力假设」原则，以及 2–3x 而非 10x 的冷静提效判断。
+30. [DeepSeek Harness 原理：把「模型之外的一切」做成可证明、可热替换的插件系统](docs/deepseek-harness/deepseek-harness.md)：以一个生产级开源 harness 为样本，配 8 张本地架构图，理解 Cordis 元框架如何用可逆效应与响应式余效应支撑「Everything is a Plugin」，掌握事件溯源会话日志（model-visible means logged）、turn/step 循环、工具白名单管线、capability seam、LLM 适配器硬契约与 profile/bundle/patch 组合机制。
 
 ### 项目迁移检查
 
@@ -222,13 +224,16 @@ learn-ai-agent/
 │   └── harness-engineering/
 │       ├── harness-engineering.md
 │       └── figures/
+│   └── deepseek-harness/
+│       ├── deepseek-harness.md
+│       └── figures/（8 张本地架构图）
 ```
 
 ## 后续计划
 
 - 本轮 9 个 LLM 基础主题已全部沉淀，Q9（RLHF / DPO）、Q10（量化）、Q11（推理服务框架）按用户节奏延后启动。
 - Memory 综述已沉淀（Forms / Functions / Dynamics 三棱镜），Karpathy LLM Wiki 模式已沉淀（三层架构 + Ingest/Query/Lint 闭环），后续继续补充 RAG、向量检索与知识库专题，以及更细的 Multi-Agent 工程案例。
-- 补充优秀开源 Agent 项目的架构阅读材料。
+- 补充优秀开源 Agent 项目的架构阅读材料（已覆盖 DeepSeek Harness，后续可补充其他开源 harness / agent 框架）。
 - 沉淀 AI Agent 面试问答和项目表达材料。
 - 将学习资料逐步组织成“概念 -> 设计原则 -> 工程实践 -> 项目复盘”的完整路径。
 
