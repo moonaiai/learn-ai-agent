@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="600" viewBox="0 0 980 600" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a1a2e; }
+      .h { font-size: 15px; font-weight: bold; fill: #1a1a2e; }
+      .t { font-size: 13px; fill: #333; }
+      .small { font-size: 12px; fill: #555; }
+      .en { font-size: 11px; font-style: italic; fill: #777; }
+      .cap { font-size: 12px; font-style: italic; fill: #666; }
+      .who { font-size: 11.5px; font-weight: bold; fill: #5b7fb8; }
+    </style>
+    <marker id="a3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 z" fill="#8a93ad"/>
+    </marker>
+  </defs>
+  <rect width="980" height="600" fill="#fbfbfd"/>
+  <text x="490" y="36" text-anchor="middle" class="title">LLM Wiki 的三层架构：Obsidian 是 IDE，LLM 是程序员，Wiki 是代码库</text>
+
+  <!-- Layer 3 schema (top, governs) -->
+  <g>
+    <rect x="180" y="70" width="620" height="86" rx="12" fill="#f3eefa" stroke="#b6a4dd" stroke-width="1.5"/>
+    <text x="490" y="98" text-anchor="middle" class="h">Layer 3 · Schema 结构层</text>
+    <text x="490" y="122" text-anchor="middle" class="t">CLAUDE.md / AGENTS.md：目录约定、页面格式、ingest/query/lint 工作流</text>
+    <text x="130" y="100" text-anchor="middle" class="who">人 + LLM</text>
+    <text x="130" y="118" text-anchor="middle" class="small">共同演化</text>
+  </g>
+
+  <!-- Layer 2 wiki -->
+  <g>
+    <rect x="180" y="180" width="620" height="180" rx="12" fill="#eef2fb" stroke="#9db4e0" stroke-width="1.5"/>
+    <text x="490" y="208" text-anchor="middle" class="h">Layer 2 · Wiki（LLM 写，人读）</text>
+    <text x="130" y="200" text-anchor="middle" class="who">LLM 写</text>
+    <text x="130" y="218" text-anchor="middle" class="small">人读</text>
+    <!-- sub boxes -->
+    <rect x="220" y="228" width="250" height="52" rx="8" fill="#ffffff" stroke="#c3d2ec"/>
+    <text x="345" y="250" text-anchor="middle" class="t">源摘要页</text>
+    <text x="345" y="268" text-anchor="middle" class="small">一篇文档一页</text>
+    <rect x="510" y="228" width="250" height="52" rx="8" fill="#ffffff" stroke="#c3d2ec"/>
+    <text x="635" y="250" text-anchor="middle" class="t">实体页</text>
+    <text x="635" y="268" text-anchor="middle" class="small">人 / 公司 / 概念</text>
+    <rect x="220" y="292" width="250" height="52" rx="8" fill="#ffffff" stroke="#c3d2ec"/>
+    <text x="345" y="314" text-anchor="middle" class="t">主题摘要 + 对比分析</text>
+    <text x="345" y="332" text-anchor="middle" class="small">overview.md</text>
+    <rect x="510" y="292" width="250" height="52" rx="8" fill="#ffffff" stroke="#c3d2ec"/>
+    <text x="635" y="314" text-anchor="middle" class="t">交叉引用 / 反链</text>
+    <text x="635" y="332" text-anchor="middle" class="small">index.md 导航</text>
+  </g>
+
+  <!-- Layer 1 raw -->
+  <g>
+    <rect x="180" y="384" width="620" height="110" rx="12" fill="#eef9f1" stroke="#93cfae" stroke-width="1.5"/>
+    <text x="490" y="412" text-anchor="middle" class="h">Layer 1 · Raw Sources（人策展，不可变）</text>
+    <text x="130" y="412" text-anchor="middle" class="who">人策展</text>
+    <text x="130" y="430" text-anchor="middle" class="small">不可变</text>
+    <text x="490" y="438" text-anchor="middle" class="t">raw/ 目录：文章、论文、repo、数据集、图片、转录</text>
+    <text x="490" y="462" text-anchor="middle" class="en">LLM 只读，从不修改 —— 「源代码」</text>
+    <text x="490" y="484" text-anchor="middle" class="small">用 Obsidian Web Clipper 剪藏进来</text>
+  </g>
+
+  <!-- vertical compile arrow -->
+  <g stroke="#8a93ad" stroke-width="2.2" fill="none" marker-end="url(#a3)">
+    <line x1="860" y1="440" x2="860" y2="270"/>
+  </g>
+  <text x="900" y="360" class="small" transform="rotate(90 900 360)" text-anchor="middle">编译 compile</text>
+
+  <text x="490" y="540" text-anchor="middle" class="cap">"The tedious part of maintaining a knowledge base is not the reading or the thinking — it's the bookkeeping."</text>
+  <text x="490" y="566" text-anchor="middle" class="cap">维护知识库最枯燥的不是读和想，而是「记账」—— 这正是交给 LLM 的部分</text>
+</svg>

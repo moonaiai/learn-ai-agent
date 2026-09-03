@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="480" viewBox="0 0 980 480" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a1a2e; }
+      .t { font-size: 13px; fill: #333; }
+      .small { font-size: 12px; fill: #555; }
+      .axis { font-size: 13px; font-weight: bold; fill: #1a1a2e; }
+      .cap { font-size: 12px; font-style: italic; fill: #666; }
+      .good { fill: #2e7d5b; font-size: 12.5px; }
+      .bad { fill: #b04a3a; font-size: 12.5px; }
+    </style>
+  </defs>
+  <rect width="980" height="480" fill="#fbfbfd"/>
+  <text x="490" y="36" text-anchor="middle" class="title">锯齿智能（Jagged Intelligence）：能力不是平地，是尖峰</text>
+
+  <!-- axes -->
+  <line x1="150" y1="80" x2="150" y2="400" stroke="#1a1a2e" stroke-width="2"/>
+  <line x1="150" y1="400" x2="880" y2="400" stroke="#1a1a2e" stroke-width="2"/>
+  <text x="70" y="240" class="axis" transform="rotate(-90 70 240)" text-anchor="middle">模型能力</text>
+  <text x="515" y="440" text-anchor="middle" class="axis">不同任务领域</text>
+
+  <!-- jagged bars -->
+  <!-- math -->
+  <rect x="200" y="120" width="90" height="280" fill="#7fb8a0"/>
+  <text x="245" y="108" text-anchor="middle" class="good">数学</text>
+  <!-- code -->
+  <rect x="310" y="100" width="90" height="300" fill="#7fb8a0"/>
+  <text x="355" y="88" text-anchor="middle" class="good">代码</text>
+  <!-- puzzles -->
+  <rect x="420" y="150" width="90" height="250" fill="#9cc7b4"/>
+  <text x="465" y="138" text-anchor="middle" class="good">谜题 / 棋类</text>
+  <!-- common sense (low) -->
+  <rect x="530" y="320" width="90" height="80" fill="#e0a396"/>
+  <text x="575" y="308" text-anchor="middle" class="bad">常识判断</text>
+  <!-- creative (low-mid) -->
+  <rect x="640" y="290" width="90" height="110" fill="#e0a396"/>
+  <text x="685" y="278" text-anchor="middle" class="bad">创造 / 战略</text>
+  <!-- real-world (low) -->
+  <rect x="750" y="340" width="90" height="60" fill="#e9b7ab"/>
+  <text x="795" y="328" text-anchor="middle" class="bad">真实世界情境</text>
+
+  <!-- annotation callouts -->
+  <text x="245" y="420" text-anchor="middle" class="small">可验证</text>
+  <text x="700" y="420" text-anchor="middle" class="small">不可验证</text>
+
+  <text x="490" y="466" text-anchor="middle" class="cap">同一模型能重构 10 万行代码，却会让你「走去 50 米外的洗车店」—— 能力分布是锯齿而非平地</text>
+</svg>

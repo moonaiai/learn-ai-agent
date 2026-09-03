@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="560" viewBox="0 0 980 560" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a1a2e; }
+      .h { font-size: 15px; font-weight: bold; fill: #1a1a2e; }
+      .t { font-size: 13px; fill: #333; }
+      .small { font-size: 12px; fill: #555; }
+      .en { font-size: 11px; font-style: italic; fill: #777; }
+      .cap { font-size: 12px; font-style: italic; fill: #666; }
+    </style>
+    <marker id="a2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 z" fill="#5b7fb8"/>
+    </marker>
+  </defs>
+  <rect width="980" height="560" fill="#fbfbfd"/>
+  <text x="490" y="36" text-anchor="middle" class="title">可验证性的三个条件：让 AI「练得出来」的环境</text>
+  <text x="490" y="60" text-anchor="middle" class="cap">"It's about to what extent an AI can 'practice' something." —— 关键在 AI 能在多大程度上「练习」一件事</text>
+
+  <!-- Loop diagram -->
+  <!-- resettable -->
+  <g>
+    <rect x="90" y="120" width="240" height="120" rx="14" fill="#eef2fb" stroke="#9db4e0" stroke-width="1.5"/>
+    <text x="210" y="152" text-anchor="middle" class="h">1. 可重置 Resettable</text>
+    <text x="210" y="180" text-anchor="middle" class="t">能不断开启全新的尝试</text>
+    <text x="210" y="205" text-anchor="middle" class="en">"you can start a new attempt"</text>
+  </g>
+
+  <!-- efficient -->
+  <g>
+    <rect x="640" y="120" width="240" height="120" rx="14" fill="#eef9f1" stroke="#93cfae" stroke-width="1.5"/>
+    <text x="760" y="152" text-anchor="middle" class="h">2. 高效 Efficient</text>
+    <text x="760" y="180" text-anchor="middle" class="t">单位时间能做海量尝试</text>
+    <text x="760" y="205" text-anchor="middle" class="en">"a lot of attempts can be made"</text>
+  </g>
+
+  <!-- rewardable -->
+  <g>
+    <rect x="365" y="330" width="250" height="120" rx="14" fill="#fdf1ec" stroke="#ecae8f" stroke-width="1.5"/>
+    <text x="490" y="362" text-anchor="middle" class="h">3. 可奖励 Rewardable</text>
+    <text x="490" y="390" text-anchor="middle" class="t">有自动化流程给每次尝试打分</text>
+    <text x="490" y="415" text-anchor="middle" class="en">"an automated process to reward any attempt"</text>
+  </g>
+
+  <!-- loop arrows -->
+  <g stroke="#5b7fb8" stroke-width="2.2" fill="none" marker-end="url(#a2)">
+    <path d="M330 165 C 460 90, 540 90, 636 160"/>
+    <path d="M760 244 C 770 320, 700 350, 620 372"/>
+    <path d="M365 392 C 250 350, 200 300, 208 244"/>
+  </g>
+  <text x="490" y="130" text-anchor="middle" class="small">重新开始</text>
+  <text x="820" y="310" text-anchor="middle" class="small">批量采样</text>
+  <text x="150" y="320" text-anchor="middle" class="small">奖励回灌</text>
+
+  <!-- bottom -->
+  <rect x="150" y="478" width="680" height="58" rx="10" fill="#ffffff" stroke="#d4d9e6"/>
+  <text x="490" y="502" text-anchor="middle" class="t">三条同时满足，强化学习（RLVR）的飞轮才转得起来</text>
+  <text x="490" y="524" text-anchor="middle" class="small">数学有标准答案 · 代码有测试套件 · 棋类有输赢 · 形式化证明有 checker</text>
+</svg>

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="470" viewBox="0 0 980 470" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a1a2e; }
+      .h { font-size: 15px; font-weight: bold; fill: #1a1a2e; }
+      .t { font-size: 12.5px; fill: #333; }
+      .small { font-size: 12px; fill: #555; }
+      .en { font-size: 11px; font-style: italic; fill: #777; }
+      .cap { font-size: 12px; font-style: italic; fill: #666; }
+    </style>
+    <marker id="a4" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 z" fill="#5b7fb8"/>
+    </marker>
+  </defs>
+  <rect width="980" height="470" fill="#fbfbfd"/>
+  <text x="490" y="36" text-anchor="middle" class="title">三个操作循环：Ingest / Query / Lint</text>
+
+  <!-- Ingest -->
+  <g>
+    <rect x="70" y="90" width="250" height="150" rx="14" fill="#eef2fb" stroke="#9db4e0" stroke-width="1.5"/>
+    <text x="195" y="122" text-anchor="middle" class="h">Ingest 摄入</text>
+    <text x="195" y="148" text-anchor="middle" class="t">读源 → 讨论要点 → 写摘要页</text>
+    <text x="195" y="170" text-anchor="middle" class="small">更新 index.md + 实体/概念页</text>
+    <text x="195" y="190" text-anchor="middle" class="small">(一个源常改 10–15 个文件)</text>
+    <text x="195" y="212" text-anchor="middle" class="small">追加 log.md · 一次一个源 + 人审</text>
+  </g>
+
+  <!-- Query -->
+  <g>
+    <rect x="365" y="90" width="250" height="150" rx="14" fill="#fdf1ec" stroke="#ecae8f" stroke-width="1.5"/>
+    <text x="490" y="122" text-anchor="middle" class="h">Query 查询</text>
+    <text x="490" y="148" text-anchor="middle" class="t">读 index.md 定位 → 沿链接钻入</text>
+    <text x="490" y="170" text-anchor="middle" class="small">跨文章综合，带引用回答</text>
+    <text x="490" y="192" text-anchor="middle" class="en">"index.md is not RAG"</text>
+    <text x="490" y="212" text-anchor="middle" class="small">好答案回填为新 wiki 页</text>
+  </g>
+
+  <!-- Lint -->
+  <g>
+    <rect x="660" y="90" width="250" height="150" rx="14" fill="#eef9f1" stroke="#93cfae" stroke-width="1.5"/>
+    <text x="785" y="122" text-anchor="middle" class="h">Lint 健康检查</text>
+    <text x="785" y="148" text-anchor="middle" class="t">找矛盾 / 过时说法 / 孤儿页</text>
+    <text x="785" y="170" text-anchor="middle" class="small">补缺失引用、联网补齐数据</text>
+    <text x="785" y="192" text-anchor="middle" class="small">浮现该写的新主题</text>
+    <text x="785" y="212" text-anchor="middle" class="small">主动提出新问题</text>
+  </g>
+
+  <!-- circular loop arrows -->
+  <g stroke="#5b7fb8" stroke-width="2.2" fill="none" marker-end="url(#a4)">
+    <path d="M320 165 L360 165"/>
+    <path d="M615 165 L655 165"/>
+    <path d="M785 245 C 740 330, 260 330, 198 245"/>
+  </g>
+  <text x="340" y="152" text-anchor="middle" class="small">编译</text>
+  <text x="635" y="152" text-anchor="middle" class="small">回答沉淀</text>
+  <text x="490" y="320" text-anchor="middle" class="small">lint 反哺：发现缺失 → 触发新的 ingest</text>
+
+  <text x="490" y="392" text-anchor="middle" class="cap">"Knowledge is compiled once and kept current, not re-derived on every query."</text>
+  <text x="490" y="418" text-anchor="middle" class="cap">知识「编译一次、持续保鲜」，而不是每次查询都重新推导 —— 这是和 RAG 的根本区别</text>
+</svg>

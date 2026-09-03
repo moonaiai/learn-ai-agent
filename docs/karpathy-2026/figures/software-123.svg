@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="520" viewBox="0 0 980 520" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a1a2e; }
+      .h { font-size: 15px; font-weight: bold; fill: #1a1a2e; }
+      .t { font-size: 12.5px; fill: #333; }
+      .small { font-size: 11.5px; fill: #555; }
+      .cap { font-size: 12px; font-style: italic; fill: #666; }
+    </style>
+  </defs>
+  <rect width="980" height="520" fill="#fbfbfd"/>
+  <text x="490" y="34" text-anchor="middle" class="title">Software 1.0 / 2.0 / 3.0：程序从哪里来</text>
+
+  <!-- Column 1 -->
+  <g>
+    <rect x="40" y="70" width="280" height="360" rx="14" fill="#eef2fb" stroke="#9db4e0" stroke-width="1.5"/>
+    <text x="180" y="100" text-anchor="middle" class="h">Software 1.0</text>
+    <text x="180" y="122" text-anchor="middle" class="small">人写显式代码</text>
+
+    <rect x="60" y="150" width="240" height="58" rx="8" fill="#ffffff" stroke="#c3d2ec"/>
+    <text x="180" y="175" text-anchor="middle" class="t">程序 = 写死的规则</text>
+    <text x="180" y="195" text-anchor="middle" class="small">if-else · 脚本 · 算法</text>
+
+    <rect x="60" y="222" width="240" height="70" rx="8" fill="#ffffff" stroke="#c3d2ec"/>
+    <text x="180" y="245" text-anchor="middle" class="t">自动化门槛</text>
+    <text x="180" y="265" text-anchor="middle" class="small">能否被「描述 specify」</text>
+    <text x="180" y="282" text-anchor="middle" class="small">成确定规则</text>
+
+    <rect x="60" y="306" width="240" height="104" rx="8" fill="#ffffff" stroke="#c3d2ec"/>
+    <text x="180" y="328" text-anchor="middle" class="t">典型被自动化的工作</text>
+    <text x="180" y="350" text-anchor="middle" class="small">打字 · 记账 · 人肉计算器</text>
+    <text x="180" y="372" text-anchor="middle" class="small">1980s 计算机革命的</text>
+    <text x="180" y="390" text-anchor="middle" class="small">那一波</text>
+  </g>
+
+  <!-- Column 2 -->
+  <g>
+    <rect x="350" y="70" width="280" height="360" rx="14" fill="#eef9f1" stroke="#93cfae" stroke-width="1.5"/>
+    <text x="490" y="100" text-anchor="middle" class="h">Software 2.0</text>
+    <text x="490" y="122" text-anchor="middle" class="small">数据 + 梯度下降学出权重</text>
+
+    <rect x="370" y="150" width="240" height="58" rx="8" fill="#ffffff" stroke="#bfe3cf"/>
+    <text x="490" y="175" text-anchor="middle" class="t">程序 = 搜索到的网络权重</text>
+    <text x="490" y="195" text-anchor="middle" class="small">给定目标 · 在程序空间搜索</text>
+
+    <rect x="370" y="222" width="240" height="70" rx="8" fill="#ffffff" stroke="#bfe3cf"/>
+    <text x="490" y="245" text-anchor="middle" class="t">自动化门槛</text>
+    <text x="490" y="265" text-anchor="middle" class="small">能否被「验证 verify」</text>
+    <text x="490" y="282" text-anchor="middle" class="small">出对错</text>
+
+    <rect x="370" y="306" width="240" height="104" rx="8" fill="#ffffff" stroke="#bfe3cf"/>
+    <text x="490" y="328" text-anchor="middle" class="t">RLVR 爆发的领域</text>
+    <text x="490" y="350" text-anchor="middle" class="small">数学 · 代码 · 棋类 · 谜题</text>
+    <text x="490" y="372" text-anchor="middle" class="small">有标准答案 / 测试套件 /</text>
+    <text x="490" y="390" text-anchor="middle" class="small">形式化 checker</text>
+  </g>
+
+  <!-- Column 3 -->
+  <g>
+    <rect x="660" y="70" width="280" height="360" rx="14" fill="#fdf1ec" stroke="#ecae8f" stroke-width="1.5"/>
+    <text x="800" y="100" text-anchor="middle" class="h">Software 3.0</text>
+    <text x="800" y="122" text-anchor="middle" class="small">用 prompt / context / tool 编程</text>
+
+    <rect x="680" y="150" width="240" height="58" rx="8" fill="#ffffff" stroke="#f3d3bd"/>
+    <text x="800" y="175" text-anchor="middle" class="t">程序 = 上下文窗口里的内容</text>
+    <text x="800" y="195" text-anchor="middle" class="small">提示词 · 工具 · 记忆 · 示例</text>
+
+    <rect x="680" y="222" width="240" height="70" rx="8" fill="#ffffff" stroke="#f3d3bd"/>
+    <text x="800" y="245" text-anchor="middle" class="t">新的主杠杆</text>
+    <text x="800" y="265" text-anchor="middle" class="small">上下文窗口本身</text>
+    <text x="800" y="282" text-anchor="middle" class="small">「一段文字复制给 agent」</text>
+
+    <rect x="680" y="306" width="240" height="104" rx="8" fill="#ffffff" stroke="#f3d3bd"/>
+    <text x="800" y="328" text-anchor="middle" class="t">结果</text>
+    <text x="800" y="350" text-anchor="middle" class="small">「有些应用根本不该再以</text>
+    <text x="800" y="370" text-anchor="middle" class="small">应用的形式存在」</text>
+    <text x="800" y="392" text-anchor="middle" class="small">模型直接完成输入→输出变换</text>
+  </g>
+
+  <!-- Arrows -->
+  <g stroke="#8a93ad" stroke-width="2" fill="none" marker-end="url(#arr)">
+    <line x1="322" y1="250" x2="346" y2="250"/>
+    <line x1="632" y1="250" x2="656" y2="250"/>
+  </g>
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 z" fill="#8a93ad"/>
+    </marker>
+  </defs>
+
+  <text x="490" y="470" text-anchor="middle" class="cap">「Software 1.0 自动化你能描述的东西；Software 2.0 自动化你能验证的东西。」—— Karpathy</text>
+  <text x="490" y="494" text-anchor="middle" class="cap">Software 3.0 把「编程」进一步变成对上下文窗口的直接操纵</text>
+</svg>

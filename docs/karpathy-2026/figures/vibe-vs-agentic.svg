@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="430" viewBox="0 0 980 430" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a1a2e; }
+      .h { font-size: 16px; font-weight: bold; fill: #1a1a2e; }
+      .t { font-size: 13px; fill: #333; }
+      .small { font-size: 12px; fill: #555; }
+      .cap { font-size: 12px; font-style: italic; fill: #666; }
+      .li { font-size: 12.5px; fill: #333; }
+    </style>
+  </defs>
+  <rect width="980" height="430" fill="#fbfbfd"/>
+  <text x="490" y="36" text-anchor="middle" class="title">Vibe Coding 抬地板，Agentic Engineering 抬天花板</text>
+
+  <!-- floor side -->
+  <g>
+    <rect x="50" y="80" width="410" height="270" rx="14" fill="#eef2fb" stroke="#9db4e0" stroke-width="1.5"/>
+    <text x="255" y="112" text-anchor="middle" class="h">Vibe Coding</text>
+    <text x="255" y="136" text-anchor="middle" class="small">接受 agent 生成的结果，不问过程</text>
+    <line x1="80" y1="150" x2="430" y2="150" stroke="#c3d2ec"/>
+    <text x="90" y="178" class="li">· 作用：抬高「地板」</text>
+    <text x="90" y="202" class="li">· 让任何人都能做出软件</text>
+    <text x="90" y="226" class="li">· 民主化，但不保证质量</text>
+    <text x="90" y="250" class="li">· 风险：把模型的尖峰误当平地</text>
+    <rect x="80" y="272" width="350" height="56" rx="8" fill="#ffffff" stroke="#c3d2ec"/>
+    <text x="255" y="295" text-anchor="middle" class="small">"Vibe coding raises the floor."</text>
+    <text x="255" y="315" text-anchor="middle" class="small">产出容易是 slop（粗制滥造）</text>
+  </g>
+
+  <!-- ceiling side -->
+  <g>
+    <rect x="520" y="80" width="410" height="270" rx="14" fill="#eef9f1" stroke="#93cfae" stroke-width="1.5"/>
+    <text x="725" y="112" text-anchor="middle" class="h">Agentic Engineering</text>
+    <text x="725" y="136" text-anchor="middle" class="small">有纪律地协调一群「会犯错的 agent」</text>
+    <line x1="550" y1="150" x2="900" y2="150" stroke="#bfe3cf"/>
+    <text x="560" y="176" class="li">· 作用：抬高「天花板」，远超 10x 工程师</text>
+    <text x="560" y="200" class="li">· 四项纪律：</text>
+    <text x="578" y="222" class="li">1. 分解任务 / 写好规格 spec</text>
+    <text x="578" y="244" class="li">2. 审查 diff、保住质量</text>
+    <text x="578" y="266" class="li">3. 设计评测 eval</text>
+    <text x="578" y="288" class="li">4. 安全加固、监督越权</text>
+    <rect x="550" y="300" width="350" height="34" rx="8" fill="#ffffff" stroke="#bfe3cf"/>
+    <text x="725" y="322" text-anchor="middle" class="small">"Agentic engineering is about extrapolating the ceiling."</text>
+  </g>
+
+  <!-- arrows floor/ceiling -->
+  <g stroke="#8a93ad" stroke-width="2" fill="none">
+    <line x1="255" y1="360" x2="255" y2="392"/>
+    <line x1="725" y1="360" x2="725" y2="380"/>
+  </g>
+  <text x="255" y="410" text-anchor="middle" class="small">地板 ↑</text>
+  <text x="725" y="398" text-anchor="middle" class="small">天花板 ↑</text>
+
+  <text x="490" y="424" text-anchor="middle" class="cap">「你可以外包思考，但无法外包理解。」</text>
+</svg>
