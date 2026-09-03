@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="560" viewBox="0 0 980 560" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a1a2e; }
+      .h { font-size: 15px; font-weight: bold; fill: #1a1a2e; }
+      .t { font-size: 13px; fill: #333; }
+      .small { font-size: 12px; fill: #555; }
+      .cap { font-size: 12px; font-style: italic; fill: #666; }
+      .li { font-size: 12px; fill: #333; }
+    </style>
+  </defs>
+  <rect width="980" height="560" fill="#fbfbfd"/>
+  <text x="490" y="36" text-anchor="middle" class="title">Agent = Model + Harness：重心从「提示词」转向「环境设计」</text>
+  <text x="490" y="60" text-anchor="middle" class="cap">"Agent = Model + Harness. If you're not the model, you're the harness." —— Viv Trivedy</text>
+
+  <!-- central model -->
+  <circle cx="490" cy="300" r="72" fill="#7fb8a0"/>
+  <text x="490" y="296" text-anchor="middle" class="h" fill="#ffffff">Model</text>
+  <text x="490" y="316" text-anchor="middle" class="small" fill="#ffffff">权重 / 智能内核</text>
+
+  <!-- harness ring -->
+  <circle cx="490" cy="300" r="120" fill="none" stroke="#ecae8f" stroke-width="2" stroke-dasharray="6 5"/>
+  <text x="490" y="170" text-anchor="middle" class="small">Harness 环：不是模型本身的全部代码 / 配置 / 执行逻辑</text>
+
+  <!-- harness component boxes -->
+  <!-- system prompt -->
+  <g><rect x="150" y="120" width="200" height="56" rx="10" fill="#eef2fb" stroke="#9db4e0"/>
+  <text x="250" y="143" text-anchor="middle" class="t">系统提示</text><text x="250" y="162" text-anchor="middle" class="small">CLAUDE.md / AGENTS.md / skill</text></g>
+  <!-- tools -->
+  <g><rect x="630" y="120" width="200" height="56" rx="10" fill="#eef2fb" stroke="#9db4e0"/>
+  <text x="730" y="143" text-anchor="middle" class="t">工具与 MCP</text><text x="730" y="162" text-anchor="middle" class="small">Tools / Skills / MCP server</text></g>
+  <!-- infra -->
+  <g><rect x="90" y="270" width="180" height="56" rx="10" fill="#eef9f1" stroke="#93cfae"/>
+  <text x="180" y="293" text-anchor="middle" class="t">基础设施</text><text x="180" y="312" text-anchor="middle" class="small">文件系统 / 沙箱 / 浏览器</text></g>
+  <!-- orchestration -->
+  <g><rect x="710" y="270" width="180" height="56" rx="10" fill="#eef9f1" stroke="#93cfae"/>
+  <text x="800" y="293" text-anchor="middle" class="t">编排逻辑</text><text x="800" y="312" text-anchor="middle" class="small">子 agent / 交接 / 路由</text></g>
+  <!-- hooks -->
+  <g><rect x="150" y="420" width="200" height="56" rx="10" fill="#fdf1ec" stroke="#ecae8f"/>
+  <text x="250" y="443" text-anchor="middle" class="t">Hooks / 中间件</text><text x="250" y="462" text-anchor="middle" class="small">compaction / lint / 续跑</text></g>
+  <!-- observability -->
+  <g><rect x="630" y="420" width="200" height="56" rx="10" fill="#fdf1ec" stroke="#ecae8f"/>
+  <text x="730" y="443" text-anchor="middle" class="t">可观测性</text><text x="730" y="462" text-anchor="middle" class="small">日志 / trace / 成本与延迟</text></g>
+
+  <!-- connectors -->
+  <g stroke="#c3cbdd" stroke-width="1.5" fill="none">
+    <line x1="350" y1="148" x2="428" y2="240"/><line x1="630" y1="148" x2="552" y2="240"/>
+    <line x1="270" y1="298" x2="418" y2="300"/><line x1="710" y1="298" x2="562" y2="300"/>
+    <line x1="350" y1="448" x2="432" y2="356"/><line x1="630" y1="448" x2="548" y2="356"/>
+  </g>
+
+  <text x="490" y="530" text-anchor="middle" class="cap">提示词只是 harness 的一个组件；真正的工程在模型之外</text>
+</svg>

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="460" viewBox="0 0 980 460" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a1a2e; }
+      .h { font-size: 15px; font-weight: bold; fill: #1a1a2e; }
+      .t { font-size: 12.5px; fill: #333; }
+      .small { font-size: 11.5px; fill: #555; }
+      .cap { font-size: 12px; font-style: italic; fill: #666; }
+    </style>
+    <marker id="ah" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 z" fill="#5b7fb8"/>
+    </marker>
+  </defs>
+  <rect width="980" height="460" fill="#fbfbfd"/>
+  <text x="490" y="36" text-anchor="middle" class="title">Anthropic 三智能体 Harness：Generator 与 Evaluator 分离</text>
+  <text x="490" y="60" text-anchor="middle" class="cap">灵感来自 GAN：干活的和评判的不能是同一个 agent</text>
+
+  <!-- Planner -->
+  <g>
+    <rect x="70" y="120" width="230" height="150" rx="14" fill="#eef2fb" stroke="#9db4e0" stroke-width="1.5"/>
+    <text x="185" y="150" text-anchor="middle" class="h">Planner 规划者</text>
+    <text x="185" y="176" text-anchor="middle" class="t">把一句话扩成完整产品规格</text>
+    <text x="185" y="198" text-anchor="middle" class="small">「敢于扩大范围」，但不写</text>
+    <text x="185" y="216" text-anchor="middle" class="small">细节，避免误差向下游传染</text>
+  </g>
+
+  <!-- Generator -->
+  <g>
+    <rect x="375" y="120" width="230" height="150" rx="14" fill="#eef9f1" stroke="#93cfae" stroke-width="1.5"/>
+    <text x="490" y="150" text-anchor="middle" class="h">Generator 生成者</text>
+    <text x="490" y="176" text-anchor="middle" class="t">逐个特性地实现</text>
+    <text x="490" y="198" text-anchor="middle" class="small">先自评，再交给 QA</text>
+    <text x="490" y="216" text-anchor="middle" class="small">与 Planner 先谈「sprint 契约」</text>
+  </g>
+
+  <!-- Evaluator -->
+  <g>
+    <rect x="680" y="120" width="230" height="150" rx="14" fill="#fdf1ec" stroke="#ecae8f" stroke-width="1.5"/>
+    <text x="795" y="150" text-anchor="middle" class="h">Evaluator 评估者</text>
+    <text x="795" y="176" text-anchor="middle" class="t">用 Playwright 真的点开 app</text>
+    <text x="795" y="198" text-anchor="middle" class="small">按硬阈值打分，不过就</text>
+    <text x="795" y="216" text-anchor="middle" class="small">退回 Generator 并附详细反馈</text>
+  </g>
+
+  <!-- forward arrows -->
+  <g stroke="#5b7fb8" stroke-width="2.2" fill="none" marker-end="url(#ah)">
+    <line x1="300" y1="185" x2="372" y2="185"/>
+    <line x1="605" y1="185" x2="677" y2="185"/>
+  </g>
+  <text x="336" y="172" text-anchor="middle" class="small">spec</text>
+  <text x="641" y="172" text-anchor="middle" class="small">交付 QA</text>
+
+  <!-- feedback loop -->
+  <path d="M795 272 C 700 350, 590 350, 495 272" stroke="#b04a3a" stroke-width="2.2" fill="none" marker-end="url(#ah)"/>
+  <text x="645" y="330" text-anchor="middle" class="small">不达标 → 带反馈返工</text>
+
+  <!-- context reset note -->
+  <rect x="120" y="380" width="740" height="52" rx="10" fill="#ffffff" stroke="#d4d9e6"/>
+  <text x="490" y="402" text-anchor="middle" class="t">上下文重置（clean slate）+ 结构化交接，对抗「上下文焦虑」</text>
+  <text x="490" y="422" text-anchor="middle" class="small">交接产物要足以让下一个 agent 干净接手；Opus 4.5 后可改用连续会话 + 自动 compaction</text>
+</svg>

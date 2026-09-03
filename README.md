@@ -57,10 +57,11 @@
 | Agent 成本优化 | [Parcle：把「找上下文」的成本从 agent 循环里拿掉](docs/agent-cost-optimization/parcle-context-layer.md) | 基于 Parcle 产品页沉淀，拆解 agent token 大头花在「找上下文」的数据（~86% token、9.6x 隐藏开销）、预索引 context layer 的方案思路、LongMemEval 95.6% 的基准表现与工程含义。 |
 | Karpathy 2026 | [Software 3.0 与可验证性：Karpathy 的自动化新法则](docs/karpathy-2026/software-3.0-与可验证性.md) | 基于《Verifiability》与《Sequoia Ascent 2026》沉淀，拆解「可描述→可验证」的判断标准转移、可验证性三条件（可重置/高效/可奖励）、RLVR 爆发原因、锯齿智能、Vibe coding 与 Agentic engineering 的分野，以及 agent-native 基础设施清单。 |
 | Karpathy 2026 | [后 RAG 时代的 Agent 记忆：Karpathy 的 LLM Wiki 模式](docs/karpathy-2026/后RAG时代的Agent记忆-LLM-Wiki模式.md) | 基于 Karpathy LLM Wiki gist 沉淀，拆解「知识编译一次、持续保鲜」对 RAG「每次查询重新检索」的替代，三层架构（raw/wiki/schema）与 Ingest/Query/Lint 闭环，以及在本仓库/Claude Code 的落地骨架。 |
+| Harness Engineering | [Harness Engineering：当 Agent 工程的重心从「提示词」转向「环境设计」](docs/harness-engineering/harness-engineering.md) | 基于 Weng / Horthy / Anthropic / Osmani / swyx / Trivedy 六源交叉沉淀，拆解「Agent = Model + Harness」定义、上下文管理（dumb zone、intentional compaction、trajectory poisoning）、三智能体编排（Planner/Generator/Evaluator）、「组件即对模型能力假设」原则，以及 2–3x 而非 10x 的冷静提效判断。 |
 
 ## 学习路径
 
-这个仓库会按 AI Agent 工程能力的成长路线持续补齐内容。当前已沉淀二十八份文档，后续新增文档后，会把对应节点回填到这张路线图中。
+这个仓库会按 AI Agent 工程能力的成长路线持续补齐内容。当前已沉淀二十九份文档，后续新增文档后，会把对应节点回填到这张路线图中。
 
 | 阶段 | 学习主题 | 需要掌握的问题 | 当前状态 |
 |---:|---|---|---|
@@ -68,7 +69,7 @@
 | 1.x | 大模型基础代码路径 | 跟着 Karpathy "Zero to Hero" 视频系列从零手写 micrograd / makemore / nanoGPT / minbpe。 | 已沉淀：[Karpathy Zero to Hero：讲座列表与学习顺序](docs/zero-to-hero/01-karpathy-zero-to-hero-learning-path.md) |
 | 2 | Agent 基础模型 | Agent loop 如何运转，模型、工具、状态和控制流如何配合。 | 已沉淀：[12-Factor Agents 设计原则](docs/12-factor-agents/12-factor-agents-principles.md)、[ReAct 框架：从推理行动循环到可控 Agent](docs/react-framework/react-framework.md) |
 | 3 | Tool Calling 与工具系统 | Tool schema 如何设计，工具权限、失败、重试和审计如何处理。 | 已沉淀：[Tool Card 模板](docs/react-framework/tool-card-template.md)、[Writing Effective Tools for Agents：Agent 工具设计原则](docs/writing-tools-for-agents/writing-tools-for-agents.md) |
-| 4 | Context Engineering | 什么信息应该进入上下文，如何压缩、隔离、检索和复用上下文。 | 已沉淀：[长文深度解析：大模型的上下文陷阱与 6 大修复技巧](docs/context-engineering/context-engineering.md)、[Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md)、[Agent 架构综述：从 Prompt 到上下文工程构建 AI Agent](docs/build-agent-context-engineering/build-agent-context-engineering.md) |
+| 4 | Context Engineering | 什么信息应该进入上下文，如何压缩、隔离、检索和复用上下文。 | 已沉淀：[长文深度解析：大模型的上下文陷阱与 6 大修复技巧](docs/context-engineering/context-engineering.md)、[Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md)、[Agent 架构综述：从 Prompt 到上下文工程构建 AI Agent](docs/build-agent-context-engineering/build-agent-context-engineering.md)、[Harness Engineering：从提示词到环境设计](docs/harness-engineering/harness-engineering.md) |
 | 5 | Memory 与 RAG | 短期记忆、长期记忆、RAG、向量检索和知识库如何支撑 agent。 | 已沉淀：[Agent Memory 综述：Forms、Functions 与 Dynamics](docs/agent-memory-survey/agent-memory-survey.md)、[后 RAG 时代的 Agent 记忆：Karpathy 的 LLM Wiki 模式](docs/karpathy-2026/后RAG时代的Agent记忆-LLM-Wiki模式.md) |
 | 6 | Workflow 与 Multi-Agent | 什么时候用 workflow，什么时候拆 multi-agent，角色边界如何划分。 | 已沉淀：[Building Effective Agents：从简单模式到可控 Agent](docs/building-effective-agents/building-effective-agents.md)、[Loop Engineering：Karpathy Loop 与让它快 5 倍的双层循环](docs/loop-engineering/loop-engineering-karpathy-method.md) |
 | 7 | Eval 与 Observability | 如何构建评测集、trace、回放、LLM-as-judge 和线上质量指标。 | 已沉淀：[Agent Evaluation Harness：从感觉评估到可复现评估](docs/agent-evaluation-harness/agent-evaluation-harness-guide.md)、[Software 3.0 与可验证性：Karpathy 的自动化新法则](docs/karpathy-2026/software-3.0-与可验证性.md) |
@@ -107,6 +108,7 @@
 26. [Parcle：把「找上下文」的成本从 agent 循环里拿掉](docs/agent-cost-optimization/parcle-context-layer.md)：理解 agent token 大头花在「找上下文」的数据（~86% token、9.6x 隐藏开销），掌握预索引 context layer 的方案思路、LongMemEval 95.6% 的基准表现与工程含义。
 27. [Software 3.0 与可验证性：Karpathy 的自动化新法则](docs/karpathy-2026/software-3.0-与可验证性.md)：理解判断自动化的标准为何从「可描述」转向「可验证」，掌握可验证性三条件、RLVR 爆发的原因、锯齿智能的经验事实，以及 Vibe coding 与 Agentic engineering 的分野和 agent-native 基础设施清单。
 28. [后 RAG 时代的 Agent 记忆：Karpathy 的 LLM Wiki 模式](docs/karpathy-2026/后RAG时代的Agent记忆-LLM-Wiki模式.md)：理解 LLM Wiki 如何用「知识编译一次、持续保鲜」替代 RAG 的「每次查询重新检索」，掌握三层架构与 Ingest/Query/Lint 闭环，以及在本仓库/Claude Code 的落地骨架。
+29. [Harness Engineering：当 Agent 工程的重心从「提示词」转向「环境设计」](docs/harness-engineering/harness-engineering.md)：理解「Agent = Model + Harness」的范式转移，掌握上下文管理（dumb zone、intentional compaction、trajectory poisoning）、三智能体编排（Planner/Generator/Evaluator）、「组件即对模型能力假设」原则，以及 2–3x 而非 10x 的冷静提效判断。
 
 ### 项目迁移检查
 
@@ -216,6 +218,9 @@ learn-ai-agent/
 │   └── karpathy-2026/
 │       ├── software-3.0-与可验证性.md
 │       ├── 后RAG时代的Agent记忆-LLM-Wiki模式.md
+│       └── figures/
+│   └── harness-engineering/
+│       ├── harness-engineering.md
 │       └── figures/
 ```
 

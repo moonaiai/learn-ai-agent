@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="480" viewBox="0 0 980 480" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <style>
+      .title { font-size: 20px; font-weight: bold; fill: #1a1a2e; }
+      .axis { font-size: 13px; font-weight: bold; fill: #1a1a2e; }
+      .t { font-size: 13px; fill: #333; }
+      .small { font-size: 12px; fill: #555; }
+      .good { fill: #2e7d5b; font-size: 12.5px; }
+      .bad { fill: #b04a3a; font-size: 12.5px; }
+      .cap { font-size: 12px; font-style: italic; fill: #666; }
+    </style>
+  </defs>
+  <rect width="980" height="480" fill="#fbfbfd"/>
+  <text x="490" y="36" text-anchor="middle" class="title">「Dumb Zone」：上下文填得越满，模型越笨</text>
+
+  <!-- axes -->
+  <line x1="150" y1="80" x2="150" y2="380" stroke="#1a1a2e" stroke-width="2"/>
+  <line x1="150" y1="380" x2="880" y2="380" stroke="#1a1a2e" stroke-width="2"/>
+  <text x="72" y="230" class="axis" transform="rotate(-90 72 230)" text-anchor="middle">有效智能</text>
+  <text x="515" y="412" text-anchor="middle" class="axis">上下文占用（token）</text>
+
+  <!-- performance curve -->
+  <path d="M150 130 L 520 130 L 560 150 L 700 290 L 860 360" stroke="#5b7fb8" stroke-width="3" fill="none"/>
+
+  <!-- smart zone shading -->
+  <rect x="150" y="80" width="370" height="300" fill="#dff0e6" opacity="0.6"/>
+  <!-- dumb zone shading -->
+  <rect x="520" y="80" width="360" height="300" fill="#f6ddd5" opacity="0.55"/>
+
+  <text x="335" y="110" text-anchor="middle" class="good">Smart Zone（高效区）</text>
+  <text x="700" y="110" text-anchor="middle" class="bad">Dumb Zone（迟钝区）</text>
+
+  <!-- threshold markers -->
+  <line x1="520" y1="80" x2="520" y2="380" stroke="#b04a3a" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="520" y="398" text-anchor="middle" class="small">1M 窗口 ≈ 用 300–400K</text>
+  <text x="240" y="398" text-anchor="middle" class="small">小模型 ≈ 100K 即触顶</text>
+
+  <!-- annotation -->
+  <text x="700" y="330" text-anchor="middle" class="bad">开始删你的 .env 文件</text>
+
+  <text x="490" y="446" text-anchor="middle" class="cap">"A larger context window does not mean a smarter model." —— Dex Horthy</text>
+  <text x="490" y="468" text-anchor="middle" class="cap">窗口更大 ≠ 更聪明；智能体现在「知道哪些 token 该进上下文」</text>
+</svg>
