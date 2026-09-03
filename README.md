@@ -36,6 +36,8 @@
 | Tool Card 模板 | [Tool Card 模板](docs/react-framework/tool-card-template.md) | 提供工具描述模板，覆盖 Use When、Do Not Use When、输入输出 schema、错误类型、安全边界和示例。 |
 | Agent 工具设计 | [Writing Effective Tools for Agents：Agent 工具设计原则](docs/writing-tools-for-agents/writing-tools-for-agents.md) | 基于 Anthropic 工程文章，梳理面向 agent 的工具粒度、命名空间、返回上下文、工具说明和 eval 迭代方法。 |
 | Agent Evaluation Harness | [Agent Evaluation Harness：从感觉评估到可复现评估](docs/agent-evaluation-harness/agent-evaluation-harness-guide.md) | 基于 AgentGuide 原文沉淀 Agent 评估基础设施，梳理 task、trial、transcript、grader、report、工具选型、CI 集成和落地检查项。 |
+| 智能体性能评估 | [智能体性能评估：BFCL、GAIA 与生成数据质量的三套判据](docs/agent-performance-evaluation/agent-performance-evaluation.md) | 基于 Datawhale《Hello-Agents》第十二章沉淀，8 张图拆解：评估三大挑战、BFCL 的 AST 匹配、GAIA 的准精确匹配与官方提示词协同、难度递进下降率、生成数据质量的 LLM Judge + Win Rate + 人工三重判据，以及 Dataset/Evaluator/Metrics/Tool 统一骨架与选型原则。 |
+| Agentic RL | [Agentic RL：从单轮回答优化到多步任务优化](docs/agentic-rl/agentic-rl.md) | 基于 Datawhale《Hello-Agents》第十一章沉淀，11 张图拆解：PBRFT vs Agentic RL 的 MDP 本质差异、六大核心能力、LLM 训练全景（预训练+后训练 SFT/RM/PPO/RLAIF）、GSM8K 数据格式分治、奖励函数防 reward hacking、GRPO 组内相对奖励替代 Value Model、SFT→GRPO pipeline、多维评估与端到端部署。 |
 | Context Engineering 实践技巧 | [长文深度解析：大模型的上下文陷阱与 6 大修复技巧](docs/context-engineering/context-engineering.md) | 梳理上下文中毒、干扰、混淆、冲突等失效模式，以及 offload、pruning、summarization、quarantine 等修复技巧。 |
 | Context Engineering 2.0 | [Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md) | 基于论文梳理上下文工程的发展脉络、关键概念、阶段框架、上下文采集/管理/使用方法，以及对 Agent 系统的启发。 |
 | Build Agent Context Engineering | [Agent 架构综述：从 Prompt 到上下文工程构建 AI Agent](docs/build-agent-context-engineering/build-agent-context-engineering.md) | 原文资源本地化，覆盖结构化提示词、上下文工程、RAG、工具函数、Agent 规划与多 Agent。 |
@@ -62,18 +64,18 @@
 
 ## 学习路径
 
-这个仓库会按 AI Agent 工程能力的成长路线持续补齐内容。当前已沉淀三十份文档，后续新增文档后，会把对应节点回填到这张路线图中。
+这个仓库会按 AI Agent 工程能力的成长路线持续补齐内容。当前已沉淀三十二份文档，后续新增文档后，会把对应节点回填到这张路线图中。
 
 | 阶段 | 学习主题 | 需要掌握的问题 | 当前状态 |
 |---:|---|---|---|
-| 1 | 大模型基础原理 | Transformer Self-Attention、Decoder-Only、Tokenization、位置编码、KV Cache、LoRA/QLoRA、Embedding 选型等开发岗面试常考点的工程化梳理。 | 已沉淀：[Attention Is All You Need：Transformer 与纯注意力架构](docs/transformer/02-attention-is-all-you-need.md)、[Transformer Self-Attention：Q/K/V 与注意力怎么算](docs/transformer/01-transformer-self-attention.md)、[GPT vs BERT：为什么 LLM 都用 Decoder-Only](docs/gpt/01-decoder-only-vs-encoder-decoder.md)、[Tokenization：BPE / WordPiece / Unigram 怎么选](docs/tokenization/01-bpe-wordpiece-unigram.md)、[RoPE：旋转位置编码与相对注意力](docs/positional-encoding/01-rope-relative-position.md)、[推理采样参数：temperature / top_p / top_k](docs/sampling/01-temperature-top-p-top-k.md)、[KV Cache：自回归推理的工程加速](docs/kv-cache/01-kv-cache-inference.md)、[LoRA：低秩适配微调](docs/lora/01-lora-low-rank-adaptation.md)、[QLoRA：把 65B 微调压进单张 24GB 显卡](docs/qlora/01-qlora-quantized-lora.md)、[Embedding 模型选型：从 MTEB 排名到工程落地](docs/embedding/01-embedding-model-selection.md) |
+| 1 | 大模型基础原理 | Transformer Self-Attention、Decoder-Only、Tokenization、位置编码、KV Cache、LoRA/QLoRA、Embedding 选型等开发岗面试常考点的工程化梳理。 | 已沉淀：[Attention Is All You Need：Transformer 与纯注意力架构](docs/transformer/02-attention-is-all-you-need.md)、[Transformer Self-Attention：Q/K/V 与注意力怎么算](docs/transformer/01-transformer-self-attention.md)、[GPT vs BERT：为什么 LLM 都用 Decoder-Only](docs/gpt/01-decoder-only-vs-encoder-decoder.md)、[Tokenization：BPE / WordPiece / Unigram 怎么选](docs/tokenization/01-bpe-wordpiece-unigram.md)、[RoPE：旋转位置编码与相对注意力](docs/positional-encoding/01-rope-relative-position.md)、[推理采样参数：temperature / top_p / top_k](docs/sampling/01-temperature-top-p-top-k.md)、[KV Cache：自回归推理的工程加速](docs/kv-cache/01-kv-cache-inference.md)、[LoRA：低秩适配微调](docs/lora/01-lora-low-rank-adaptation.md)、[QLoRA：把 65B 微调压进单张 24GB 显卡](docs/qlora/01-qlora-quantized-lora.md)、[Embedding 模型选型：从 MTEB 排名到工程落地](docs/embedding/01-embedding-model-selection.md)、[Agentic RL：从单轮回答优化到多步任务优化](docs/agentic-rl/agentic-rl.md) |
 | 1.x | 大模型基础代码路径 | 跟着 Karpathy "Zero to Hero" 视频系列从零手写 micrograd / makemore / nanoGPT / minbpe。 | 已沉淀：[Karpathy Zero to Hero：讲座列表与学习顺序](docs/zero-to-hero/01-karpathy-zero-to-hero-learning-path.md) |
 | 2 | Agent 基础模型 | Agent loop 如何运转，模型、工具、状态和控制流如何配合。 | 已沉淀：[12-Factor Agents 设计原则](docs/12-factor-agents/12-factor-agents-principles.md)、[ReAct 框架：从推理行动循环到可控 Agent](docs/react-framework/react-framework.md)、[DeepSeek Harness 原理](docs/deepseek-harness/deepseek-harness.md) |
 | 3 | Tool Calling 与工具系统 | Tool schema 如何设计，工具权限、失败、重试和审计如何处理。 | 已沉淀：[Tool Card 模板](docs/react-framework/tool-card-template.md)、[Writing Effective Tools for Agents：Agent 工具设计原则](docs/writing-tools-for-agents/writing-tools-for-agents.md) |
 | 4 | Context Engineering | 什么信息应该进入上下文，如何压缩、隔离、检索和复用上下文。 | 已沉淀：[长文深度解析：大模型的上下文陷阱与 6 大修复技巧](docs/context-engineering/context-engineering.md)、[Context Engineering 2.0](docs/context-engineering-2.0-pdf/context_engineering_2_cn_notes.md)、[Agent 架构综述：从 Prompt 到上下文工程构建 AI Agent](docs/build-agent-context-engineering/build-agent-context-engineering.md)、[Harness Engineering：从提示词到环境设计](docs/harness-engineering/harness-engineering.md) |
 | 5 | Memory 与 RAG | 短期记忆、长期记忆、RAG、向量检索和知识库如何支撑 agent。 | 已沉淀：[Agent Memory 综述：Forms、Functions 与 Dynamics](docs/agent-memory-survey/agent-memory-survey.md)、[后 RAG 时代的 Agent 记忆：Karpathy 的 LLM Wiki 模式](docs/karpathy-2026/后RAG时代的Agent记忆-LLM-Wiki模式.md) |
 | 6 | Workflow 与 Multi-Agent | 什么时候用 workflow，什么时候拆 multi-agent，角色边界如何划分。 | 已沉淀：[Building Effective Agents：从简单模式到可控 Agent](docs/building-effective-agents/building-effective-agents.md)、[Loop Engineering：Karpathy Loop 与让它快 5 倍的双层循环](docs/loop-engineering/loop-engineering-karpathy-method.md) |
-| 7 | Eval 与 Observability | 如何构建评测集、trace、回放、LLM-as-judge 和线上质量指标。 | 已沉淀：[Agent Evaluation Harness：从感觉评估到可复现评估](docs/agent-evaluation-harness/agent-evaluation-harness-guide.md)、[Software 3.0 与可验证性：Karpathy 的自动化新法则](docs/karpathy-2026/software-3.0-与可验证性.md) |
+| 7 | Eval 与 Observability | 如何构建评测集、trace、回放、LLM-as-judge 和线上质量指标。 | 已沉淀：[Agent Evaluation Harness：从感觉评估到可复现评估](docs/agent-evaluation-harness/agent-evaluation-harness-guide.md)、[Software 3.0 与可验证性：Karpathy 的自动化新法则](docs/karpathy-2026/software-3.0-与可验证性.md)、[智能体性能评估：BFCL、GAIA 与生成数据质量的三套判据](docs/agent-performance-evaluation/agent-performance-evaluation.md) |
 | 8 | Safety 与 Human-in-the-loop | 权限、审批、敏感操作、人工介入和安全边界如何设计。 | 已沉淀：[OpenAI 实用指南：构建 AI Agents](docs/practical-guide-building-ai-agents/practical-guide-building-ai-agents.md) |
 | 9 | Production Engineering | 成本、延迟、缓存、限流、错误恢复、部署和运维如何落地。 | 已沉淀：[OpenAI 实用指南：构建 AI Agents](docs/practical-guide-building-ai-agents/practical-guide-building-ai-agents.md)、[AI-Native SDLC：当写代码不再是瓶颈，软件流程该怎么重构](docs/ai-native-sdlc/ai-native-sdlc-playbook.md)、[OpenClaw Token 成本优化：从 $187/月 压到 $35/月 的六步](docs/agent-cost-optimization/openclaw-token-costs-optimization.md)、[Parcle：把「找上下文」的成本从 agent 循环里拿掉](docs/agent-cost-optimization/parcle-context-layer.md) |
 | 10 | 项目复盘与面试表达 | 如何把 agent 项目讲成架构设计、工程取舍和业务结果。 | 待沉淀 |
@@ -111,6 +113,8 @@
 28. [后 RAG 时代的 Agent 记忆：Karpathy 的 LLM Wiki 模式](docs/karpathy-2026/后RAG时代的Agent记忆-LLM-Wiki模式.md)：理解 LLM Wiki 如何用「知识编译一次、持续保鲜」替代 RAG 的「每次查询重新检索」，掌握三层架构与 Ingest/Query/Lint 闭环，以及在本仓库/Claude Code 的落地骨架。
 29. [Harness Engineering：当 Agent 工程的重心从「提示词」转向「环境设计」](docs/harness-engineering/harness-engineering.md)：理解「Agent = Model + Harness」的范式转移，掌握上下文管理（dumb zone、intentional compaction、trajectory poisoning）、三智能体编排（Planner/Generator/Evaluator）、「组件即对模型能力假设」原则，以及 2–3x 而非 10x 的冷静提效判断。
 30. [DeepSeek Harness 原理：把「模型之外的一切」做成可证明、可热替换的插件系统](docs/deepseek-harness/deepseek-harness.md)：以一个生产级开源 harness 为样本，配 8 张本地架构图，理解 Cordis 元框架如何用可逆效应与响应式余效应支撑「Everything is a Plugin」，掌握事件溯源会话日志（model-visible means logged）、turn/step 循环、工具白名单管线、capability seam、LLM 适配器硬契约与 profile/bundle/patch 组合机制。
+31. [智能体性能评估：BFCL、GAIA 与生成数据质量的三套判据](docs/agent-performance-evaluation/agent-performance-evaluation.md)：理解智能体评估的灵魂是判据而非基准，掌握 BFCL 的 AST 匹配、GAIA 的准精确匹配与提示词协同、难度递进下降率、生成数据质量的 LLM Judge + Win Rate + 人工三重判据，以及 Dataset/Evaluator/Metrics/Tool 统一骨架和「确定性判据优先」的选型原则。
+32. [Agentic RL：从单轮回答优化到多步任务优化](docs/agentic-rl/agentic-rl.md)：理解 Agentic RL 与 PBRFT 在 MDP 建模上的本质差异（状态/行动/奖励从单步变多步），掌握 LLM 后训练全景（SFT/RM/PPO/RLAIF）、GSM8K 数据格式分治、奖励函数防 reward hacking、GRPO 组内相对奖励替代 Value Model，以及 SFT→GRPO→评估→部署的端到端 pipeline。
 
 ### 项目迁移检查
 
@@ -161,6 +165,12 @@ learn-ai-agent/
 │   │   └── figures/
 │   ├── agent-evaluation-harness/
 │   │   └── agent-evaluation-harness-guide.md
+│   ├── agent-performance-evaluation/
+│   │   ├── agent-performance-evaluation.md
+│   │   └── figures/（4 张自绘图 + 4 张原书图）
+│   ├── agentic-rl/
+│   │   ├── agentic-rl.md
+│   │   └── figures/（3 张自绘图 + 8 张原书图）
 │   ├── build-agent-context-engineering/
 │   │   ├── build-agent-context-engineering.md
 │   │   └── images/
