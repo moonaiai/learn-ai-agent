@@ -961,6 +961,365 @@ pre code {
 }
 
 /* --------------------------------------------------------------------------
+   Courses — index cards, course header, syllabus, lesson sidebar
+   -------------------------------------------------------------------------- */
+
+/* Subtitle line under a course or lesson title. */
+.course-subtitle {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 0.5em;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.course-card h3 {
+  max-width: none;
+}
+
+/* Course rows are full-width text cards (no cover image). */
+.course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.course-row {
+  padding: 30px 32px;
+}
+
+.course-row h3 {
+  margin-top: 10px;
+}
+
+.course-row .course-subtitle {
+  font-size: 0.48em;
+}
+
+.course-row p {
+  max-width: 760px;
+}
+
+.course-header .meta-row {
+  margin-top: 18px;
+}
+
+.course-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+.course-cta {
+  display: inline-flex;
+  padding: 10px 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  color: var(--button-text);
+  font-size: 13px;
+  text-decoration: none;
+  transition: border-color 0.2s ease;
+}
+
+.course-cta:hover {
+  border-color: var(--accent);
+}
+
+/* Syllabus on the course home page. */
+.syllabus {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 12px;
+}
+
+.syllabus-module {
+  padding: 26px 30px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+}
+
+.syllabus-module h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.syllabus-module h2 small {
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+.syllabus-num {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.78em;
+}
+
+.syllabus-lessons {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.syllabus-lessons li a {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 9px 10px;
+  margin-inline: -10px;
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  font-size: 14.5px;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.syllabus-lessons li a:hover {
+  background: var(--surface-glass);
+}
+
+.syllabus-lessons .syllabus-num {
+  width: 34px;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.syllabus-lessons small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.syllabus-title {
+  flex-shrink: 0;
+}
+
+.lab-badge {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 2px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  color: var(--signal);
+  font-size: 11px;
+}
+
+/* Sidebar on lesson pages: full curriculum with the current lesson marked. */
+.course-toc strong a {
+  padding: 0;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.course-toc-module {
+  margin-top: 14px;
+}
+
+.course-toc-module-title {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.course-toc a.lab {
+  color: var(--muted);
+}
+
+.course-toc .lab-badge {
+  margin-left: 8px;
+  padding: 1px 7px;
+  font-size: 10px;
+}
+
+/* --------------------------------------------------------------------------
+   Tracks — the home-page directory of curated learning units. A couple of
+   feature cards with cover imagery take focus; the rest fall back to compact
+   rows so the directory has a clear focal hierarchy instead of a card wall.
+   -------------------------------------------------------------------------- */
+
+.track-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.track-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color 0.2s ease;
+}
+
+.track-card:hover {
+  border-color: var(--line-strong);
+}
+
+/* Feature card: cover image left, copy right. */
+.track-card.feature {
+  flex-direction: row;
+  min-height: 240px;
+}
+
+.track-media {
+  position: relative;
+  flex: 0 0 44%;
+  min-height: 220px;
+  overflow: hidden;
+  background: var(--surface-soft);
+}
+
+.track-media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.track-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 30px 32px;
+}
+
+.track-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.track-num {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+
+.track-count {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.track-body h3 {
+  margin: 14px 0 0;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.track-body p {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.72;
+}
+
+.track-flag {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-top: 14px;
+  padding: 4px 11px;
+  border: 1px solid var(--line-accent-soft, var(--line));
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft, transparent);
+  color: var(--accent-strong);
+  font-size: 11px;
+}
+
+.track-body .state {
+  margin-top: auto;
+  padding-top: 18px;
+  color: var(--accent);
+  font-size: 12px;
+}
+
+/* Compact row for tracks without a cover. */
+.track-card.compact {
+  align-items: center;
+  gap: 18px;
+  padding: 20px 26px;
+}
+
+.track-card.compact .track-num {
+  flex-shrink: 0;
+}
+
+.track-compact-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.track-compact-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-family: var(--font-display);
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+.track-compact-title .track-flag {
+  margin-top: 0;
+  padding: 2px 9px;
+}
+
+.track-compact-blurb {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.track-card.compact .track-count {
+  flex-shrink: 0;
+}
+
+.track-arrow {
+  flex-shrink: 0;
+  color: var(--accent);
+  font-size: 16px;
+}
+
+/* --------------------------------------------------------------------------
    Responsive
    -------------------------------------------------------------------------- */
 
@@ -984,6 +1343,13 @@ pre code {
   }
   .doc-content {
     padding-inline: 32px;
+  }
+  .track-card.feature {
+    flex-direction: column;
+  }
+  .track-media {
+    flex-basis: auto;
+    min-height: 180px;
   }
 }
 
@@ -1041,6 +1407,15 @@ pre code {
   }
   .doc-nav a.next {
     text-align: left;
+  }
+  .track-card.compact {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px 20px;
+  }
+  .track-compact-blurb {
+    -webkit-line-clamp: 2;
   }
   /* Inline PDF rendering is unreliable on small screens even when the browser
      reports a pdf mime type — always show the download affordance instead. */

@@ -1,12 +1,17 @@
 import Link from "next/link";
-import type { NavEntry } from "@/lib/types";
+
+/** Anything with a site route and a display title — docs and course lessons. */
+interface NavTarget {
+  route: string;
+  title: string;
+}
 
 export function PrevNext({
   prev,
   next,
 }: {
-  prev?: NavEntry;
-  next?: NavEntry;
+  prev?: NavTarget;
+  next?: NavTarget;
 }) {
   if (!prev && !next) return null;
 

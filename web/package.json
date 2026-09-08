@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "extract": "tsx scripts/extract-docs.ts",
+    "extract": "tsx scripts/extract-docs.ts && tsx scripts/extract-courses.ts",
     "predev": "npm run extract",
     "dev": "next dev",
     "prebuild": "npm run extract",

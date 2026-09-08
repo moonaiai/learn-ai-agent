@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getAllDocs, getDoc, getNeighbours } from "@/lib/docs";
+import { getAllDocs, getDoc, getNeighbours, getNav } from "@/lib/docs";
 import { DocContent } from "@/components/doc-content";
 import { DocToc } from "@/components/doc-toc";
 import { HtmlViewer } from "@/components/html-viewer";
@@ -31,11 +32,17 @@ export default async function DocPage({ params }: PageProps) {
   if (!doc) notFound();
 
   const { prev, next } = getNeighbours(topic, slug);
+  const category = getNav().categories.find(
+    (entry) => entry.id === doc.categoryId
+  );
 
   return (
     <>
       <section className="doc-header">
-        <div className="eyebrow">{doc.topicLabel}</div>
+        <div className="eyebrow">
+          {category && <Link href={`/tracks/${category.id}/`}>{category.label}</Link>}
+          {` · ${doc.topicLabel}`}
+        </div>
         <h1>{doc.title}</h1>
         {doc.summary && <p className="doc-summary">{doc.summary}</p>}
         {doc.sourcesHtml && (

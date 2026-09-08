@@ -9,7 +9,8 @@ export function Topbar() {
       </Link>
       <div className="topbar-right">
         <nav>
-          <Link href="/">文档目录</Link>
+          <Link href="/">学习专题</Link>
+          <Link href="/courses/">系统课程</Link>
           <a
             href="https://github.com/moonaiai/learn-ai-agent"
             target="_blank"

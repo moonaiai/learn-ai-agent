@@ -11,6 +11,7 @@ web/.next/
 web/out/
 web/src/data/generated/
 web/public/doc-assets/
+web/public/course-assets/
 web/public/doc-pdf/
 web/public/doc-html/
 web/tsconfig.tsbuildinfo

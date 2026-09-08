@@ -55,6 +55,17 @@ export interface NavCategory {
   label: string;
   blurb: string;
   docs: NavEntry[];
+  /**
+   * Courses whose `docCategories` manifest field lists this category — shown
+   * on the track page as "相关课程" next to the docs.
+   */
+  courses: { id: string; title: string }[];
+  /**
+   * Public URL (basePath included) of a representative image from the track's
+   * asset folders — used as the track card's visual. Absent when the track
+   * ships no images.
+   */
+  coverUrl?: string;
 }
 
 export interface NavIndex {
@@ -67,4 +78,54 @@ export interface NavIndex {
     html: number;
     categories: number;
   };
+}
+
+/* ---------------------------------------------------------------------------
+ * Courses — structured curricula mirrored under `courses/<id>/`, parallel to
+ * the flat docs pipeline. A course is an ordered tree of modules and lessons;
+ * labs (notebook directories) are listed but link out to GitHub.
+ * ------------------------------------------------------------------------- */
+
+export type LessonKind = "lesson" | "lab";
+
+export interface CourseLesson {
+  /** Curriculum number, e.g. "2.3". Drives ordering and the TOC badge. */
+  number: string;
+  slug: string;
+  /** Site route WITHOUT basePath, e.g. `/courses/agentic-ai/2-3-chart/`. */
+  route: string;
+  title: string;
+  /** English half of the bilingual source filename, when present. */
+  titleEn?: string;
+  kind: LessonKind;
+  /** `lab` only: GitHub URL of the mirrored notebook directory. */
+  githubUrl?: string;
+  headings: Heading[];
+  /** Rendered HTML — `lesson` only. */
+  html?: string;
+}
+
+export interface CourseModule {
+  number: number;
+  title: string;
+  titleEn?: string;
+  lessons: CourseLesson[];
+}
+
+export interface Course {
+  id: string;
+  title: string;
+  subtitle?: string;
+  instructor?: string;
+  /** Upstream repository the content is mirrored from. */
+  source?: string;
+  /** External video course URL, when one exists. */
+  video?: string;
+  description: string;
+  /** First course image, used as the course card's cover. */
+  coverUrl?: string;
+  modules: CourseModule[];
+  /** All lessons flattened in curriculum order — used for prev/next. */
+  ordered: CourseLesson[];
+  stats: { lessons: number; labs: number };
 }

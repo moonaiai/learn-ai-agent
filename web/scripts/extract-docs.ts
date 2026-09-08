@@ -53,6 +53,33 @@ const IMAGE_EXTENSIONS = new Set([
   ".webp",
 ]);
 
+/**
+ * Courses linked to a doc category via their course.json `docCategories`
+ * field — surfaced on the track page as "相关课程". Loaded best-effort: the
+ * courses extractor runs after this one, so we read the manifests directly.
+ */
+function coursesByCategory(): Map<string, { id: string; title: string }[]> {
+  const map = new Map<string, { id: string; title: string }[]>();
+  const coursesRoot = path.join(REPO_ROOT, "courses");
+  if (!fs.existsSync(coursesRoot)) return map;
+  for (const entry of fs.readdirSync(coursesRoot, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const manifestPath = path.join(coursesRoot, entry.name, "course.json");
+    if (!fs.existsSync(manifestPath)) continue;
+    try {
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+      const item = { id: slugify(entry.name), title: manifest.title ?? entry.name };
+      for (const categoryId of manifest.docCategories ?? []) {
+        if (!map.has(categoryId)) map.set(categoryId, []);
+        map.get(categoryId)!.push(item);
+      }
+    } catch {
+      // Malformed manifest — the courses extractor will report it.
+    }
+  }
+  return map;
+}
+
 interface SourceFile {
   /** First-level directory under `docs/`. */
   topic: string;
@@ -514,6 +541,28 @@ function main() {
   const toNav = ({ html: _html, sourcesHtml: _sourcesHtml, ...rest }: DocEntry): NavEntry =>
     rest;
 
+  const linkedCourses = coursesByCategory();
+
+  // A representative image per category for the track card's visual — the
+  // first image asset of the first topic in the category that has one.
+  function coverForCategory(category: (typeof CATEGORIES)[number]): string | undefined {
+    for (const topic of category.topics) {
+      for (const copied of assetDirs) {
+        const [assetTopic, assetSubdir] = copied.split("/");
+        if (assetTopic !== topic) continue;
+        const dir = path.join(ASSETS_OUT, copied);
+        if (!fs.existsSync(dir)) continue;
+        const file = fs
+          .readdirSync(dir)
+          .find((name) => IMAGE_EXTENSIONS.has(path.extname(name).toLowerCase()));
+        if (file) {
+          return `${ASSET_BASE}/doc-assets/${copied}/${file}`;
+        }
+      }
+    }
+    return undefined;
+  }
+
   for (const category of [...CATEGORIES, FALLBACK_CATEGORY]) {
     const inCategory = docs.filter((doc) => doc.categoryId === category.id);
     if (inCategory.length === 0) continue;
@@ -532,6 +581,8 @@ function main() {
       label: category.label,
       blurb: category.blurb,
       docs: inCategory.map(toNav),
+      courses: linkedCourses.get(category.id) ?? [],
+      coverUrl: coverForCategory(category),
     });
   }
 

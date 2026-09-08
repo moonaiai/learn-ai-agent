@@ -35,10 +35,11 @@ jobs:
       - name: Assert every asset URL carries the basePath
         working-directory: web
         run: |
-          if grep -rq 'src="/doc-assets' out/ || grep -rq '"/doc-pdf' out/; then
+          if grep -rq 'src="/doc-assets' out/ || grep -rq '"/doc-pdf' out/ || grep -rq '"/course-assets' out/; then
             echo "发现未加 basePath 前缀的资源链接：" >&2
             grep -rl 'src="/doc-assets' out/ >&2 || true
             grep -rl '"/doc-pdf' out/ >&2 || true
+            grep -rl '"/course-assets' out/ >&2 || true
             exit 1
           fi
           echo "所有资源链接均已加上 basePath 前缀。"
