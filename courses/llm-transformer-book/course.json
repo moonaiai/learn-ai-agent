@@ -1,0 +1,18 @@
+{
+  "title": "Transformer 架构：从直觉到实现",
+  "subtitle": "从直觉到代码，彻底搞懂 GPT",
+  "instructor": "Wayland Zhang（张老师）",
+  "source": "https://github.com/waylandzhang/llm-transformer-book",
+  "upstreamCommit": "4a777889b5c5e41295439cfff2cac7ba2b3c4cb9",
+  "order": 2,
+  "docCategories": ["llm-basics"],
+  "cover": "intro-cover.jpg",
+  "description": "基于 Bilibili 系列视频整理成书的 Transformer 完整教程：从发展简史与「大模型就是两个文件」的直觉讲起，逐一拆解 Tokenization、位置编码、Attention 的几何意义，到手写 Model.py / Train.py / Inference.py，再延伸到 Flash Attention、KV Cache、GQA、LoRA 与量化等生产与前沿话题。32 章 + 3 篇附录，配大量手绘插图。",
+  "attribution": {
+    "originalTitle": "Transformer 架构：从直觉到实现",
+    "authors": ["Wayland Zhang（张老师）"],
+    "license": "MIT License",
+    "licenseUrl": "https://github.com/waylandzhang/llm-transformer-book/blob/main/LICENSE",
+    "note": "原作为作者 Bilibili 系列视频（2023.12–2024.03 录制）的文字整理版"
+  }
+}

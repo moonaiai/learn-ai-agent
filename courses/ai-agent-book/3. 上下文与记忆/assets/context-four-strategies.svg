@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 420">
+  <defs>
+    <style>
+      .title { font: 700 16px 'SF Mono', 'PingFang SC', sans-serif; fill: #1a1a1a; text-anchor: middle; }
+      .label { font: 500 10px 'SF Mono', 'Menlo', 'Monaco', monospace; fill: #666; text-anchor: middle; letter-spacing: 0.5px; }
+      .box-title { font: 700 14px 'SF Mono', 'PingFang SC', sans-serif; fill: #1a1a1a; text-anchor: middle; }
+      .box-sub { font: 500 10px 'SF Mono', 'PingFang SC', sans-serif; fill: #64748b; text-anchor: middle; }
+      .practice { font: 400 9px 'SF Mono', 'PingFang SC', sans-serif; fill: #666; text-anchor: middle; }
+      .center-text { font: 600 12px 'SF Mono', 'PingFang SC', sans-serif; fill: #1a1a1a; text-anchor: middle; }
+      .center-sub { font: 500 9px 'SF Mono', monospace; fill: #64748b; text-anchor: middle; }
+      .dir { font: 600 9px 'SF Mono', monospace; fill: #666; text-anchor: middle; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="680" height="420" fill="#fff"/>
+
+  <!-- Title -->
+  <text x="340" y="30" class="title">上下文工程四策略</text>
+  <text x="340" y="47" class="label">FOUR CONTEXT ENGINEERING STRATEGIES</text>
+
+  <!-- Center: Context Window -->
+  <rect x="265" y="180" width="150" height="55" rx="27" fill="#f1f5f9" stroke="#1a1a1a" stroke-width="1.5"/>
+  <text x="340" y="204" class="center-text">Context Window</text>
+  <text x="340" y="218" class="center-sub">上下文窗口</text>
+
+  <!-- ===== Top-Left: Write ===== -->
+  <rect x="30" y="65" width="175" height="100" rx="3" fill="#d1fae5" stroke="#1a1a1a" stroke-width="1.5"/>
+  <text x="117" y="92" class="box-title">Write 写出</text>
+  <text x="117" y="109" class="box-sub">把信息写到外部存储</text>
+  <line x1="42" y1="120" x2="193" y2="120" stroke="#6ee7b7" stroke-width="1"/>
+  <text x="117" y="137" class="practice">Scratchpad / 目标复述</text>
+  <text x="117" y="152" class="practice">文件系统即无限记忆</text>
+
+  <!-- Arrow: Context → Write (OUT) -->
+  <line x1="280" y1="192" x2="213" y2="158" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="255" y="168" class="dir">OUT</text>
+
+  <!-- ===== Top-Right: Select ===== -->
+  <rect x="475" y="65" width="175" height="100" rx="3" fill="#dbeafe" stroke="#1a1a1a" stroke-width="1.5"/>
+  <text x="562" y="92" class="box-title">Select 检索</text>
+  <text x="562" y="109" class="box-sub">按需检索回来</text>
+  <line x1="487" y1="120" x2="638" y2="120" stroke="#93c5fd" stroke-width="1"/>
+  <text x="562" y="137" class="practice">Just-in-Time 即时检索</text>
+  <text x="562" y="152" class="practice">预加载 + 按需混合</text>
+
+  <!-- Arrow: Select → Context (IN) -->
+  <line x1="467" y1="158" x2="400" y2="192" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="425" y="168" class="dir">IN</text>
+
+  <!-- ===== Bottom-Left: Compress ===== -->
+  <rect x="30" y="250" width="175" height="100" rx="3" fill="#fef3c7" stroke="#1a1a1a" stroke-width="1.5"/>
+  <text x="117" y="277" class="box-title">Compress 压缩</text>
+  <text x="117" y="294" class="box-sub">摘要替代原文</text>
+  <line x1="42" y1="305" x2="193" y2="305" stroke="#fde047" stroke-width="1"/>
+  <text x="117" y="322" class="practice">三段式保留策略</text>
+  <text x="117" y="337" class="practice">工具结果清除</text>
+
+  <!-- Arrow: Context ↔ Compress (循环) -->
+  <line x1="280" y1="222" x2="213" y2="262" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="213" y1="275" x2="273" y2="232" stroke="#666" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+
+  <!-- ===== Bottom-Right: Isolate ===== -->
+  <rect x="475" y="250" width="175" height="100" rx="3" fill="#fce7f3" stroke="#1a1a1a" stroke-width="1.5"/>
+  <text x="562" y="277" class="box-title">Isolate 隔离</text>
+  <text x="562" y="294" class="box-sub">拆分到子 Agent</text>
+  <line x1="487" y1="305" x2="638" y2="305" stroke="#fce7f3" stroke-width="1"/>
+  <text x="562" y="322" class="practice">子 Agent 独立窗口</text>
+  <text x="562" y="337" class="practice">工具集拆分</text>
+
+  <!-- Arrow: Context → Isolate -->
+  <line x1="400" y1="222" x2="467" y2="262" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Bottom annotation -->
+  <text x="340" y="395" class="label">每种策略解决不同的上下文瓶颈</text>
+  <text x="340" y="410" class="label">EACH STRATEGY ADDRESSES A DIFFERENT CONTEXT BOTTLENECK</text>
+</svg>

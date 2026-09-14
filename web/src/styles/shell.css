@@ -1031,6 +1031,63 @@ pre code {
   border-color: var(--accent);
 }
 
+/* 出处与授权说明 — mirrored content belongs to its original authors. */
+.course-attribution {
+  margin-top: 22px;
+  padding: 18px 22px;
+  border: 1px dashed var(--line-strong, var(--line-soft));
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.course-attribution .attribution-head {
+  margin-bottom: 6px;
+  color: var(--muted-strong);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.course-attribution p {
+  margin: 0 0 4px;
+}
+
+.course-attribution .attribution-disclaimer {
+  color: var(--muted);
+}
+
+.course-attribution .attribution-links {
+  display: flex;
+  gap: 18px;
+  margin-top: 8px;
+}
+
+.course-attribution a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.course-attribution a:hover {
+  text-decoration: underline;
+}
+
+/* Compact footer line on lesson pages. */
+.course-attribution.lesson-attribution {
+  margin: 28px 0 0;
+  padding: 14px 18px;
+  font-size: 12px;
+}
+
+/* Global aggregation disclaimer on the /courses index hero. */
+.attribution-banner {
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 /* Syllabus on the course home page. */
 .syllabus {
   display: flex;

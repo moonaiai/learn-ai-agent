@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 500">
+  <defs>
+    <style>
+      .title { font: 700 16px 'SF Mono', 'PingFang SC', sans-serif; fill: #1a1a1a; text-anchor: middle; }
+      .label { font: 500 10px 'SF Mono', 'Menlo', monospace; fill: #666; text-anchor: middle; letter-spacing: 0.5px; }
+      .box-text { font: 600 13px 'SF Mono', 'PingFang SC', monospace; fill: #1a1a1a; text-anchor: middle; }
+      .sublabel { font: 500 9px 'SF Mono', 'PingFang SC', monospace; fill: #64748b; text-anchor: middle; }
+    </style>
+    <marker id="a" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#666"/>
+    </marker>
+    <marker id="ao" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#f59e0b"/>
+    </marker>
+  </defs>
+
+  <rect width="680" height="500" fill="#fff"/>
+
+  <!-- Title -->
+  <text x="340" y="30" class="title">Swarm 架构概览</text>
+  <text x="340" y="48" class="label">SWARM ARCHITECTURE OVERVIEW</text>
+
+  <!-- ── Layer 1: Lead Agent ── -->
+  <rect x="100" y="72" width="480" height="72" fill="#fce7f3" stroke="#1a1a1a" stroke-width="1.5" rx="4"/>
+  <text x="340" y="100" class="box-text">Lead Agent</text>
+  <text x="340" y="128" class="sublabel">规划 · 事件循环 · 质量验证</text>
+
+  <!-- ── Arrow: Lead → Workers ── -->
+  <line x1="340" y1="144" x2="340" y2="198" stroke="#666" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="430" y="176" class="sublabel" style="fill:#666;">spawn / assign / shutdown</text>
+
+  <!-- ── Layer 2: Worker Agents ── -->
+  <rect x="100" y="206" width="150" height="60" fill="#dbeafe" stroke="#1a1a1a" stroke-width="1.5" rx="4"/>
+  <text x="175" y="232" class="box-text">Sub Agent A</text>
+  <text x="175" y="250" class="sublabel">researcher · ReAct</text>
+
+  <rect x="265" y="206" width="150" height="60" fill="#dbeafe" stroke="#1a1a1a" stroke-width="1.5" rx="4"/>
+  <text x="340" y="232" class="box-text">Sub Agent B</text>
+  <text x="340" y="250" class="sublabel">analyst · ReAct</text>
+
+  <rect x="430" y="206" width="150" height="60" fill="#dbeafe" stroke="#1a1a1a" stroke-width="1.5" rx="4"/>
+  <text x="505" y="232" class="box-text">Sub Agent C</text>
+  <text x="505" y="250" class="sublabel">writer · ReAct</text>
+
+  <!-- ── idle signal: right side curve ── -->
+  <path d="M580,224 C625,224 625,108 580,108" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ao)"/>
+  <text x="630" y="170" class="sublabel" style="fill:#f59e0b;">idle</text>
+
+  <!-- ── Arrow: Workers → Infrastructure ── -->
+  <line x1="340" y1="266" x2="340" y2="330" stroke="#666" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="430" y="304" class="sublabel" style="fill:#666;">read / write / publish</text>
+
+  <!-- ── Layer 3: Shared Infrastructure ── -->
+  <rect x="100" y="338" width="480" height="140" fill="#d1fae5" stroke="#1a1a1a" stroke-width="1.5" rx="4"/>
+  <text x="340" y="364" class="label">SHARED INFRASTRUCTURE</text>
+
+  <rect x="120" y="378" width="130" height="48" fill="#fff" stroke="#1a1a1a" stroke-width="1" rx="3"/>
+  <text x="185" y="400" class="box-text" style="font-size:12px;">Workspace</text>
+  <text x="185" y="418" class="sublabel">共享数据读写</text>
+
+  <rect x="275" y="378" width="130" height="48" fill="#fff" stroke="#1a1a1a" stroke-width="1" rx="3"/>
+  <text x="340" y="400" class="box-text" style="font-size:12px;">P2P Mailbox</text>
+  <text x="340" y="418" class="sublabel">Agent 间消息</text>
+
+  <rect x="430" y="378" width="130" height="48" fill="#fff" stroke="#1a1a1a" stroke-width="1" rx="3"/>
+  <text x="495" y="400" class="box-text" style="font-size:12px;">Task List</text>
+  <text x="495" y="418" class="sublabel">任务队列与状态</text>
+</svg>

@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 520">
+  <defs>
+    <style>
+      .title { font: 700 15px 'SF Mono', 'Menlo', 'Monaco', monospace; fill: #1a1a1a; text-anchor: middle; }
+      .step-tag { font: 700 10px 'SF Mono', 'Menlo', 'Monaco', monospace; fill: #fff; text-anchor: middle; }
+      .label { font: 600 11px 'SF Mono', 'Menlo', 'Monaco', monospace; fill: #1a1a1a; text-anchor: middle; }
+      .sublabel { font: 500 9px 'SF Mono', 'Menlo', 'Monaco', monospace; fill: #64748b; text-anchor: middle; }
+      .note { font: 500 8px 'SF Mono', 'Menlo', 'Monaco', monospace; fill: #64748b; }
+    </style>
+    <marker id="arr" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+      <polygon points="0 0, 6 2.5, 0 5" fill="#60a5fa"/>
+    </marker>
+    <marker id="arr-orange" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+      <polygon points="0 0, 6 2.5, 0 5" fill="#f59e0b"/>
+    </marker>
+  </defs>
+
+  <rect width="700" height="520" fill="#fff"/>
+  <text x="350" y="28" class="title">Shannon Deep Research 工作流</text>
+
+  <!-- Step 1: Query Refine -->
+  <rect x="40" y="50" width="620" height="70" rx="2" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+  <rect x="52" y="58" width="60" height="18" rx="2" fill="#22c55e"/>
+  <text x="82" y="70" class="step-tag">Step 1</text>
+  <text x="350" y="75" class="label">Query Refine（查询细化）</text>
+  <text x="170" y="95" class="sublabel">识别任务类型</text>
+  <text x="350" y="95" class="sublabel">生成研究维度</text>
+  <text x="530" y="95" class="sublabel">Source Guidance</text>
+  <text x="130" y="110" class="note" text-anchor="middle">公司/行业/学术/对比</text>
+  <text x="350" y="110" class="note" text-anchor="middle">拆分子问题</text>
+  <text x="530" y="110" class="note" text-anchor="middle">必选/可选/避免来源</text>
+
+  <line x1="350" y1="120" x2="350" y2="145" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Step 2: Parallel Research -->
+  <rect x="40" y="150" width="620" height="125" rx="2" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+  <rect x="52" y="158" width="60" height="18" rx="2" fill="#3b82f6"/>
+  <text x="82" y="170" class="step-tag">Step 2</text>
+  <text x="350" y="175" class="label">Parallel Research（并行研究）</text>
+
+  <!-- Sub-agents -->
+  <rect x="60" y="190" width="130" height="65" rx="2" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+  <text x="125" y="210" class="label">Sub-agent 1</text>
+  <text x="125" y="225" class="sublabel">维度 A</text>
+  <text x="125" y="245" class="note" text-anchor="middle">ReAct 循环</text>
+
+  <rect x="210" y="190" width="130" height="65" rx="2" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+  <text x="275" y="210" class="label">Sub-agent 2</text>
+  <text x="275" y="225" class="sublabel">维度 B</text>
+  <text x="275" y="245" class="note" text-anchor="middle">ReAct 循环</text>
+
+  <rect x="360" y="190" width="130" height="65" rx="2" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+  <text x="425" y="210" class="label">Sub-agent 3</text>
+  <text x="425" y="225" class="sublabel">维度 C</text>
+  <text x="425" y="245" class="note" text-anchor="middle">ReAct 循环</text>
+
+  <!-- Sub-agent 说明 -->
+  <text x="560" y="200" class="sublabel">每个 Sub-agent:</text>
+  <text x="520" y="218" class="note">· Search（搜索）</text>
+  <text x="520" y="232" class="note">· Fetch（抓取验证）</text>
+  <text x="520" y="246" class="note">· Extract（信息提取）</text>
+  <text x="520" y="260" class="note">· 压缩结果返回</text>
+
+  <line x1="350" y1="275" x2="350" y2="300" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Step 3: Coverage Evaluation -->
+  <rect x="150" y="305" width="400" height="55" rx="2" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+  <rect x="162" y="313" width="60" height="18" rx="2" fill="#f59e0b"/>
+  <text x="192" y="325" class="step-tag">Step 3</text>
+  <text x="350" y="335" class="label">Coverage Evaluation（覆盖率评估）</text>
+  <text x="350" y="352" class="sublabel">达标则停止  ·  有缺口则继续迭代</text>
+
+  <!-- Iteration loop back to Step 1 -->
+  <path d="M 550 332 Q 630 332 630 190 Q 630 85 560 85" stroke="#f59e0b" stroke-width="1.5" fill="none" stroke-dasharray="4,2" marker-end="url(#arr-orange)"/>
+  <text x="645" y="200" class="sublabel" fill="#f59e0b">迭代</text>
+
+  <line x1="350" y1="360" x2="350" y2="385" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Step 4: Synthesize -->
+  <rect x="150" y="390" width="400" height="45" rx="2" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <rect x="162" y="398" width="60" height="18" rx="2" fill="#3b82f6"/>
+  <text x="192" y="410" class="step-tag">Step 4</text>
+  <text x="380" y="418" class="label">Synthesize（综合）→ 结构化报告</text>
+
+  <line x1="350" y1="435" x2="350" y2="460" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Step 5: Citation -->
+  <rect x="150" y="465" width="400" height="45" rx="2" fill="#60a5fa" stroke="#4f46e5" stroke-width="1.5"/>
+  <rect x="162" y="473" width="60" height="18" rx="2" fill="#4f46e5"/>
+  <text x="192" y="485" class="step-tag">Step 5</text>
+  <text x="380" y="493" class="label" fill="#fff">Citation（引用处理）→ 最终报告</text>
+</svg>

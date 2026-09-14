@@ -112,6 +112,25 @@ export interface CourseModule {
   lessons: CourseLesson[];
 }
 
+/**
+ * 出处与授权声明 — mirrored content belongs to its original authors; this
+ * repo only aggregates and re-renders it. Rendered on the course page and at
+ * the foot of every lesson page.
+ */
+export interface CourseAttribution {
+  /** 原作标题（书名 / 课程名），缺省回落到课程标题。 */
+  originalTitle?: string;
+  /** 原作者或出品方，按署名顺序。 */
+  authors?: string[];
+  /** 原作主链接，缺省回落到 `Course.source`。 */
+  url?: string;
+  /** 原作许可证名称，如 "MIT License"、"CC BY-NC-SA 4.0"。 */
+  license?: string;
+  licenseUrl?: string;
+  /** 补充说明，如原作的发布渠道或配套项目。 */
+  note?: string;
+}
+
 export interface Course {
   id: string;
   title: string;
@@ -122,6 +141,8 @@ export interface Course {
   /** External video course URL, when one exists. */
   video?: string;
   description: string;
+  /** 出处与授权声明 — mirrored content belongs to its original authors. */
+  attribution?: CourseAttribution;
   /** First course image, used as the course card's cover. */
   coverUrl?: string;
   modules: CourseModule[];

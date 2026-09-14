@@ -8,5 +8,12 @@
   "order": 1,
   "docCategories": ["agent-design"],
   "cover": "images/1.8.1.png",
-  "description": "围绕 DeepLearning.AI《Agentic AI》课程的中文翻译与结构化梳理:从 Agentic 工作流、反思设计模式、工具使用,到评估与错误分析、高度自治智能体的规划与多智能体协作。由 Datawhale 社区翻译整理,本站原样镜像以便与站内笔记互链。"
+  "description": "围绕 DeepLearning.AI《Agentic AI》课程的中文翻译与结构化梳理:从 Agentic 工作流、反思设计模式、工具使用,到评估与错误分析、高度自治智能体的规划与多智能体协作。由 Datawhale 社区翻译整理,本站原样镜像以便与站内笔记互链。",
+  "attribution": {
+    "originalTitle": "Agentic AI(吴恩达 DeepLearning.AI 课程)",
+    "authors": ["吴恩达 / DeepLearning.AI(原课程)", "Datawhale 社区(中文翻译与笔记)"],
+    "license": "Apache License 2.0",
+    "licenseUrl": "https://github.com/datawhalechina/agentic-ai/blob/main/LICENSE",
+    "note": "原课程视频见 DeepLearning.AI 官网;本站镜像 Datawhale 的中文笔记版本"
+  }
 }

@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 520">
+  <defs>
+    <style>
+      .title { font: 700 16px 'SF Mono', 'PingFang SC', sans-serif; fill: #1a1a1a; text-anchor: middle; }
+      .label { font: 500 10px 'SF Mono', 'Menlo', monospace; fill: #666; text-anchor: middle; letter-spacing: 0.5px; }
+      .box-text { font: 600 13px 'SF Mono', 'PingFang SC', monospace; fill: #1a1a1a; text-anchor: middle; }
+      .sublabel { font: 500 9px 'SF Mono', 'PingFang SC', monospace; fill: #64748b; text-anchor: middle; }
+      .phase { font: 700 11px 'SF Mono', 'PingFang SC', sans-serif; fill: #1a1a1a; text-anchor: middle; }
+      .event { font: 600 10px 'SF Mono', 'PingFang SC', monospace; fill: #1a1a1a; text-anchor: middle; }
+      .action { font: 500 9px 'SF Mono', 'PingFang SC', monospace; fill: #64748b; text-anchor: middle; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+    <marker id="arrow-loop" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#60a5fa"/>
+    </marker>
+  </defs>
+
+  <rect width="680" height="520" fill="#fff"/>
+
+  <!-- Title -->
+  <text x="340" y="30" class="title">Lead Agent 事件循环</text>
+  <text x="340" y="48" class="label">LEAD AGENT EVENT LOOP</text>
+
+  <!-- ── Phase 1: 初始规划 ── -->
+  <rect x="120" y="70" width="440" height="56" fill="#fef3c7" stroke="#1a1a1a" stroke-width="1.5" rx="4"/>
+  <text x="340" y="93" class="phase">Phase 1  初始规划</text>
+  <text x="340" y="113" class="sublabel">接收查询 → /lead/decide → 分解任务 → spawn_agent</text>
+
+  <!-- Arrow Phase 1 → Select -->
+  <line x1="340" y1="126" x2="340" y2="160" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ── Phase 2: 事件循环 (大虚线框) ── -->
+  <rect x="60" y="148" width="560" height="270" fill="#f8fafc" stroke="#1a1a1a" stroke-width="1.5" rx="4" stroke-dasharray="6,3"/>
+  <text x="340" y="172" class="label">PHASE 2  EVENT-DRIVEN LOOP</text>
+
+  <!-- Select box -->
+  <rect x="280" y="184" width="120" height="36" fill="#e0e7ff" stroke="#1a1a1a" stroke-width="1.5" rx="3"/>
+  <text x="340" y="207" class="box-text">Select</text>
+
+  <!-- Arrows from Select down to 4 event boxes (simple vertical fan) -->
+  <line x1="310" y1="220" x2="195" y2="250" stroke="#666" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="330" y1="220" x2="195" y2="324" stroke="#666" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="350" y1="220" x2="485" y2="250" stroke="#666" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="370" y1="220" x2="485" y2="324" stroke="#666" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+  <!-- Event 1: agent_idle (left top) -->
+  <rect x="90" y="248" width="210" height="52" fill="#dbeafe" stroke="#1a1a1a" stroke-width="1.5" rx="3"/>
+  <text x="195" y="270" class="event">agent_idle</text>
+  <text x="195" y="289" class="action">reassign / shutdown</text>
+
+  <!-- Event 2: checkpoint (left bottom) -->
+  <rect x="90" y="322" width="210" height="52" fill="#fef3c7" stroke="#1a1a1a" stroke-width="1.5" rx="3"/>
+  <text x="195" y="344" class="event">checkpoint (2min)</text>
+  <text x="195" y="363" class="action">审视全局 / revise_plan</text>
+
+  <!-- Event 3: agent_completed (right top) -->
+  <rect x="380" y="248" width="210" height="52" fill="#d1fae5" stroke="#1a1a1a" stroke-width="1.5" rx="3"/>
+  <text x="485" y="270" class="event">agent_completed</text>
+  <text x="485" y="289" class="action">质量验证 (file_read)</text>
+
+  <!-- Event 4: human_input (right bottom) -->
+  <rect x="380" y="322" width="210" height="52" fill="#fce7f3" stroke="#1a1a1a" stroke-width="1.5" rx="3"/>
+  <text x="485" y="344" class="event">human_input</text>
+  <text x="485" y="363" class="action">interim_reply / 调整任务</text>
+
+  <!-- Loop annotation -->
+  <text x="340" y="396" class="sublabel" style="fill:#60a5fa;">↻ 每个事件处理完毕后回到 Select</text>
+
+  <!-- Arrow Phase 2 → Phase 3 -->
+  <line x1="340" y1="418" x2="340" y2="448" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ── Phase 3: 关闭合成 ── -->
+  <rect x="120" y="456" width="440" height="56" fill="#d1fae5" stroke="#1a1a1a" stroke-width="1.5" rx="4"/>
+  <text x="340" y="479" class="phase">Phase 3  关闭合成</text>
+  <text x="340" y="499" class="sublabel">收集输出 → 合成回复 → 验证质量</text>
+</svg>

@@ -26,6 +26,10 @@ export default function CoursesPage() {
           </span>
           <span className="pill">持续更新</span>
         </div>
+        <p className="attribution-banner">
+          所有课程内容均来自社区开源项目，本站仅做汇总与二次渲染，版权归原作者所有；
+          每门课程的主页与课时页均附出处与授权说明。
+        </p>
       </section>
 
       <section>

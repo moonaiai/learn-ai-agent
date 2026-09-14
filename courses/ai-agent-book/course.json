@@ -1,0 +1,18 @@
+{
+  "title": "AI Agent 架构：从单体到企业级多智能体",
+  "subtitle": "From Concept to Production",
+  "instructor": "Wayland Zhang",
+  "source": "https://github.com/Kocoro-lab/ai-agent-book",
+  "upstreamCommit": "97753aee16a30dcf13207cbb0dcec8db34371b3b",
+  "order": 3,
+  "docCategories": ["agent-design", "agent-engineering"],
+  "cover": "assets/book-overview-hero.svg",
+  "description": "面向生产环境的 AI Agent 架构开源书：从 ReAct 循环与工具调用（MCP、Skills、Hooks）讲起，覆盖上下文工程与记忆架构、Planning / Reflection / CoT 等单 Agent 模式、DAG / Swarm / Handoff 多智能体编排、ToT 与 Debate 高级推理，到三层生产架构、Token 预算、策略治理与安全执行。33 章，以 Shannon OSS 为参考实现。",
+  "attribution": {
+    "originalTitle": "AI Agent Architecture: From Monolith to Enterprise Multi-Agent",
+    "authors": ["Wayland Zhang"],
+    "license": "CC BY-NC-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "note": "镜像其官方中文版（zh/）33 章；配套参考实现 Shannon OSS 以 Apache 2.0 发布"
+  }
+}

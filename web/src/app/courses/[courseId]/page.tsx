@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCourse, getCourses } from "@/lib/courses";
+import { CourseAttributionNote } from "@/components/course-attribution";
 
 interface PageProps {
   params: Promise<{ courseId: string }>;
@@ -59,6 +60,7 @@ export default async function CoursePage({ params }: PageProps) {
             </a>
           )}
         </div>
+        <CourseAttributionNote course={course} />
       </section>
 
       <section className="syllabus">

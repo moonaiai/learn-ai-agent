@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 420">
+  <defs>
+    <style>
+      .title { font: 700 16px 'SF Mono', 'PingFang SC', sans-serif; fill: #1a1a1a; text-anchor: middle; }
+      .label { font: 500 10px 'SF Mono', 'Menlo', 'Monaco', monospace; fill: #666; text-anchor: middle; letter-spacing: 0.5px; }
+      .box-text { font: 600 13px 'SF Mono', 'Menlo', 'Monaco', monospace; fill: #1a1a1a; text-anchor: middle; }
+      .sublabel { font: 500 9px 'SF Mono', 'PingFang SC', monospace; fill: #64748b; text-anchor: middle; }
+      .annotation { font: 400 9px 'SF Mono', 'PingFang SC', monospace; fill: #666; }
+      .cond { font: 400 8px 'SF Mono', 'PingFang SC', monospace; fill: #64748b; text-anchor: middle; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#60a5fa"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="680" height="420" fill="#fff"/>
+
+  <!-- Title -->
+  <text x="340" y="30" class="title">Worker Agent 生命周期</text>
+  <text x="340" y="47" class="label">WORKER AGENT LIFECYCLE</text>
+
+  <!-- ==================== MAIN FLOW (center column) ==================== -->
+
+  <!-- 1. spawn (cyan) -->
+  <rect x="90" y="68" width="150" height="48" fill="#67e8f9" stroke="#1a1a1a" stroke-width="1.5" rx="4"/>
+  <text x="165" y="88" class="box-text">spawn</text>
+  <text x="165" y="103" class="sublabel">Lead 创建 Agent</text>
+
+  <!-- Arrow: spawn → execute -->
+  <line x1="165" y1="116" x2="165" y2="146" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 2. execute (blue, larger) -->
+  <rect x="70" y="156" width="190" height="70" fill="#dbeafe" stroke="#1a1a1a" stroke-width="1.5" rx="4"/>
+  <text x="165" y="181" class="box-text">execute</text>
+  <text x="165" y="197" class="sublabel">工具调用 / 数据发布</text>
+  <text x="165" y="211" class="sublabel">消息发送</text>
+
+  <!-- ReAct self-loop (left side of execute) -->
+  <path d="M 70,176 C 40,176 40,206 70,206" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="40" y="195" class="annotation" text-anchor="middle" style="fill:#60a5fa; font-weight:600;">ReAct</text>
+
+  <!-- Arrow: execute → idle -->
+  <line x1="165" y1="226" x2="165" y2="270" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="178" y="252" class="annotation">完成</text>
+
+  <!-- 3. idle (yellow) -->
+  <rect x="90" y="280" width="150" height="48" fill="#fef3c7" stroke="#1a1a1a" stroke-width="1.5" rx="4"/>
+  <text x="165" y="300" class="box-text">idle</text>
+  <text x="165" y="315" class="sublabel">等待 Lead 决策</text>
+
+  <!-- Arrow: idle → done -->
+  <line x1="165" y1="328" x2="165" y2="365" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="178" y="352" class="annotation">结束</text>
+
+  <!-- 5. done (green) -->
+  <rect x="90" y="375" width="150" height="40" fill="#d1fae5" stroke="#1a1a1a" stroke-width="1.5" rx="4"/>
+  <text x="165" y="393" class="box-text">done</text>
+  <text x="165" y="407" class="sublabel">Agent 退出</text>
+
+  <!-- ==================== reassign (pink, right of idle) ==================== -->
+
+  <!-- 4. reassign -->
+  <rect x="330" y="280" width="150" height="48" fill="#fce7f3" stroke="#1a1a1a" stroke-width="1.5" rx="4"/>
+  <text x="405" y="300" class="box-text">reassign</text>
+  <text x="405" y="315" class="sublabel">Lead 分配新任务</text>
+
+  <!-- Arrow: idle → reassign -->
+  <line x1="240" y1="304" x2="320" y2="304" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="280" y="297" class="annotation">新任务</text>
+
+  <!-- Arrow: reassign → execute (loop up along right edge, dashed orange) -->
+  <path d="M 480,304 L 510,304 C 530,304 530,191 510,191 L 270,191"
+        fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arrow-orange)"/>
+  <text x="543" y="252" class="annotation" style="fill:#f59e0b; font-weight:500;">重新执行</text>
+
+  <!-- ==================== 收敛检测 (side branch from execute) ==================== -->
+
+  <!-- Dashed container box -->
+  <rect x="310" y="68" width="340" height="148" fill="#fff" stroke="#e2e8f0" stroke-width="1" rx="4" stroke-dasharray="4,2"/>
+
+  <!-- Container title -->
+  <text x="480" y="89" class="box-text" style="font-size:12px;">收敛检测</text>
+  <text x="480" y="103" class="label">CONVERGENCE DETECTION</text>
+
+  <!-- Dashed arrow: execute → convergence detection -->
+  <line x1="260" y1="174" x2="330" y2="135" stroke="#666" stroke-width="1" stroke-dasharray="4,2" marker-end="url(#arrow)"/>
+
+  <!-- 3 condition tags -->
+  <rect x="345" y="116" width="120" height="22" fill="#fef3c7" stroke="#f59e0b" stroke-width="1" rx="2"/>
+  <text x="405" y="131" class="cond">无进展（3 次）</text>
+
+  <rect x="345" y="144" width="120" height="22" fill="#fef3c7" stroke="#f59e0b" stroke-width="1" rx="2"/>
+  <text x="405" y="159" class="cond">连续错误（3 次）</text>
+
+  <rect x="345" y="172" width="120" height="22" fill="#fef3c7" stroke="#f59e0b" stroke-width="1" rx="2"/>
+  <text x="405" y="187" class="cond">超过上限</text>
+
+  <!-- "trigger any → force idle" label -->
+  <text x="540" y="155" class="annotation" text-anchor="middle" style="fill:#f59e0b;">触发任一</text>
+  <text x="540" y="169" class="annotation" text-anchor="middle" style="fill:#f59e0b;">→ 强制 idle</text>
+
+  <!-- Arrow: convergence → idle (route down from conditions to idle top-right) -->
+  <path d="M 465,194 L 465,255 L 210,255 L 210,270"
+        fill="none" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+  <text x="470" y="240" class="annotation" style="fill:#f59e0b;">强制 idle</text>
+
+</svg>

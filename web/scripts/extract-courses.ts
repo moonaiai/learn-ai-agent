@@ -31,6 +31,7 @@ import {
 import { slugify, uniqueSlug } from "../src/lib/slug";
 import type {
   Course,
+  CourseAttribution,
   CourseLesson,
   CourseModule,
   Heading,
@@ -73,6 +74,12 @@ interface CourseManifest {
   video?: string;
   order?: number;
   description?: string;
+  /**
+   * 出处与授权声明 — mirrored content belongs to its original authors; this
+   * site only aggregates and re-renders it. Shown on the course page and at
+   * the foot of every lesson page.
+   */
+  attribution?: CourseAttribution;
   /** Doc categories (categories.ts ids) this course belongs to. */
   docCategories?: string[];
   /**
@@ -196,10 +203,17 @@ function extractCourse(courseId: string, manifest: CourseManifest): Course {
 
   // Pass 2: render lessons now that every route is known.
   const lessonsByModule = new Map<number, CourseLesson[]>();
+  const normalizedIndex = buildNormalizedIndex(courseId);
 
   for (const lesson of pending) {
     const raw = fs.readFileSync(lesson.absPath, "utf-8");
-    const rewritten = rewriteLinks(raw, courseId, lesson.moduleDirName, routeByRelPath);
+    const rewritten = rewriteLinks(
+      raw,
+      courseId,
+      lesson.moduleDirName,
+      routeByRelPath,
+      normalizedIndex
+    );
     const title =
       lesson.title ||
       titleFromMarkdown(raw) ||
@@ -259,6 +273,7 @@ function extractCourse(courseId: string, manifest: CourseManifest): Course {
     source: manifest.source,
     video: manifest.video,
     description: manifest.description ?? "",
+    attribution: manifest.attribution,
     modules,
     ordered,
     stats: {
@@ -273,88 +288,266 @@ function extractCourse(courseId: string, manifest: CourseManifest): Course {
 // ---------------------------------------------------------------------------
 
 /**
+ * Decode + normalize a raw link target (URL-encoded or Windows-backslashed)
+ * against a lesson inside `moduleDirName`, and report where it lands.
+ */
+function resolveAgainstModule(
+  courseId: string,
+  moduleDirName: string,
+  rawPath: string
+): { resolved: string; posixRel: string; outside: boolean } {
+  const sourceDir = path.join(COURSES_ROOT, courseId, moduleDirName);
+  let decodedPath = rawPath;
+  try {
+    decodedPath = decodeURIComponent(rawPath);
+  } catch {
+    // A literal `%` in the path — treat it as-is.
+  }
+  // Some upstream files were authored on Windows (`..\images\x.png`).
+  decodedPath = decodedPath.replace(/\\/g, "/");
+  const resolved = path.normalize(path.join(sourceDir, decodedPath));
+  const relToCourse = path.relative(path.join(COURSES_ROOT, courseId), resolved);
+  return {
+    resolved,
+    posixRel: relToCourse.split(path.sep).join("/"),
+    outside: relToCourse.startsWith(".."),
+  };
+}
+
+/** GitHub URL for a course-tree file, as seen from the repo root. */
+function githubBlobUrl(courseId: string, moduleDirName: string, decodedPath: string): string {
+  const fromRepoRoot = path
+    .normalize(path.join("courses", courseId, moduleDirName, decodedPath))
+    .split(path.sep)
+    .join("/");
+  return `${GITHUB_BLOB}/${fromRepoRoot.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+/**
+ * Canonical form of one path segment: upstream books number their parts and
+ * chapters differently from the mirrored layout (`Part9-前沿实践` vs
+ * `9. 前沿实践`, `第33章：X.md` vs `9.33 X.md`), so links whose exact path
+ * misses the mirror get a second chance through this normalization. The
+ * numeric rule requires trailing whitespace — figure names like `1.2.2.png`
+ * must survive untouched.
+ */
+function stripNumbering(segment: string): string {
+  return segment
+    .replace(/^Part\d+-/, "")
+    .replace(/^第\d+章：/, "")
+    .replace(/^\d+(?:[.、]\d+)?\s+/, "");
+}
+
+/**
+ * Every file in the course tree, keyed by its normalized course-relative
+ * path. Built once per course; only consulted when an exact-path lookup has
+ * already missed, so collisions are reported and the first file wins.
+ */
+function buildNormalizedIndex(courseId: string): Map<string, string> {
+  const index = new Map<string, string>();
+  function walk(dir: string) {
+    for (const entry of fs
+      .readdirSync(dir, { withFileTypes: true })
+      .sort((a, b) => a.name.localeCompare(b.name))) {
+      const abs = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(abs);
+        continue;
+      }
+      const rel = path.relative(path.join(COURSES_ROOT, courseId), abs)
+        .split(path.sep)
+        .join("/");
+      const key = rel.split("/").map(stripNumbering).join("/");
+      if (index.has(key)) {
+        warn(`归一化路径冲突,仅保留先出现的: ${key} (${index.get(key)}) ←→ ${rel}`);
+        continue;
+      }
+      index.set(key, rel);
+    }
+  }
+  walk(path.join(COURSES_ROOT, courseId));
+  return index;
+}
+
+/**
+ * Second-chance link resolution: map a missed course-relative path through
+ * the normalized index and return the URL it should become, or null when
+ * nothing matches (the caller keeps the link untouched and reports it).
+ *
+ * When the full normalized path misses — e.g. the upstream file sat at the
+ * repo root but the mirror nested it one level deeper — fall back to the
+ * normalized file segment, but only when it is unambiguous.
+ */
+function fuzzyResolve(
+  courseId: string,
+  normalizedIndex: Map<string, string>,
+  posixRel: string,
+  routeByRelPath: Map<string, string>
+): string | null {
+  const key = posixRel.split("/").map(stripNumbering).join("/");
+  let realRel = normalizedIndex.get(key);
+  if (!realRel) {
+    const fileSegment = key.split("/").pop()!;
+    const candidates = [...normalizedIndex.entries()].filter(
+      ([candidateKey]) => candidateKey.split("/").pop() === fileSegment
+    );
+    if (candidates.length !== 1) return null;
+    realRel = candidates[0][1];
+  }
+  const encodedRel = realRel.split("/").map(encodeURIComponent).join("/");
+  if (IMAGE_EXTENSIONS.has(path.extname(realRel).toLowerCase())) {
+    return `${ASSET_BASE}/course-assets/${courseId}/${encodedRel}`;
+  }
+  const route = routeByRelPath.get(realRel);
+  if (route) return `${ASSET_BASE}${route}`;
+  return `${GITHUB_BLOB}/courses/${encodeURIComponent(courseId)}/${encodedRel}`;
+}
+
+const MD_LINK_RE = /(!?)\[([^\]]*)\]\(([^)\s]+)([^)]*)\)/g;
+const HTML_IMG_RE = /(<img\b[^>]*?\bsrc=)(["'])([^"']+)\2/gi;
+
+/**
  * Rewrite a lesson's relative links against the mirrored course tree:
  *
  * - `../images/2.3.1.png` → `${ASSET_BASE}/course-assets/<id>/images/2.3.1.png`
  * - `../2.4 实验[Lab]/notebook.ipynb` → GitHub blob URL of the mirrored file
  * - `1.2 另一课[Lesson].md` → the lesson's site route
  *
+ * Raw HTML `<img src="…">` tags — common in hand-authored books — get the
+ * same treatment as markdown image links.
+ *
  * Resolution is filesystem-backed — the target is checked to exist inside the
  * course directory — so any upstream relative layout works without hardcoding
- * directory names. Links that resolve outside the course (or to nothing) fall
- * back to a GitHub URL or a warning respectively.
+ * directory names. Links that resolve outside the course fall back to a
+ * GitHub URL; links that miss the mirror get one fuzzy retry through the
+ * normalized index (numbering-layout differences) before being reported.
+ *
+ * Fenced code blocks are skipped entirely: `experts[i](x)` in a Python
+ * snippet must not be mistaken for a markdown link.
  */
 function rewriteLinks(
   markdown: string,
   courseId: string,
   moduleDirName: string,
-  routeByRelPath: Map<string, string>
+  routeByRelPath: Map<string, string>,
+  normalizedIndex: Map<string, string>
 ): string {
-  const sourceDir = path.join(COURSES_ROOT, courseId, moduleDirName);
-
-  return markdown.replace(
-    /(!?)\[([^\]]*)\]\(([^)\s]+)([^)]*)\)/g,
-    (match, bang: string, text: string, target: string, tail: string) => {
-      // Leave anchors, absolute URLs and protocol-relative links untouched.
-      if (/^(#|[a-z][a-z0-9+.-]*:|\/\/)/i.test(target)) return match;
-      if (target.startsWith("/")) return match;
-
-      const [rawPath, hash = ""] = target.split("#");
-      if (!rawPath) return match;
-      let decodedPath = rawPath;
-      try {
-        decodedPath = decodeURIComponent(rawPath);
-      } catch {
-        // A literal `%` in the path — treat it as-is.
+  let inFence = false;
+  return markdown
+    .split("\n")
+    .map((line) => {
+      if (/^\s{0,3}(?:```|~~~)/.test(line)) {
+        inFence = !inFence;
+        return line;
       }
-      // Some upstream files were authored on Windows (`..\images\x.png`).
-      decodedPath = decodedPath.replace(/\\/g, "/");
-      const resolved = path.normalize(path.join(sourceDir, decodedPath));
-      const relToCourse = path.relative(path.join(COURSES_ROOT, courseId), resolved);
+      if (inFence) return line;
 
-      // Outside the course tree (or the course root itself): link to GitHub.
-      if (relToCourse.startsWith("..")) {
-        const fromRepoRoot = path
-          .normalize(path.join("courses", courseId, moduleDirName, decodedPath))
-          .split(path.sep)
-          .join("/");
-        return `${bang}[${text}](${GITHUB_BLOB}/${fromRepoRoot.split("/").map(encodeURIComponent).join("/")}${tail})`;
-      }
+      const rewritten = line.replace(
+        MD_LINK_RE,
+        (match, bang: string, text: string, target: string, tail: string) => {
+          // Leave anchors, absolute URLs and protocol-relative links untouched.
+          if (/^(#|[a-z][a-z0-9+.-]*:|\/\/)/i.test(target)) return match;
+          if (target.startsWith("/")) return match;
 
-      const posixRel = relToCourse.split(path.sep).join("/");
-      const encodedRel = posixRel.split("/").map(encodeURIComponent).join("/");
-      const ext = path.extname(posixRel).toLowerCase();
+          const [rawPath, hash = ""] = target.split("#");
+          if (!rawPath) return match;
+          const { resolved, posixRel, outside } = resolveAgainstModule(
+            courseId,
+            moduleDirName,
+            rawPath
+          );
 
-      if (IMAGE_EXTENSIONS.has(ext)) {
-        if (!fs.existsSync(resolved)) {
-          warn(`图片不存在,保留原样: ${posixRel} (← ${rawPath})`);
+          // Outside the course tree (or the course root itself): link to GitHub.
+          if (outside) {
+            let decodedPath = rawPath;
+            try {
+              decodedPath = decodeURIComponent(rawPath);
+            } catch {
+              // A literal `%` in the path — treat it as-is.
+            }
+            return `${bang}[${text}](${githubBlobUrl(courseId, moduleDirName, decodedPath.replace(/\\/g, "/"))}${tail})`;
+          }
+
+          const encodedRel = posixRel.split("/").map(encodeURIComponent).join("/");
+          const ext = path.extname(posixRel).toLowerCase();
+
+          if (IMAGE_EXTENSIONS.has(ext)) {
+            if (!fs.existsSync(resolved)) {
+              const fuzzy = fuzzyResolve(courseId, normalizedIndex, posixRel, routeByRelPath);
+              if (fuzzy) return `${bang}[${text}](${fuzzy}${tail})`;
+              warn(`图片不存在,保留原样: ${posixRel} (← ${rawPath})`);
+              return match;
+            }
+            return `${bang}[${text}](${ASSET_BASE}/course-assets/${courseId}/${encodedRel}${tail})`;
+          }
+
+          if (ext === ".md") {
+            // A link to a sibling lesson: resolve to its route when it is one.
+            const route = routeByRelPath.get(posixRel);
+            if (route) {
+              return `${bang}[${text}](${ASSET_BASE}${route}${hash ? `#${hash}` : ""}${tail})`;
+            }
+            if (fs.existsSync(resolved)) {
+              return `${bang}[${text}](${GITHUB_BLOB}/courses/${encodeURIComponent(courseId)}/${encodedRel}${tail})`;
+            }
+            const fuzzy = fuzzyResolve(courseId, normalizedIndex, posixRel, routeByRelPath);
+            if (fuzzy) {
+              return `${bang}[${text}](${fuzzy}${hash ? `#${hash}` : ""}${tail})`;
+            }
+            warn(`课时交叉链接不存在,保留原样: ${posixRel}`);
+            return match;
+          }
+
+          // Anything else that exists in the mirror (notebooks, py, csv, db…)
+          // gets a GitHub blob link; anything that doesn't is reported.
+          if (fs.existsSync(resolved)) {
+            return `${bang}[${text}](${GITHUB_BLOB}/courses/${encodeURIComponent(courseId)}/${encodedRel}${tail})`;
+          }
+          const fuzzy = fuzzyResolve(courseId, normalizedIndex, posixRel, routeByRelPath);
+          if (fuzzy) return `${bang}[${text}](${fuzzy}${tail})`;
+          warn(`链接目标不存在,保留原样: ${posixRel} (← ${rawPath})`);
           return match;
         }
-        return `${bang}[${text}](${ASSET_BASE}/course-assets/${courseId}/${encodedRel}${tail})`;
-      }
+      );
 
-      if (ext === ".md") {
-        // A link to a sibling lesson: resolve to its route when it is one.
-        const route = routeByRelPath.get(posixRel);
-        if (route) {
-          return `${bang}[${text}](${ASSET_BASE}${route}${hash ? `#${hash}` : ""}${tail})`;
+      // HTML `<img src="…">` — markdown-link syntax doesn't cover these.
+      return rewritten.replace(
+        HTML_IMG_RE,
+        (match, lead: string, quote: string, src: string) => {
+          if (/^(#|[a-z][a-z0-9+.-]*:|\/\/)/i.test(src)) return match;
+          if (src.startsWith("/")) return match;
+          const [rawPath] = src.split("#");
+          if (!rawPath) return match;
+          const { resolved, posixRel, outside } = resolveAgainstModule(
+            courseId,
+            moduleDirName,
+            rawPath
+          );
+          if (outside) {
+            let decodedPath = rawPath;
+            try {
+              decodedPath = decodeURIComponent(rawPath);
+            } catch {
+              // A literal `%` in the path — treat it as-is.
+            }
+            return `${lead}${quote}${githubBlobUrl(courseId, moduleDirName, decodedPath.replace(/\\/g, "/"))}${quote}`;
+          }
+          if (!IMAGE_EXTENSIONS.has(path.extname(posixRel).toLowerCase())) {
+            warn(`HTML <img> 指向非图片文件,保留原样: ${posixRel}`);
+            return match;
+          }
+          if (!fs.existsSync(resolved)) {
+            const fuzzy = fuzzyResolve(courseId, normalizedIndex, posixRel, routeByRelPath);
+            if (fuzzy) return `${lead}${quote}${fuzzy}${quote}`;
+            warn(`图片不存在,保留原样: ${posixRel} (← ${rawPath})`);
+            return match;
+          }
+          const encodedRel = posixRel.split("/").map(encodeURIComponent).join("/");
+          return `${lead}${quote}${ASSET_BASE}/course-assets/${courseId}/${encodedRel}${quote}`;
         }
-        if (fs.existsSync(resolved)) {
-          return `${bang}[${text}](${GITHUB_BLOB}/courses/${encodeURIComponent(courseId)}/${encodedRel}${tail})`;
-        }
-        warn(`课时交叉链接不存在,保留原样: ${posixRel}`);
-        return match;
-      }
-
-      // Anything else that exists in the mirror (notebooks, py, csv, db…)
-      // gets a GitHub blob link; anything that doesn't is reported.
-      if (fs.existsSync(resolved)) {
-        return `${bang}[${text}](${GITHUB_BLOB}/courses/${encodeURIComponent(courseId)}/${encodedRel}${tail})`;
-      }
-      warn(`链接目标不存在,保留原样: ${posixRel} (← ${rawPath})`);
-      return match;
-    }
-  );
+      );
+    })
+    .join("\n");
 }
 
 // ---------------------------------------------------------------------------

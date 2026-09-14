@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 420">
+  <defs>
+    <style>
+      .title { font: 700 16px 'SF Mono', 'PingFang SC', sans-serif; fill: #1a1a1a; text-anchor: middle; }
+      .label { font: 500 10px 'SF Mono', 'Menlo', 'Monaco', monospace; fill: #666; text-anchor: middle; letter-spacing: 0.5px; }
+      .axis-label { font: 500 10px 'SF Mono', 'PingFang SC', sans-serif; fill: #1a1a1a; text-anchor: middle; }
+      .tick { font: 500 9px 'SF Mono', monospace; fill: #666; }
+      .sublabel { font: 500 9px 'SF Mono', 'PingFang SC', sans-serif; fill: #64748b; text-anchor: middle; }
+      .note-title { font: 600 11px 'SF Mono', 'PingFang SC', sans-serif; fill: #1a1a1a; text-anchor: middle; }
+      .note-text { font: 400 9px 'SF Mono', monospace; fill: #666; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="680" height="420" fill="#fff"/>
+
+  <!-- Title -->
+  <text x="340" y="28" class="title">上下文腐蚀</text>
+  <text x="340" y="45" class="label">CONTEXT ROT</text>
+
+  <!-- Chart area: x=110..560, y=70..340 -->
+
+  <!-- Y-axis -->
+  <line x1="110" y1="340" x2="110" y2="65" stroke="#1a1a1a" stroke-width="1.5"/>
+  <!-- X-axis -->
+  <line x1="110" y1="340" x2="565" y2="340" stroke="#1a1a1a" stroke-width="1.5"/>
+
+  <!-- Y-axis label -->
+  <text x="30" y="205" class="axis-label" transform="rotate(-90, 30, 205)">信息检索准确率</text>
+
+  <!-- X-axis label -->
+  <text x="335" y="380" class="axis-label">Context 中的 Token 数量</text>
+  <text x="335" y="395" class="sublabel">TOKEN COUNT IN CONTEXT</text>
+
+  <!-- Horizontal grid lines -->
+  <line x1="110" y1="272.5" x2="560" y2="272.5" stroke="#e5e7eb" stroke-width="0.5" stroke-dasharray="4,3"/>
+  <line x1="110" y1="205" x2="560" y2="205" stroke="#e5e7eb" stroke-width="0.5" stroke-dasharray="4,3"/>
+  <line x1="110" y1="137.5" x2="560" y2="137.5" stroke="#e5e7eb" stroke-width="0.5" stroke-dasharray="4,3"/>
+  <line x1="110" y1="70" x2="560" y2="70" stroke="#e5e7eb" stroke-width="0.5" stroke-dasharray="4,3"/>
+
+  <!-- Vertical grid lines -->
+  <line x1="222.5" y1="70" x2="222.5" y2="340" stroke="#e5e7eb" stroke-width="0.5" stroke-dasharray="4,3"/>
+  <line x1="335" y1="70" x2="335" y2="340" stroke="#e5e7eb" stroke-width="0.5" stroke-dasharray="4,3"/>
+  <line x1="447.5" y1="70" x2="447.5" y2="340" stroke="#e5e7eb" stroke-width="0.5" stroke-dasharray="4,3"/>
+  <line x1="560" y1="70" x2="560" y2="340" stroke="#e5e7eb" stroke-width="0.5" stroke-dasharray="4,3"/>
+
+  <!-- Y ticks -->
+  <text x="100" y="344" class="tick" text-anchor="end">0%</text>
+  <text x="100" y="276" class="tick" text-anchor="end">25%</text>
+  <text x="100" y="209" class="tick" text-anchor="end">50%</text>
+  <text x="100" y="141" class="tick" text-anchor="end">75%</text>
+  <text x="100" y="74" class="tick" text-anchor="end">100%</text>
+
+  <!-- X ticks -->
+  <text x="110" y="358" class="tick" text-anchor="middle">10K</text>
+  <text x="222.5" y="358" class="tick" text-anchor="middle">50K</text>
+  <text x="335" y="358" class="tick" text-anchor="middle">100K</text>
+  <text x="447.5" y="358" class="tick" text-anchor="middle">150K</text>
+  <text x="560" y="358" class="tick" text-anchor="middle">200K</text>
+
+  <!-- Shaded area under curve -->
+  <!-- Y: 100%=70, 0%=340. So 95%=83.5, 80%=124, 55%=191.5, 45%=218.5, 38%=237.4 -->
+  <path d="M 110 83
+           C 160 88, 195 108, 222 135
+           C 260 172, 295 195, 335 213
+           C 390 230, 440 236, 560 240
+           L 560 340 L 110 340 Z"
+        fill="#dbeafe" opacity="0.25"/>
+
+  <!-- Declining curve -->
+  <path d="M 110 83
+           C 160 88, 195 108, 222 135
+           C 260 172, 295 195, 335 213
+           C 390 230, 440 236, 560 240"
+        stroke="#3b82f6" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Curve endpoints -->
+  <circle cx="110" cy="83" r="4" fill="#3b82f6"/>
+  <circle cx="560" cy="240" r="4" fill="#3b82f6"/>
+
+  <!-- Practical threshold dashed line at ~55% => y=191.5 -->
+  <line x1="110" y1="191" x2="560" y2="191" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="8,4"/>
+  <rect x="420" y="176" width="138" height="16" fill="#fef3c7" rx="2"/>
+  <text x="489" y="188" class="tick" text-anchor="middle" style="fill:#b45309; font-weight:600; font-size:8px;">实用阈值 PRACTICAL THRESHOLD</text>
+
+  <!-- Annotation box: n² attention (top-right, outside chart) -->
+  <rect x="582" y="70" width="88" height="56" fill="#f8fafc" stroke="#1a1a1a" stroke-width="1" rx="3"/>
+  <text x="626" y="87" class="note-title" style="font-size:10px;">n² 注意力</text>
+  <line x1="590" y1="93" x2="662" y2="93" stroke="#e5e7eb" stroke-width="0.5"/>
+  <text x="626" y="108" class="note-text">10K → 100M</text>
+  <text x="626" y="122" class="note-text">50K → 2.5B</text>
+
+  <!-- Performance gradient label -->
+  <text x="440" y="270" class="sublabel" style="fill:#94a3b8;">↑ 性能梯度 PERFORMANCE GRADIENT</text>
+</svg>

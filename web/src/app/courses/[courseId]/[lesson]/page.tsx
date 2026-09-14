@@ -5,6 +5,7 @@ import { getCourse, getCourses, getLesson, getLessonNeighbours } from "@/lib/cou
 import { CourseNav } from "@/components/course-nav";
 import { DocContent } from "@/components/doc-content";
 import { PrevNext } from "@/components/prev-next";
+import { CourseAttributionNote } from "@/components/course-attribution";
 
 interface PageProps {
   params: Promise<{ courseId: string; lesson: string }>;
@@ -65,6 +66,7 @@ export default async function LessonPage({ params }: PageProps) {
       </div>
 
       <PrevNext prev={prev} next={next} />
+      <CourseAttributionNote course={course} variant="compact" />
     </>
   );
 }
