@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 620" width="1280" height="620" role="img" aria-label="多层护栏架构：输入验证、输出过滤、架构约束三层嵌套包裹 LLM">
+  <title>多层护栏：把不确定性关进确定性的笼子</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .t{font-size:17px;font-weight:650}
+    .sub{font-size:14px}
+    .ctr{font-size:20px;font-weight:650}
+    .note{font-size:14.5px}
+  </style>
+  <rect width="1280" height="620" fill="#fdf5eb"/>
+
+  <!-- 第三层：架构约束（最外层笼子） -->
+  <rect x="90" y="80" width="1100" height="480" rx="14" fill="#ffffff" stroke="#0d366b" stroke-width="2"/>
+  <text class="t" x="120" y="118" fill="#0d366b">第三层 · 架构约束（Architectural Containment）</text>
+  <text class="sub muted" x="120" y="146">权限最小化 · 工具白名单 · 操作审批门槛</text>
+
+  <!-- 第二层：输出过滤 -->
+  <rect x="190" y="180" width="900" height="330" rx="12" fill="#fdf5eb" stroke="#2a78d6" stroke-width="2"/>
+  <text class="t" x="220" y="218" fill="#2a78d6">第二层 · 输出过滤（Post-LLM）</text>
+  <text class="sub muted" x="220" y="246">Schema 校验 · 有害内容检测 · 事实性验证</text>
+
+  <!-- 第一层：输入验证 -->
+  <rect x="290" y="280" width="700" height="180" rx="10" fill="#ffffff" stroke="#eb6834" stroke-width="2"/>
+  <text class="t" x="320" y="318" fill="#eb6834">第一层 · 输入验证（Pre-LLM）</text>
+  <text class="sub muted" x="320" y="346">Prompt 注入检测 · PII 脱敏 · 输入长度限制</text>
+
+  <!-- LLM 核心 -->
+  <rect x="470" y="378" width="340" height="56" rx="10" fill="#1c5cab"/>
+  <text class="ctr" x="640" y="414" text-anchor="middle" fill="#ffffff" font-size="17">LLM · 概率性核心</text>
+
+  <text class="note ink2" x="640" y="598" text-anchor="middle">护栏回答"是否被允许？" · 验证回答"是否合规？"——生产系统两者都需要；结构化输出是单一最有效的输出护栏</text>
+</svg>

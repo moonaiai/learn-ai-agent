@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 470" width="1280" height="470" role="img" aria-label="LLM-as-Judge 位置偏差的测量数据">
+  <title>LLM-as-Judge 位置偏差</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .name{font-size:16.5px;font-weight:600}
+    .sub{font-size:13px}
+    .val{font-size:16.5px;font-weight:600}
+    .tick{font-size:13.5px}
+    .leg{font-size:14.5px;fill:#52514e}
+    .grid{stroke:#e1e0d9;stroke-width:1}
+  </style>
+  <rect width="1280" height="470" fill="#fdf5eb"/>
+
+  <g>
+    <line class="grid" x1="430" y1="70" x2="430" y2="360"/>
+    <line class="grid" x1="645" y1="70" x2="645" y2="360"/>
+    <line class="grid" x1="860" y1="70" x2="860" y2="360"/>
+    <line class="grid" x1="1075" y1="70" x2="1075" y2="360"/>
+  </g>
+  <line x1="430" y1="66" x2="430" y2="360" stroke="#c3c2b7" stroke-width="1.5"/>
+
+  <!-- 图例 -->
+  <g>
+    <rect x="620" y="26" width="14" height="14" rx="3" fill="#2a78d6"/>
+    <text class="leg" x="642" y="38">"首选第一位"比率（位置偏好）</text>
+    <rect x="900" y="26" width="14" height="14" rx="3" fill="#eb6834"/>
+    <text class="leg" x="922" y="38">交换顺序后翻转率（不一致性）</text>
+  </g>
+
+  <!-- 平均首选第一位 64.3% -->
+  <text class="name ink" x="400" y="112" text-anchor="end">模型平均首选第一位（36 个模型）</text>
+  <path d="M430,96 H968 Q972,96 972,100 V116 Q972,120 968,120 H430 Z" fill="#2a78d6"/>
+  <text class="val ink" x="984" y="113">64.3%</text>
+
+  <!-- 中位数首选第一位 65.4% -->
+  <text class="name ink" x="400" y="182" text-anchor="end">中位数首选第一位</text>
+  <path d="M430,166 H979 Q983,166 983,170 V186 Q983,190 979,190 H430 Z" fill="#2a78d6"/>
+  <text class="val ink" x="995" y="183">65.4%</text>
+
+  <!-- 中位翻转率 41.3% -->
+  <text class="name ink" x="400" y="252" text-anchor="end">中位模型顺序翻转率</text>
+  <path d="M430,236 H747 Q751,236 751,240 V256 Q751,260 747,260 H430 Z" fill="#eb6834"/>
+  <text class="val ink" x="763" y="253">41.3%</text>
+
+  <!-- Mistral Medium 3.5 翻转率 72.5% -->
+  <text class="name ink" x="400" y="322" text-anchor="end">最差个案翻转率（Mistral Medium 3.5）</text>
+  <path d="M430,306 H927 Q931,306 931,310 V326 Q931,330 927,330 H430 Z" fill="#eb6834"/>
+  <text class="val ink" x="943" y="323">72.5%</text>
+
+  <g class="tick muted" text-anchor="middle">
+    <text x="430" y="390">0</text>
+    <text x="645" y="390">25%</text>
+    <text x="860" y="390">50%</text>
+    <text x="1075" y="390">75%</text>
+  </g>
+  <text class="ink2" x="640" y="436" text-anchor="middle" font-size="15.5" font-weight="600">近半数成对判断取决于展示顺序而非内容质量</text>
+</svg>

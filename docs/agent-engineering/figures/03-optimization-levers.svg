@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-label="五大成本优化杠杆联合应用的综合效果">
+  <title>五大优化杠杆联合应用：$6.00 → $0.90-1.80 / session</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .w{fill:#ffffff}
+    .name{font-size:18px;font-weight:600}
+    .sub{font-size:14.5px}
+    .chip{font-size:15px;font-weight:700;fill:#ffffff}
+    .lead{font-size:16px;fill:rgba(255,255,255,0.78)}
+    .hero{font-size:54px;font-weight:700;fill:#ffffff}
+    .res{font-size:24px;font-weight:650;fill:#ffffff}
+    .card{fill:#ffffff;stroke:#e1e0d9;stroke-width:1}
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2a78d6"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="640" fill="#fdf5eb"/>
+
+  <!-- 杠杆 1：模型路由 -->
+  <rect class="card" x="60" y="60" width="580" height="92" rx="10"/>
+  <circle cx="95" cy="106" r="14" fill="#2a78d6"/>
+  <text class="chip" x="95" y="111" text-anchor="middle">1</text>
+  <text class="name ink" x="125" y="100">模型路由</text>
+  <text class="sub muted" x="125" y="126">常规任务给小模型，复杂推理给前沿模型 · 典型节省 40-70%</text>
+
+  <!-- 杠杆 2：语义缓存 -->
+  <rect class="card" x="60" y="168" width="580" height="92" rx="10"/>
+  <circle cx="95" cy="214" r="14" fill="#2a78d6"/>
+  <text class="chip" x="95" y="219" text-anchor="middle">2</text>
+  <text class="name ink" x="125" y="208">语义缓存</text>
+  <text class="sub muted" x="125" y="234">向量相似度命中历史回答 · GPTCache 命中率 61.6-68.8%</text>
+
+  <!-- 杠杆 3：Prompt 缓存 -->
+  <rect class="card" x="60" y="276" width="580" height="92" rx="10"/>
+  <circle cx="95" cy="322" r="14" fill="#2a78d6"/>
+  <text class="chip" x="95" y="327" text-anchor="middle">3</text>
+  <text class="name ink" x="125" y="316">Prompt 缓存</text>
+  <text class="sub muted" x="125" y="342">静态前缀复用，变的内容放后面 · 缓存读取 90% 折扣</text>
+
+  <!-- 杠杆 4：上下文压缩 -->
+  <rect class="card" x="60" y="384" width="580" height="92" rx="10"/>
+  <circle cx="95" cy="430" r="14" fill="#2a78d6"/>
+  <text class="chip" x="95" y="435" text-anchor="middle">4</text>
+  <text class="name ink" x="125" y="424">上下文压缩</text>
+  <text class="sub muted" x="125" y="450">摘要 / 提取 / 语义分块 · token 减少 50-70%</text>
+
+  <!-- 杠杆 5：批处理 -->
+  <rect class="card" x="60" y="492" width="580" height="92" rx="10"/>
+  <circle cx="95" cy="538" r="14" fill="#2a78d6"/>
+  <text class="chip" x="95" y="543" text-anchor="middle">5</text>
+  <text class="name ink" x="125" y="532">批处理</text>
+  <text class="sub muted" x="125" y="558">离线任务异步处理 · Batch API 50% 折扣</text>
+
+  <!-- 汇聚箭头 -->
+  <line x1="656" y1="322" x2="742" y2="322" stroke="#2a78d6" stroke-width="3" marker-end="url(#ah)"/>
+
+  <!-- 结果面板 -->
+  <rect x="760" y="170" width="460" height="280" rx="14" fill="#1c5cab"/>
+  <text class="lead" x="990" y="218" text-anchor="middle">综合应用五大杠杆后</text>
+  <text class="hero" x="990" y="290" text-anchor="middle">$0.90 – 1.80</text>
+  <text class="lead" x="990" y="326" text-anchor="middle">/ session · 优化前 $6.00</text>
+  <line x1="810" y1="352" x2="1170" y2="352" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>
+  <text class="res" x="990" y="408" text-anchor="middle">总支出降低 70-85%</text>
+</svg>

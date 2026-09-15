@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 660" width="1280" height="660" role="img" aria-label="评测驱动的持续优化闭环：生产可观测性、自动化评测、优化迭代、CD 质量门控">
+  <title>评测驱动的持续优化闭环</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .name{font-size:19px;font-weight:650}
+    .sub{font-size:13.5px}
+    .chip{font-size:15px;font-weight:700;fill:#ffffff}
+    .ctr{font-size:23px;font-weight:650}
+    .ctr2{font-size:15px}
+    .card{fill:#ffffff;stroke:#e1e0d9;stroke-width:1}
+    .flow{stroke:#898781;stroke-width:2.5;fill:none}
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#898781"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="660" fill="#fdf5eb"/>
+
+  <!-- 顺时针流转箭头 -->
+  <path class="flow" d="M800,118 A250,250 0 0 1 1048,262" marker-end="url(#ah)"/>
+  <path class="flow" d="M1048,398 A250,250 0 0 1 802,540" marker-end="url(#ah)"/>
+  <path class="flow" d="M478,540 A250,250 0 0 1 233,398" marker-end="url(#ah)"/>
+  <path class="flow" d="M233,262 A250,250 0 0 1 480,118" marker-end="url(#ah)"/>
+
+  <!-- 1 生产可观测性（上） -->
+  <rect class="card" x="490" y="55" width="300" height="110" rx="10"/>
+  <circle cx="524" cy="89" r="15" fill="#6da7ec"/>
+  <text class="chip" x="524" y="94" text-anchor="middle">1</text>
+  <text class="name ink" x="548" y="96">生产可观测性</text>
+  <text class="sub muted" x="514" y="133">持续采集 traces、metrics、评测数据</text>
+
+  <!-- 2 自动化评测管道（右） -->
+  <rect class="card" x="900" y="275" width="300" height="110" rx="10"/>
+  <circle cx="934" cy="309" r="15" fill="#2a78d6"/>
+  <text class="chip" x="934" y="314" text-anchor="middle">2</text>
+  <text class="name ink" x="958" y="316">自动化评测管道</text>
+  <text class="sub muted" x="924" y="353">失败样本沉淀为黄金数据集</text>
+
+  <!-- 3 优化迭代（下） -->
+  <rect class="card" x="490" y="495" width="300" height="110" rx="10"/>
+  <circle cx="524" cy="529" r="15" fill="#1c5cab"/>
+  <text class="chip" x="524" y="534" text-anchor="middle">3</text>
+  <text class="name ink" x="548" y="536">优化迭代</text>
+  <text class="sub muted" x="514" y="573">Prompt 调优 · 检索优化 · 模型更新</text>
+
+  <!-- 4 CD 质量门控（左） -->
+  <rect class="card" x="80" y="275" width="300" height="110" rx="10"/>
+  <circle cx="114" cy="309" r="15" fill="#0d366b"/>
+  <text class="chip" x="114" y="314" text-anchor="middle">4</text>
+  <text class="name ink" x="138" y="316">CD 质量门控</text>
+  <text class="sub muted" x="104" y="353">回归测试通过方可进入生产</text>
+
+  <!-- 中心说明 -->
+  <text class="ctr ink" x="640" y="322" text-anchor="middle">评测驱动的持续优化闭环</text>
+  <text class="ctr2 muted" x="640" y="358" text-anchor="middle">生产洞察直接驱动 Prompt 与 Agent 迭代</text>
+</svg>

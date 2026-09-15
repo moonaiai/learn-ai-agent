@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 460" width="1280" height="460" role="img" aria-label="Multi-Agent 安全研究论文数量增长：2023 年 3 篇、2024 年 42 篇、2025 年 121 篇">
+  <title>Multi-Agent 安全研究爆发式增长</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .val{font-size:19px;font-weight:650}
+    .xt{font-size:15.5px}
+    .yt{font-size:13.5px}
+    .grid{stroke:#e1e0d9;stroke-width:1}
+  </style>
+  <rect width="1280" height="460" fill="#fdf5eb"/>
+
+  <g>
+    <line class="grid" x1="140" y1="90"  x2="1140" y2="90"/>
+    <line class="grid" x1="140" y1="180" x2="1140" y2="180"/>
+    <line class="grid" x1="140" y1="270" x2="1140" y2="270"/>
+  </g>
+  <line x1="140" y1="360" x2="1140" y2="360" stroke="#c3c2b7" stroke-width="1.5"/>
+
+  <g class="yt muted" text-anchor="end">
+    <text x="124" y="95">120</text>
+    <text x="124" y="185">80</text>
+    <text x="124" y="275">40</text>
+    <text x="124" y="365">0</text>
+  </g>
+
+  <!-- 2023: 3 篇 -->
+  <rect x="310" y="353.25" width="120" height="6.75" rx="2" fill="#6da7ec"/>
+  <text class="val ink" x="370" y="335" text-anchor="middle">3 篇</text>
+
+  <!-- 2024: 42 篇 -->
+  <path d="M580,269.5 V356 Q580,360 584,360 H696 Q700,360 700,356 V269.5 Q700,265.5 696,265.5 H584 Q580,265.5 580,269.5 Z" fill="#2a78d6"/>
+  <text class="val ink" x="640" y="245" text-anchor="middle">42 篇</text>
+
+  <!-- 2025: 121 篇 -->
+  <path d="M850,91.75 V356 Q850,360 854,360 H966 Q970,360 970,356 V91.75 Q970,87.75 966,87.75 H854 Q850,87.75 850,91.75 Z" fill="#1c5cab"/>
+  <text class="val ink" x="910" y="67" text-anchor="middle">121 篇</text>
+
+  <g class="xt ink2" text-anchor="middle">
+    <text x="370" y="398">2023</text>
+    <text x="640" y="398">2024</text>
+    <text x="910" y="398">2025</text>
+  </g>
+  <text class="muted" x="640" y="440" text-anchor="middle" font-size="15">Multi-Agent 安全研究论文数量 · 占安全研究总量的比例同期从 9.52% 升至 23.97%</text>
+</svg>

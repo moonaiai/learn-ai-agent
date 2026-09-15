@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 380" width="1280" height="380" role="img" aria-label="k=10 时的理论极端：pass@k 趋近 100% vs pass^k 跌至 0%">
+  <title>同一个 Agent 的两幅画像（k=10，p=50%）</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .name{font-size:18px;font-weight:650}
+    .sub{font-size:14px}
+    .val{font-size:22px;font-weight:650}
+    .note{font-size:14.5px}
+  </style>
+  <rect width="1280" height="380" fill="#fdf5eb"/>
+
+  <!-- pass@k ≈ 100% -->
+  <text class="name ink" x="330" y="112" text-anchor="end">pass@k（至少成功一次）</text>
+  <text class="sub muted" x="330" y="140" text-anchor="end">衡量"能力"</text>
+  <rect x="360" y="80" width="500" height="72" rx="8" fill="#2a78d6"/>
+  <text class="val" x="880" y="124" fill="#2a78d6">≈ 100%</text>
+
+  <!-- pass^k ≈ 0% -->
+  <text class="name ink" x="330" y="262" text-anchor="end">pass^k（每次都成功）</text>
+  <text class="sub muted" x="330" y="290" text-anchor="end">衡量"可靠性"</text>
+  <rect x="360" y="230" width="500" height="72" rx="8" fill="#f7e8de"/>
+  <rect x="360" y="230" width="8" height="72" rx="4" fill="#eb6834"/>
+  <text class="val" x="880" y="274" fill="#eb6834">≈ 0%（约 0.1%）</text>
+
+  <text class="note muted" x="360" y="348">k = 10 · 单次成功率 p = 50% 的理论极端——</text>
+  <text class="ink2" x="360" y="372" font-size="15.5" font-weight="600">大多数 Agent 是"有能力但不可靠"的</text>
+</svg>

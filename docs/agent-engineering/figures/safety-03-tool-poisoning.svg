@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 330" width="1280" height="330" role="img" aria-label="MCP 工具投毒攻击链的五个阶段">
+  <title>MCP 工具投毒攻击链</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .t{font-size:16.5px;font-weight:650}
+    .sub{font-size:13px}
+    .step{font-size:13px;font-weight:700;fill:#d03b3b}
+    .box{fill:#ffffff;stroke:#d03b3b;stroke-width:1.8}
+    .flow{stroke:#c3c2b7;stroke-width:2;fill:none}
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c3c2b7"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="330" fill="#fdf5eb"/>
+
+  <g>
+    <rect class="box" x="40"  y="70" width="212" height="120" rx="10"/>
+    <text class="step" x="56" y="98">STEP 1</text>
+    <text class="t ink" x="146" y="132" text-anchor="middle">恶意 MCP 服务器</text>
+    <text class="sub muted" x="146" y="160" text-anchor="middle">工具描述中隐藏指令</text>
+
+    <rect class="box" x="284" y="70" width="212" height="120" rx="10"/>
+    <text class="step" x="300" y="98">STEP 2</text>
+    <text class="t ink" x="390" y="132" text-anchor="middle">Agent 读取工具描述</text>
+    <text class="sub muted" x="390" y="160" text-anchor="middle">无清洗 · 无来源验证</text>
+
+    <rect class="box" x="528" y="70" width="212" height="120" rx="10"/>
+    <text class="step" x="544" y="98">STEP 3</text>
+    <text class="t ink" x="634" y="132" text-anchor="middle">指令原样交给模型</text>
+    <text class="sub muted" x="634" y="160" text-anchor="middle">具有完全环境权限</text>
+
+    <rect class="box" x="772" y="70" width="212" height="120" rx="10"/>
+    <text class="step" x="788" y="98">STEP 4</text>
+    <text class="t ink" x="878" y="132" text-anchor="middle">执行恶意操作</text>
+    <text class="sub muted" x="878" y="160" text-anchor="middle">读取私有 SSH 密钥</text>
+
+    <rect class="box" x="1016" y="70" width="212" height="120" rx="10"/>
+    <text class="step" x="1032" y="98">STEP 5</text>
+    <text class="t ink" x="1122" y="132" text-anchor="middle">数据外发</text>
+    <text class="sub muted" x="1122" y="160" text-anchor="middle">凭证 / 聊天记录 / 仓库</text>
+
+    <line class="flow" x1="252"  y1="130" x2="278"  y2="130" marker-end="url(#ah)"/>
+    <line class="flow" x1="496"  y1="130" x2="522"  y2="130" marker-end="url(#ah)"/>
+    <line class="flow" x1="740"  y1="130" x2="766"  y2="130" marker-end="url(#ah)"/>
+    <line class="flow" x1="984"  y1="130" x2="1010" y2="130" marker-end="url(#ah)"/>
+  </g>
+
+  <text class="ink2" x="640" y="248" text-anchor="middle" font-size="15.5" font-weight="600">MCPTox 实测攻击成功率 72.8%（45 个真实 MCP 服务器 × 20 个领先 AI 模型）</text>
+  <text class="muted" x="640" y="284" text-anchor="middle" font-size="14">OWASP MCP Top 10 将工具投毒列为第三大风险（MCP03:2025）· CVE-2025-54136 / CVE-2025-54135</text>
+</svg>

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-label="pass@k 与 pass^k 的剪刀差曲线（p=50%）">
+  <title>pass@k vs pass^k：同一 Agent 的两幅画像</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .val{font-size:15.5px;font-weight:600}
+    .xt{font-size:14.5px}
+    .yt{font-size:13.5px}
+    .leg{font-size:15px;fill:#52514e}
+    .note{font-size:15px}
+    .grid{stroke:#e1e0d9;stroke-width:1}
+    .l1{stroke:#2a78d6;stroke-width:2.5;fill:none;stroke-linejoin:round;stroke-linecap:round}
+    .l2{stroke:#eb6834;stroke-width:2.5;fill:none;stroke-linejoin:round;stroke-linecap:round}
+  </style>
+  <rect width="1280" height="640" fill="#fdf5eb"/>
+
+  <g>
+    <line class="grid" x1="120" y1="90"    x2="1180" y2="90"/>
+    <line class="grid" x1="120" y1="192.5" x2="1180" y2="192.5"/>
+    <line class="grid" x1="120" y1="295"   x2="1180" y2="295"/>
+    <line class="grid" x1="120" y1="397.5" x2="1180" y2="397.5"/>
+  </g>
+  <line x1="120" y1="500" x2="1180" y2="500" stroke="#c3c2b7" stroke-width="1.5"/>
+
+  <g class="yt muted" text-anchor="end">
+    <text x="104" y="95">100%</text>
+    <text x="104" y="197.5">75%</text>
+    <text x="104" y="300">50%</text>
+    <text x="104" y="402.5">25%</text>
+    <text x="104" y="505">0%</text>
+  </g>
+
+  <!-- pass@k = 1-(0.5)^k，蓝色上升 -->
+  <polyline class="l1" points="207,295 321,192.5 435,141.3 549,115.6 663,102.7 777,96.6 891,93.3 1005,91.6 1119,90.8 1176,90.4"/>
+  <!-- pass^k = 0.5^k，橙色衰减 -->
+  <polyline class="l2" points="207,295 321,397.5 435,448.8 549,474.4 663,487.3 777,493.4 891,496.7 1005,498.4 1119,499.2 1176,499.6"/>
+
+  <!-- 关键点标记（带表面环） -->
+  <g>
+    <circle cx="207" cy="295" r="4.5" fill="#2a78d6" stroke="#fdf5eb" stroke-width="2"/>
+    <circle cx="207" cy="295" r="4.5" fill="#eb6834" stroke="#fdf5eb" stroke-width="2"/>
+    <circle cx="663" cy="102.7" r="4.5" fill="#2a78d6" stroke="#fdf5eb" stroke-width="2"/>
+    <circle cx="663" cy="487.3" r="4.5" fill="#eb6834" stroke="#fdf5eb" stroke-width="2"/>
+    <circle cx="1176" cy="90.4" r="4.5" fill="#2a78d6" stroke="#fdf5eb" stroke-width="2"/>
+    <circle cx="1176" cy="499.6" r="4.5" fill="#eb6834" stroke="#fdf5eb" stroke-width="2"/>
+  </g>
+
+  <text class="val" x="228" y="288" fill="#2a78d6">50%</text>
+  <text class="val" x="1155" y="78" text-anchor="end" fill="#2a78d6">pass@k → 99.9%</text>
+  <text class="val" x="1155" y="530" text-anchor="end" fill="#eb6834">pass^k → 0.1%</text>
+
+  <!-- 图例 -->
+  <g>
+    <line x1="500" y1="42" x2="530" y2="42" class="l1"/>
+    <text class="leg" x="538" y="47">pass@k（至少一次成功）</text>
+    <line x1="760" y1="42" x2="790" y2="42" class="l2"/>
+    <text class="leg" x="798" y="47">pass^k（每次都成功）</text>
+  </g>
+
+  <g class="xt ink2" text-anchor="middle">
+    <text x="207" y="540">k=1</text>
+    <text x="435" y="540">k=3</text>
+    <text x="663" y="540">k=5</text>
+    <text x="891" y="540">k=7</text>
+    <text x="1119" y="540">k=9</text>
+  </g>
+  <text class="note muted" x="650" y="588" text-anchor="middle">单次成功率 p=50% 的理论曲线 · 实测参照：GPT-4o 在 tau-retail 上 pass^1 约 61% → pass^8 约 25%</text>
+</svg>

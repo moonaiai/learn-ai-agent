@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 560" width="1280" height="560" role="img" aria-label="端到端评测流水线：离线与在线评测共享数据层，CI/CD 门禁">
+  <title>端到端评测流水线架构</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .t{font-size:18px;font-weight:650}
+    .sub{font-size:14px}
+    .tag{font-size:13px;font-weight:700}
+    .card{fill:#ffffff;stroke:#e1e0d9;stroke-width:1}
+    .flow{stroke:#898781;stroke-width:2.5;fill:none}
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#898781"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="560" fill="#fdf5eb"/>
+
+  <!-- 离线评测 -->
+  <rect class="card" x="80" y="60" width="520" height="150" rx="10"/>
+  <rect x="80" y="60" width="6" height="150" rx="3" fill="#2a78d6"/>
+  <text class="tag" x="108" y="92" fill="#2a78d6">部署前 · 离线评测</text>
+  <text class="t ink" x="108" y="130">黄金数据集 · 测试套件 · CI/CD 回归</text>
+  <text class="sub muted" x="108" y="168">确定性断言 → 语义相似度 → LLM-as-Judge 三层技术栈</text>
+
+  <!-- 在线评测 -->
+  <rect class="card" x="680" y="60" width="520" height="150" rx="10"/>
+  <rect x="680" y="60" width="6" height="150" rx="3" fill="#eb6834"/>
+  <text class="tag" x="708" y="92" fill="#eb6834">生产中 · 在线评测</text>
+  <text class="t ink" x="708" y="130">采样评分 · 漂移检测 · A/B 测试</text>
+  <text class="sub muted" x="708" y="168">对生产流量按 1-5% 采样 · 偏离基线阈值触发告警</text>
+
+  <!-- 双向箭头：卡片 ↔ 共享数据层 -->
+  <path class="flow" d="M300,210 V258 Q300,263 305,263 H520" marker-end="url(#ah)"/>
+  <path class="flow" d="M980,210 V258 Q980,263 975,263 H760" marker-end="url(#ah)"/>
+  <path class="flow" d="M540,285 H310 Q305,285 305,280 V238" marker-end="url(#ah)"/>
+  <path class="flow" d="M740,285 H970 Q975,285 975,280 V238" marker-end="url(#ah)"/>
+
+  <!-- 共享数据层 -->
+  <rect x="80" y="268" width="1120" height="110" rx="10" fill="#1c5cab"/>
+  <text class="t" x="640" y="308" text-anchor="middle" fill="#ffffff">共享数据层——最关键的架构决策</text>
+  <text class="sub" x="640" y="348" text-anchor="middle" fill="rgba(255,255,255,0.85)">评测数据集 · 评测结果与指标历史 · Agent traces 与执行日志 · 模型 / prompt 版本元数据</text>
+
+  <!-- CI/CD 门禁 -->
+  <rect class="card" x="80" y="430" width="1120" height="96" rx="10"/>
+  <rect x="80" y="430" width="6" height="96" rx="3" fill="#0d366b"/>
+  <text class="t ink" x="640" y="470" text-anchor="middle">CI/CD 评测门禁</text>
+  <text class="sub muted" x="640" y="504" text-anchor="middle">每次 prompt / 模型 / 工具 / 逻辑变更运行代表性套件 · 分数低于阈值阻止合并（Braintrust Action · DeepEval × pytest）</text>
+
+  <line class="flow" x1="640" y1="378" x2="640" y2="424" marker-end="url(#ah)"/>
+</svg>

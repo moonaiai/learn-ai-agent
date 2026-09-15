@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-label="容错铁三角：重试、熔断器、优雅降级">
+  <title>容错铁三角</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .t{font-size:19px;font-weight:650}
+    .sub{font-size:14px}
+    .ctr{font-size:24px;font-weight:650}
+    .box{fill:#ffffff;stroke-width:2}
+  </style>
+  <rect width="1280" height="640" fill="#fdf5eb"/>
+
+  <!-- 连接线 -->
+  <line x1="580" y1="180" x2="330" y2="410" stroke="#c3c2b7" stroke-width="2"/>
+  <line x1="700" y1="180" x2="950" y2="410" stroke="#c3c2b7" stroke-width="2"/>
+  <line x1="400" y1="475" x2="880" y2="475" stroke="#c3c2b7" stroke-width="2"/>
+
+  <!-- 顶点 1：重试 -->
+  <rect class="box" x="500" y="70" width="280" height="120" rx="10" stroke="#2a78d6"/>
+  <text class="t ink" x="640" y="115" text-anchor="middle">重试</text>
+  <text class="sub muted" x="640" y="148" text-anchor="middle">指数退避 + 随机抖动</text>
+  <text class="sub muted" x="640" y="172" text-anchor="middle">区分可重试（429/5xx）与需重构（400）</text>
+
+  <!-- 顶点 2：熔断器 -->
+  <rect class="box" x="120" y="410" width="280" height="120" rx="10" stroke="#1c5cab"/>
+  <text class="t ink" x="260" y="455" text-anchor="middle">熔断器</text>
+  <text class="sub muted" x="260" y="488" text-anchor="middle">Closed → Open → Half-Open</text>
+  <text class="sub muted" x="260" y="512" text-anchor="middle">下游故障时继续调用只会浪费 Token</text>
+
+  <!-- 顶点 3：优雅降级 -->
+  <rect class="box" x="880" y="410" width="280" height="120" rx="10" stroke="#6da7ec"/>
+  <text class="t ink" x="1020" y="455" text-anchor="middle">优雅降级</text>
+  <text class="sub muted" x="1020" y="488" text-anchor="middle">模型回退（GPT-4 → GPT-4o-mini）</text>
+  <text class="sub muted" x="1020" y="512" text-anchor="middle">缓存回退 · 功能降级 · 人工升级</text>
+
+  <!-- 中心 -->
+  <text class="ctr ink" x="640" y="350" text-anchor="middle">容错铁三角</text>
+  <text class="sub muted" x="640" y="384" text-anchor="middle">底座：状态机 · 检查点架构 · 死信队列</text>
+
+  <text class="ink2" x="640" y="600" text-anchor="middle" font-size="15.5" font-weight="600">无容错设计的 Multi-Agent 系统失败率高达 41-86.7%</text>
+</svg>

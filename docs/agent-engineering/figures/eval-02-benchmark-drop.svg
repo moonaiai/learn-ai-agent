@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-label="同一模型在 SWE-bench Verified 与 SWE-bench Pro 上的得分落差">
+  <title>基准污染的代价：Verified vs SWE-bench Pro</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .val{font-size:17px;font-weight:600}
+    .xt{font-size:16.5px}
+    .yt{font-size:14px}
+    .leg{font-size:15px;fill:#52514e}
+    .note{font-size:15px}
+    .grid{stroke:#e1e0d9;stroke-width:1}
+  </style>
+  <rect width="1280" height="640" fill="#fdf5eb"/>
+
+  <g>
+    <line class="grid" x1="120" y1="90"    x2="1180" y2="90"/>
+    <line class="grid" x1="120" y1="192.5" x2="1180" y2="192.5"/>
+    <line class="grid" x1="120" y1="295"   x2="1180" y2="295"/>
+    <line class="grid" x1="120" y1="397.5" x2="1180" y2="397.5"/>
+  </g>
+  <line x1="120" y1="500" x2="1180" y2="500" stroke="#c3c2b7" stroke-width="1.5"/>
+
+  <g class="yt muted" text-anchor="end">
+    <text x="104" y="95">80%</text>
+    <text x="104" y="197.5">60%</text>
+    <text x="104" y="300">40%</text>
+    <text x="104" y="402.5">20%</text>
+    <text x="104" y="505">0%</text>
+  </g>
+
+  <g>
+    <rect x="985" y="44" width="14" height="14" rx="3" fill="#2a78d6"/>
+    <text class="leg" x="1007" y="56">OpenAI GPT-5</text>
+    <rect x="1120" y="44" width="14" height="14" rx="3" fill="#eb6834"/>
+    <text class="leg" x="1142" y="56">Claude Opus 4.1</text>
+  </g>
+
+  <!-- SWE-bench Verified：均超 70%（柱按 70 绘制）；比例尺 5.125px/% -->
+  <path d="M325,500 V145.25 Q325,141.25 329,141.25 H345 Q349,141.25 349,145.25 V500 Z" fill="#2a78d6"/>
+  <path d="M351,500 V145.25 Q351,141.25 355,141.25 H371 Q375,141.25 375,145.25 V500 Z" fill="#eb6834"/>
+  <text class="val ink" x="350" y="131" text-anchor="middle">70%+</text>
+
+  <!-- SWE-bench Pro：23.3 / 23.1 -->
+  <path d="M725,500 V384.6 Q725,380.6 729,380.6 H745 Q749,380.6 749,384.6 V500 Z" fill="#2a78d6"/>
+  <path d="M751,500 V385.6 Q751,381.6 755,381.6 H771 Q775,381.6 775,385.6 V500 Z" fill="#eb6834"/>
+  <text class="val ink" x="750" y="370" text-anchor="middle">23.3% / 23.1%</text>
+
+  <g class="xt ink2" text-anchor="middle">
+    <text x="350" y="540">SWE-bench Verified（已弃用）</text>
+    <text x="750" y="540">SWE-bench Pro</text>
+  </g>
+  <text class="note muted" x="650" y="584" text-anchor="middle">同一模型被拉低 20-25 个百分点 · 私有子集进一步降至 17.8%（Claude Opus 4.1）与 14.9%（GPT-5）</text>
+</svg>

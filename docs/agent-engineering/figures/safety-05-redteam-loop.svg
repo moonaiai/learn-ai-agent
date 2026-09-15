@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 480" width="1280" height="480" role="img" aria-label="持续红队测试闭环：触发、自动测试、指标对比、部署或阻断">
+  <title>持续红队测试集成 CI/CD 闭环</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .t{font-size:17.5px;font-weight:650}
+    .sub{font-size:13.5px}
+    .tag{font-size:13px;font-weight:700}
+    .card{fill:#ffffff;stroke:#e1e0d9;stroke-width:1}
+    .flow{stroke:#898781;stroke-width:2.5;fill:none}
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#898781"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="480" fill="#fdf5eb"/>
+
+  <!-- 主链路：触发 → 自动测试 → 指标对比 -->
+  <rect class="card" x="60" y="70" width="330" height="130" rx="10"/>
+  <text class="t ink" x="225" y="115" text-anchor="middle">变更触发</text>
+  <text class="sub muted" x="225" y="150" text-anchor="middle">代码提交 · 模型更新</text>
+  <text class="sub muted" x="225" y="176" text-anchor="middle">配置变更 · 工具/数据源变化</text>
+
+  <rect class="card" x="475" y="70" width="330" height="130" rx="10"/>
+  <text class="t ink" x="640" y="115" text-anchor="middle">自动安全测试套件</text>
+  <text class="sub muted" x="640" y="150" text-anchor="middle">Promptfoo（CI 门控）· PyRIT（全面攻击）</text>
+  <text class="sub muted" x="640" y="176" text-anchor="middle">Garak（基线扫描）</text>
+
+  <rect class="card" x="890" y="70" width="330" height="130" rx="10"/>
+  <text class="t ink" x="1055" y="115" text-anchor="middle">指标 vs 基线对比</text>
+  <text class="sub muted" x="1055" y="150" text-anchor="middle">红队指标基线 · 可接受阈值</text>
+  <text class="sub muted" x="1055" y="176" text-anchor="middle">攻击成功率（ASR）等指标</text>
+
+  <line class="flow" x1="390"  y1="135" x2="469"  y2="135" marker-end="url(#ah)"/>
+  <line class="flow" x1="805"  y1="135" x2="884"  y2="135" marker-end="url(#ah)"/>
+
+  <!-- 分支：通过 / 阻断 -->
+  <line class="flow" x1="1055" y1="200" x2="1055" y2="235"/>
+  <line class="flow" x1="360" y1="235" x2="820" y2="235"/>
+  <line class="flow" x1="820" y1="235" x2="820" y2="256" marker-end="url(#ah)"/>
+  <line class="flow" x1="360" y1="235" x2="360" y2="256" marker-end="url(#ah)"/>
+
+  <rect class="card" x="640" y="262" width="360" height="110" rx="10"/>
+  <rect x="640" y="262" width="6" height="110" rx="3" fill="#0ca30c"/>
+  <text class="tag" x="672" y="292" fill="#006300">通过</text>
+  <text class="t ink" x="820" y="326" text-anchor="middle">继续部署流程</text>
+  <text class="sub muted" x="820" y="354" text-anchor="middle">记录本次指标为新基线参考</text>
+
+  <rect class="card" x="180" y="262" width="360" height="110" rx="10"/>
+  <rect x="180" y="262" width="6" height="110" rx="3" fill="#d03b3b"/>
+  <text class="tag" x="212" y="292" fill="#d03b3b">阈值突破</text>
+  <text class="t ink" x="360" y="326" text-anchor="middle">自动告警 + 阻断部署</text>
+  <text class="sub muted" x="360" y="354" text-anchor="middle">修复后重新进入测试</text>
+
+  <!-- 阻断 → 修复后回到测试 -->
+  <path class="flow" d="M180,317 H122 Q102,317 102,297 V68 Q102,48 122,48 H620 Q640,48 640,66" marker-end="url(#ah)"/>
+</svg>

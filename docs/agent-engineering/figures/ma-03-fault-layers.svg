@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 560" width="1280" height="560" role="img" aria-label="容错四层防线，不可恢复故障从 23% 降至 2% 以下">
+  <title>容错四层防线</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .t{font-size:17px;font-weight:650}
+    .sub{font-size:13.5px}
+    .layer{font-size:12.5px;font-weight:700;fill:#ffffff}
+    .stat{font-size:15px;font-weight:600}
+  </style>
+  <rect width="1280" height="560" fill="#fdf5eb"/>
+
+  <!-- 第一层 -->
+  <rect x="80" y="60" width="1120" height="96" rx="10" fill="#6da7ec"/>
+  <text class="layer" x="104" y="98">第一层</text>
+  <text class="t ink" x="104" y="132">指数退避重试</text>
+  <text class="sub" x="400" y="116" fill="#0b0b0b">瞬态错误：API 超时 · 速率限制 · 连接中断</text>
+  <text class="sub" x="400" y="140" fill="#0b0b0b">抖动（jitter）防雷群效应 · 跳过 ValueError / TypeError 等非瞬态错误 · 最多 3 次、退避因子 2.0</text>
+
+  <!-- 第二层 -->
+  <rect x="160" y="168" width="960" height="96" rx="10" fill="#2a78d6"/>
+  <text class="layer" x="184" y="206">第二层</text>
+  <text class="t" x="184" y="240" fill="#ffffff">模型降级链</text>
+  <text class="sub" x="460" y="224" fill="#ffffff">主模型 → 更便宜的替代模型 → 跨提供商模型</text>
+  <text class="sub" x="460" y="248" fill="rgba(255,255,255,0.9)">跨模型切换保留代理上下文 · 重试中间件放在降级之前</text>
+
+  <!-- 第三层 -->
+  <rect x="240" y="276" width="800" height="96" rx="10" fill="#1c5cab"/>
+  <text class="layer" x="264" y="314">第三层</text>
+  <text class="t" x="264" y="348" fill="#ffffff">错误分类与路由</text>
+  <text class="sub" x="520" y="332" fill="#ffffff">系统→重试 · LLM→带错误上下文回环（限 3 次）</text>
+  <text class="sub" x="520" y="356" fill="rgba(255,255,255,0.9)">人工→中断等待 · 开发者→冒泡上报</text>
+
+  <!-- 第四层 -->
+  <rect x="320" y="384" width="640" height="96" rx="10" fill="#0d366b"/>
+  <text class="layer" x="344" y="422">第四层</text>
+  <text class="t" x="344" y="456" fill="#ffffff">检查点恢复</text>
+  <text class="sub" x="560" y="440" fill="#ffffff">崩溃后从最后保存状态恢复 · 节点越小检查点越频繁</text>
+  <text class="sub" x="560" y="464" fill="rgba(255,255,255,0.9)">开发用 MemorySaver · 生产用 PostgresSaver</text>
+
+  <!-- 结果 -->
+  <text x="640" y="530" text-anchor="middle" font-size="15.5"><tspan fill="#52514e">14-Agent 生产系统实测：不可恢复故障</tspan><tspan font-weight="700" fill="#1c5cab">&#160;&#160;23% → &lt;2%</tspan></text>
+</svg>

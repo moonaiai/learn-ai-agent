@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 420" width="1280" height="420" role="img" aria-label="五种工作流模式示意：提示链、路由、并行化、编排器-工作者、评估器-优化器">
+  <title>Anthropic 五种工作流模式</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .t{font-size:15px;font-weight:650}
+    .s{font-size:12px}
+    .n{fill:#ffffff;stroke:#2a78d6;stroke-width:1.8}
+    .g{fill:#1c5cab}
+    .e{stroke:#c3c2b7;stroke-width:1.6;fill:none}
+    .cell{fill:#ffffff;stroke:#e1e0d9;stroke-width:1}
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#898781"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="420" fill="#fdf5eb"/>
+
+  <!-- 1 Prompt Chaining -->
+  <rect class="cell" x="20" y="30" width="230" height="330" rx="10"/>
+  <text class="t ink" x="135" y="60" text-anchor="middle">Prompt Chaining</text>
+  <rect class="n" x="95" y="90" width="80" height="34" rx="6"/>
+  <text class="s ink2" x="135" y="111" text-anchor="middle">LLM</text>
+  <circle class="g" cx="135" cy="147" r="7"/>
+  <text class="s" x="155" y="151" fill="#1c5cab">门控</text>
+  <rect class="n" x="95" y="176" width="80" height="34" rx="6"/>
+  <text class="s ink2" x="135" y="197" text-anchor="middle">LLM</text>
+  <circle class="g" cx="135" cy="233" r="7"/>
+  <rect class="n" x="95" y="262" width="80" height="34" rx="6"/>
+  <text class="s ink2" x="135" y="283" text-anchor="middle">LLM</text>
+  <line class="e" x1="135" y1="124" x2="135" y2="139" marker-end="url(#ah)"/>
+  <line class="e" x1="135" y1="210" x2="135" y2="225" marker-end="url(#ah)"/>
+  <line class="e" x1="135" y1="262" x2="135" y2="247" marker-end="url(#ah)"/>
+  <text class="s muted" x="135" y="340" text-anchor="middle">顺序分解 · 用延迟换准确率</text>
+
+  <!-- 2 Routing -->
+  <rect class="cell" x="265" y="30" width="230" height="330" rx="10"/>
+  <text class="t ink" x="380" y="60" text-anchor="middle">Routing</text>
+  <rect class="n" x="300" y="155" width="60" height="34" rx="6"/>
+  <text class="s ink2" x="330" y="176" text-anchor="middle">输入</text>
+  <path d="M378,132 L408,172 L378,212 L348,172 Z" fill="#1c5cab"/>
+  <text class="s" x="378" y="177" text-anchor="middle" fill="#ffffff">分类</text>
+  <rect class="n" x="420" y="100" width="60" height="30" rx="6"/>
+  <rect class="n" x="420" y="157" width="60" height="30" rx="6"/>
+  <rect class="n" x="420" y="214" width="60" height="30" rx="6"/>
+  <text class="s muted" x="450" y="119" text-anchor="middle">小模型</text>
+  <text class="s muted" x="450" y="176" text-anchor="middle">中模型</text>
+  <text class="s muted" x="450" y="233" text-anchor="middle">强模型</text>
+  <line class="e" x1="360" y1="172" x2="344" y2="172" marker-end="url(#ah)"/>
+  <line class="e" x1="398" y1="162" x2="416" y2="122" marker-end="url(#ah)"/>
+  <line class="e" x1="408" y1="172" x2="416" y2="172" marker-end="url(#ah)"/>
+  <line class="e" x1="398" y1="182" x2="416" y2="222" marker-end="url(#ah)"/>
+  <text class="s muted" x="380" y="340" text-anchor="middle">分类输入 · 导向专门化流程</text>
+
+  <!-- 3 Parallelization -->
+  <rect class="cell" x="510" y="30" width="230" height="330" rx="10"/>
+  <text class="t ink" x="625" y="60" text-anchor="middle">Parallelization</text>
+  <rect class="n" x="555" y="80" width="60" height="30" rx="6"/>
+  <text class="s ink2" x="585" y="99" text-anchor="middle">输入</text>
+  <rect class="n" x="525" y="165" width="60" height="30" rx="6"/>
+  <rect class="n" x="595" y="165" width="60" height="30" rx="6"/>
+  <text class="s muted" x="555" y="184" text-anchor="middle">并行 A</text>
+  <text class="s muted" x="625" y="184" text-anchor="middle">并行 B</text>
+  <rect class="n" x="555" y="255" width="60" height="30" rx="6"/>
+  <text class="s ink2" x="585" y="274" text-anchor="middle">聚合</text>
+  <line class="e" x1="575" y1="110" x2="552" y2="160" marker-end="url(#ah)"/>
+  <line class="e" x1="600" y1="110" x2="622" y2="160" marker-end="url(#ah)"/>
+  <line class="e" x1="552" y1="195" x2="575" y2="250" marker-end="url(#ah)"/>
+  <line class="e" x1="622" y1="195" x2="600" y2="250" marker-end="url(#ah)"/>
+  <text class="s muted" x="625" y="340" text-anchor="middle">Sectioning / Voting · 速度与多视角</text>
+
+  <!-- 4 Orchestrator-Workers -->
+  <rect class="cell" x="755" y="30" width="230" height="330" rx="10"/>
+  <text class="t ink" x="870" y="66" text-anchor="middle">Orchestrator-Workers</text>
+  <rect class="n" x="820" y="90" width="100" height="32" rx="6"/>
+  <text class="s ink2" x="870" y="110" text-anchor="middle">编排器</text>
+  <rect class="n" x="775" y="180" width="60" height="30" rx="6"/>
+  <rect class="n" x="840" y="180" width="60" height="30" rx="6"/>
+  <rect class="n" x="905" y="180" width="60" height="30" rx="6"/>
+  <text class="s muted" x="805" y="199" text-anchor="middle">W1</text>
+  <text class="s muted" x="870" y="199" text-anchor="middle">W2</text>
+  <text class="s muted" x="935" y="199" text-anchor="middle">W3</text>
+  <rect class="n" x="820" y="258" width="100" height="32" rx="6"/>
+  <text class="s ink2" x="870" y="278" text-anchor="middle">综合结果</text>
+  <line class="e" x1="850" y1="122" x2="812" y2="176" marker-end="url(#ah)"/>
+  <line class="e" x1="870" y1="122" x2="870" y2="176" marker-end="url(#ah)"/>
+  <line class="e" x1="890" y1="122" x2="928" y2="176" marker-end="url(#ah)"/>
+  <line class="e" x1="812" y1="210" x2="848" y2="254" marker-end="url(#ah)"/>
+  <line class="e" x1="870" y1="210" x2="870" y2="254" marker-end="url(#ah)"/>
+  <line class="e" x1="928" y1="210" x2="892" y2="254" marker-end="url(#ah)"/>
+  <text class="s muted" x="870" y="340" text-anchor="middle">运行时动态分解 · 灵活</text>
+
+  <!-- 5 Evaluator-Optimizer -->
+  <rect class="cell" x="1000" y="30" width="230" height="330" rx="10"/>
+  <text class="t ink" x="1115" y="60" text-anchor="middle">Evaluator-Optimizer</text>
+  <rect class="n" x="1040" y="120" width="150" height="36" rx="6"/>
+  <text class="s ink2" x="1115" y="142" text-anchor="middle">生成器 LLM</text>
+  <rect class="n" x="1040" y="230" width="150" height="36" rx="6"/>
+  <text class="s ink2" x="1115" y="252" text-anchor="middle">评估器 LLM</text>
+  <path class="e" d="M1115,156 V226" marker-end="url(#ah)"/>
+  <path class="e" d="M1160,230 C1210,200 1210,180 1168,158" marker-end="url(#ah)"/>
+  <text class="s muted" x="1200" y="196">反馈</text>
+  <text class="s muted" x="1128" y="196">响应</text>
+  <text class="s muted" x="1115" y="340" text-anchor="middle">迭代循环 · 可度量的持续改进</text>
+
+  <text class="ink2" x="640" y="398" text-anchor="middle" font-size="15" font-weight="600">从简单到复杂的渐进式工具箱——最成功的实现用简单、可组合的模式构建</text>
+</svg>

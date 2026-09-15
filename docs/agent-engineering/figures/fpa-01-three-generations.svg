@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 450" width="1280" height="450" role="img" aria-label="三代范式演进时间线：Prompt、Context、Harness Engineering">
+  <title>三代范式演进时间线</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .era{font-size:13px;font-weight:700}
+    .t{font-size:19px;font-weight:650}
+    .q{font-size:16px;font-weight:600}
+    .sub{font-size:13.5px}
+    .flow{stroke:#898781;stroke-width:2.5;fill:none}
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#898781"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="450" fill="#fdf5eb"/>
+
+  <!-- 阶段 1 -->
+  <text class="era" x="240" y="62" text-anchor="middle" fill="#6da7ec">2022 - 2024</text>
+  <rect x="60" y="80" width="360" height="230" rx="12" fill="#ffffff" stroke="#e1e0d9"/>
+  <rect x="60" y="80" width="360" height="6" rx="3" fill="#6da7ec"/>
+  <text class="t ink" x="240" y="130" text-anchor="middle">Prompt Engineering</text>
+  <text class="q" x="240" y="172" text-anchor="middle" fill="#2a78d6">"说什么？"</text>
+  <text class="sub ink2" x="240" y="216" text-anchor="middle">工程产物：Prompt 模板</text>
+  <text class="sub muted" x="240" y="246" text-anchor="middle">代表：ChatGPT · 早期 Copilot</text>
+  <text class="sub muted" x="240" y="276" text-anchor="middle">主要挑战：非确定性</text>
+
+  <!-- 阶段 2 -->
+  <text class="era" x="640" y="62" text-anchor="middle" fill="#2a78d6">2025</text>
+  <rect x="460" y="80" width="360" height="230" rx="12" fill="#ffffff" stroke="#e1e0d9"/>
+  <rect x="460" y="80" width="360" height="6" rx="3" fill="#2a78d6"/>
+  <text class="t ink" x="640" y="130" text-anchor="middle">Context Engineering</text>
+  <text class="q" x="640" y="172" text-anchor="middle" fill="#2a78d6">"提供什么信息？"</text>
+  <text class="sub ink2" x="640" y="216" text-anchor="middle">工程产物：RAG 管线 / Context Hub</text>
+  <text class="sub muted" x="640" y="246" text-anchor="middle">代表：Cursor Composer · RAG 管线</text>
+  <text class="sub muted" x="640" y="276" text-anchor="middle">主要挑战：上下文污染</text>
+
+  <!-- 阶段 3 -->
+  <text class="era" x="1040" y="62" text-anchor="middle" fill="#1c5cab">2026+</text>
+  <rect x="860" y="80" width="360" height="230" rx="12" fill="#ffffff" stroke="#e1e0d9"/>
+  <rect x="860" y="80" width="360" height="6" rx="3" fill="#1c5cab"/>
+  <text class="t ink" x="1040" y="130" text-anchor="middle">Harness Engineering</text>
+  <text class="q" x="1040" y="172" text-anchor="middle" fill="#2a78d6">"构建什么系统？"</text>
+  <text class="sub ink2" x="1040" y="216" text-anchor="middle">工程产物：Agent Harness 系统</text>
+  <text class="sub muted" x="1040" y="246" text-anchor="middle">代表：Claude Code · Copilot Coding Agent</text>
+  <text class="sub muted" x="1040" y="276" text-anchor="middle">主要挑战：编排失败</text>
+
+  <line class="flow" x1="424" y1="195" x2="452" y2="195" marker-end="url(#ah)"/>
+  <line class="flow" x1="824" y1="195" x2="852" y2="195" marker-end="url(#ah)"/>
+
+  <!-- 底部：严谨性迁移 -->
+  <rect x="60" y="340" width="1160" height="70" rx="10" fill="#1c5cab"/>
+  <text x="640" y="372" text-anchor="middle" font-size="15" fill="rgba(255,255,255,0.85)">工程严谨性的迁移路径</text>
+  <text x="640" y="396" text-anchor="middle" font-size="15.5" font-weight="650" fill="#ffffff">指令层 → 信息架构层 → 系统架构层 —— 严谨性不会消失，只会迁移到更高层次的抽象</text>
+</svg>

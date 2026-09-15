@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-label="GPT-4 与 GPT-3.5 在质数判断任务上的准确率变化（2023年3月 vs 6月）">
+  <title>模型漂移：GPT-4 质数判断准确率 97.6% → 2.4%</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .val{font-size:17px;font-weight:600}
+    .xt{font-size:16.5px}
+    .yt{font-size:14px}
+    .leg{font-size:15px;fill:#52514e}
+    .note{font-size:15px}
+    .grid{stroke:#e1e0d9;stroke-width:1}
+  </style>
+  <rect width="1280" height="640" fill="#fdf5eb"/>
+
+  <!-- 网格 -->
+  <g>
+    <line class="grid" x1="120" y1="90"    x2="1180" y2="90"/>
+    <line class="grid" x1="120" y1="192.5" x2="1180" y2="192.5"/>
+    <line class="grid" x1="120" y1="295"   x2="1180" y2="295"/>
+    <line class="grid" x1="120" y1="397.5" x2="1180" y2="397.5"/>
+  </g>
+  <!-- 基线 -->
+  <line x1="120" y1="500" x2="1180" y2="500" stroke="#c3c2b7" stroke-width="1.5"/>
+
+  <!-- Y 轴刻度 -->
+  <g class="yt muted" text-anchor="end">
+    <text x="104" y="95">100%</text>
+    <text x="104" y="197.5">75%</text>
+    <text x="104" y="300">50%</text>
+    <text x="104" y="402.5">25%</text>
+    <text x="104" y="505">0%</text>
+  </g>
+
+  <!-- 图例 -->
+  <g>
+    <rect x="985" y="44" width="14" height="14" rx="3" fill="#2a78d6"/>
+    <text class="leg" x="1007" y="56">GPT-4</text>
+    <rect x="1095" y="44" width="14" height="14" rx="3" fill="#eb6834"/>
+    <text class="leg" x="1117" y="56">GPT-3.5</text>
+  </g>
+
+  <!-- 2023年3月：GPT-4 97.6% / GPT-3.5 7.4% -->
+  <path d="M425,500 V103.84 Q425,99.84 429,99.84 H445 Q449,99.84 449,103.84 V500 Z" fill="#2a78d6"/>
+  <text class="val ink" x="437" y="88" text-anchor="middle">97.6%</text>
+  <path d="M451,500 V473.66 Q451,469.66 455,469.66 H471 Q475,469.66 475,473.66 V500 Z" fill="#eb6834"/>
+  <text class="val ink" x="463" y="459.66" text-anchor="middle">7.4%</text>
+
+  <!-- 2023年6月：GPT-4 2.4% / GPT-3.5 86.8% -->
+  <path d="M825,500 V494.16 Q825,490.16 829,490.16 H845 Q849,490.16 849,494.16 V500 Z" fill="#2a78d6"/>
+  <text class="val ink" x="837" y="480.16" text-anchor="middle">2.4%</text>
+  <path d="M851,500 V148.12 Q851,144.12 855,144.12 H871 Q875,144.12 875,148.12 V500 Z" fill="#eb6834"/>
+  <text class="val ink" x="863" y="134.12" text-anchor="middle">86.8%</text>
+
+  <!-- X 轴组标签 -->
+  <g class="xt ink2" text-anchor="middle">
+    <text x="450" y="540">2023年3月</text>
+    <text x="850" y="540">2023年6月</text>
+  </g>
+  <text class="note muted" x="650" y="584" text-anchor="middle">任务：判断 17077 是否为质数 · 同一模型相隔 3 个月的两个版本</text>
+</svg>

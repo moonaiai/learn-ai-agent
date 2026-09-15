@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 400" width="1280" height="400" role="img" aria-label="生产环境障碍占比：质量 32%、安全 24.9%、延迟 20%">
+  <title>Agent 生产部署的主要障碍</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .name{font-size:17.5px;font-weight:600}
+    .val{font-size:17px;font-weight:600}
+    .tick{font-size:13.5px}
+    .grid{stroke:#e1e0d9;stroke-width:1}
+  </style>
+  <rect width="1280" height="400" fill="#fdf5eb"/>
+
+  <g>
+    <line class="grid" x1="420" y1="70" x2="420" y2="300"/>
+    <line class="grid" x1="570" y1="70" x2="570" y2="300"/>
+    <line class="grid" x1="720" y1="70" x2="720" y2="300"/>
+    <line class="grid" x1="870" y1="70" x2="870" y2="300"/>
+  </g>
+  <line x1="420" y1="66" x2="420" y2="300" stroke="#c3c2b7" stroke-width="1.5"/>
+
+  <text class="name ink" x="390" y="112" text-anchor="end">质量（一致性 · 准确性 · 语调）</text>
+  <path d="M420,94 H900 Q904,94 904,98 V116 Q904,120 900,120 H420 Z" fill="#1c5cab"/>
+  <text class="val ink" x="916" y="112">32%</text>
+
+  <text class="name ink" x="390" y="202" text-anchor="end">安全</text>
+  <path d="M420,184 H793.5 Q797.5,184 797.5,188 V206 Q797.5,210 793.5,210 H420 Z" fill="#2a78d6"/>
+  <text class="val ink" x="809" y="202">24.9%</text>
+
+  <text class="name ink" x="390" y="292" text-anchor="end">延迟</text>
+  <path d="M420,274 H734 Q738,274 738,278 V296 Q738,300 734,300 H420 Z" fill="#6da7ec"/>
+  <text class="val ink" x="750" y="292">20%</text>
+
+  <g class="tick muted" text-anchor="middle">
+    <text x="420" y="330">0</text>
+    <text x="570" y="330">10%</text>
+    <text x="720" y="330">20%</text>
+    <text x="870" y="330">30%</text>
+  </g>
+  <text class="ink2" x="640" y="376" text-anchor="middle" font-size="15.5" font-weight="600">可靠性鸿沟：57.3% 已部署生产，而 Gartner 预测超 40% 的 Agentic AI 项目将在 2027 年前被取消</text>
+</svg>

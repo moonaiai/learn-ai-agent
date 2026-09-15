@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 760" width="1280" height="760" role="img" aria-label="分层防御架构：输入护栏、LLM、输出护栏、沙箱工具执行、HITL 审批，全程监控审计">
+  <title>分层防御架构（Defense-in-Depth）</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .t{font-size:18px;font-weight:650}
+    .chip{font-size:14.5px;font-weight:600}
+    .sub{font-size:14px}
+    .side{font-size:14px}
+    .card{fill:#ffffff;stroke:#e1e0d9;stroke-width:1}
+    .flow{stroke:#898781;stroke-width:2.5;fill:none}
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#898781"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="760" fill="#fdf5eb"/>
+
+  <!-- 用户请求 -->
+  <text class="chip ink2" x="640" y="46" text-anchor="middle">用户请求</text>
+  <line x1="640" y1="58" x2="640" y2="88" class="flow" marker-end="url(#ah)"/>
+
+  <!-- 输入护栏 -->
+  <rect class="card" x="240" y="94" width="800" height="104" rx="10"/>
+  <rect x="240" y="94" width="6" height="104" rx="3" fill="#2a78d6"/>
+  <text class="t ink" x="640" y="130" text-anchor="middle">输入护栏（到达 LLM 之前）</text>
+  <text class="sub muted" x="640" y="166" text-anchor="middle">意图分类 · Prompt 注入检测（启发式 / LLM 分析 / 历史攻击匹配） · 敏感词过滤与内容分级</text>
+  <line x1="640" y1="198" x2="640" y2="228" class="flow" marker-end="url(#ah)"/>
+
+  <!-- LLM + harness -->
+  <rect class="card" x="240" y="234" width="800" height="104" rx="10"/>
+  <rect x="240" y="234" width="6" height="104" rx="3" fill="#1c5cab"/>
+  <text class="t ink" x="640" y="266" text-anchor="middle">LLM · 确定性 Harness 层</text>
+  <text class="sub muted" x="640" y="302" text-anchor="middle">永不直接调用工具 · 返回结构化工具调用请求 · 验证 schema 与权限后执行</text>
+  <line x1="640" y1="338" x2="640" y2="368" class="flow" marker-end="url(#ah)"/>
+
+  <!-- 输出护栏 -->
+  <rect class="card" x="240" y="374" width="800" height="104" rx="10"/>
+  <rect x="240" y="374" width="6" height="104" rx="3" fill="#2a78d6"/>
+  <text class="t ink" x="640" y="410" text-anchor="middle">输出护栏（返回用户 / 触发工具之前）</text>
+  <text class="sub muted" x="640" y="446" text-anchor="middle">格式验证（JSON schema） · PII 脱敏 · 有害内容过滤 · 工具调用范围与参数校验</text>
+  <line x1="640" y1="478" x2="640" y2="508" class="flow" marker-end="url(#ah)"/>
+
+  <!-- 沙箱执行 -->
+  <rect class="card" x="240" y="514" width="800" height="104" rx="10"/>
+  <rect x="240" y="514" width="6" height="104" rx="3" fill="#eb6834"/>
+  <text class="t ink" x="640" y="550" text-anchor="middle">工具执行 · 沙箱与权限</text>
+  <text class="sub muted" x="640" y="586" text-anchor="middle">微虚拟机 / gVisor 隔离 · 最小权限 · 即时授权（JIT）· 出口网络控制</text>
+
+  <!-- 分支：低风险自动 / 高风险 HITL -->
+  <path d="M480,618 V648 Q480,653 485,653 H420" class="flow" marker-end="url(#ah)"/>
+  <path d="M800,618 V653 Q800,653 805,653 H860" class="flow" marker-end="url(#ah)"/>
+  <rect class="card" x="80" y="620" width="330" height="100" rx="10"/>
+  <text class="t ink" x="245" y="658" text-anchor="middle" font-size="16.5">低风险操作</text>
+  <text class="sub muted" x="245" y="690" text-anchor="middle">自动执行 · 异步审计</text>
+  <rect class="card" x="870" y="620" width="330" height="100" rx="10"/>
+  <text class="t ink" x="1035" y="658" text-anchor="middle" font-size="16.5">高风险操作 · HITL</text>
+  <text class="sub muted" x="1035" y="690" text-anchor="middle">同步等待人工审批</text>
+
+  <!-- 右侧纵贯：监控审计 -->
+  <rect x="1150" y="94" width="70" height="520" rx="10" fill="#fdf5eb" stroke="#e1e0d9"/>
+  <text class="side ink2" x="1185" y="354" text-anchor="middle" transform="rotate(90 1185 354)">全程监控 · 审计日志</text>
+</svg>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 400" width="1280" height="400" role="img" aria-label="部署-评测鸿沟：57.3% 生产部署、52.4% 离线评测、37.3% 在线评测">
+  <title>部署-评测鸿沟</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .name{font-size:17.5px;font-weight:600}
+    .sub{font-size:13.5px}
+    .val{font-size:17px;font-weight:600}
+    .tick{font-size:13.5px}
+    .grid{stroke:#e1e0d9;stroke-width:1}
+  </style>
+  <rect width="1280" height="400" fill="#fdf5eb"/>
+
+  <g>
+    <line class="grid" x1="420" y1="60" x2="420" y2="300"/>
+    <line class="grid" x1="645" y1="60" x2="645" y2="300"/>
+    <line class="grid" x1="870" y1="60" x2="870" y2="300"/>
+    <line class="grid" x1="1095" y1="60" x2="1095" y2="300"/>
+  </g>
+  <line x1="420" y1="56" x2="420" y2="300" stroke="#c3c2b7" stroke-width="1.5"/>
+
+  <text class="name ink" x="390" y="107" text-anchor="end">已将 Agent 部署到生产环境</text>
+  <text class="sub muted" x="390" y="130" text-anchor="end">LangChain 2025 年调查</text>
+  <path d="M420,92 H878 Q882,92 882,96 V112 Q882,116 878,116 H420 Z" fill="#1c5cab"/>
+  <text class="val ink" x="894" y="109">57.3%</text>
+
+  <text class="name ink" x="390" y="197" text-anchor="end">运行离线评测</text>
+  <text class="sub muted" x="390" y="220" text-anchor="end">部署前的质量关卡</text>
+  <path d="M420,182 H821 Q825,182 825,186 V202 Q825,206 821,206 H420 Z" fill="#2a78d6"/>
+  <text class="val ink" x="837" y="199">52.4%</text>
+
+  <text class="name ink" x="390" y="287" text-anchor="end">运行在线评测</text>
+  <text class="sub muted" x="390" y="310" text-anchor="end">生产流量的持续监控</text>
+  <path d="M420,272 H649 Q653,272 653,276 V292 Q653,296 649,296 H420 Z" fill="#6da7ec"/>
+  <text class="val ink" x="665" y="289">37.3%</text>
+
+  <g class="tick muted" text-anchor="middle">
+    <text x="420" y="330">0</text>
+    <text x="645" y="330">25%</text>
+    <text x="870" y="330">50%</text>
+    <text x="1095" y="330">75%</text>
+  </g>
+  <text class="ink2" x="640" y="376" text-anchor="middle" font-size="15.5" font-weight="600">部署速度领先评测成熟度——能看到 Agent 在做什么 ≠ 知道它做得好不好</text>
+</svg>

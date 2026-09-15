@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 460" width="1280" height="460" role="img" aria-label="多 Agent 系统的 token 成本放大阶梯">
+  <title>多 Agent 成本放大：单 Agent → 三 Agent → 无隔离多 Agent</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .name{font-size:17px;font-weight:600}
+    .sub{font-size:13.5px}
+    .val{font-size:16.5px;font-weight:600}
+    .tick{font-size:13.5px}
+    .foot{font-size:15px}
+    .grid{stroke:#e1e0d9;stroke-width:1}
+  </style>
+  <rect width="1280" height="460" fill="#fdf5eb"/>
+
+  <!-- 纵向网格线 -->
+  <g>
+    <line class="grid" x1="540"  y1="70" x2="540"  y2="360"/>
+    <line class="grid" x1="720"  y1="70" x2="720"  y2="360"/>
+    <line class="grid" x1="900"  y1="70" x2="900"  y2="360"/>
+    <line class="grid" x1="1080" y1="70" x2="1080" y2="360"/>
+  </g>
+
+  <!-- 基线 -->
+  <line x1="360" y1="64" x2="360" y2="360" stroke="#c3c2b7" stroke-width="1.5"/>
+
+  <!-- 行 1：单 Agent 10,000 token -->
+  <text class="name ink" x="330" y="107" text-anchor="end">单 Agent</text>
+  <text class="sub muted" x="330" y="130" text-anchor="end">简单工具调用 Agent：5,000-15,000 token</text>
+  <path d="M360,100 H446 Q450,100 450,104 V120 Q450,124 446,124 H360 Z" fill="#6da7ec"/>
+  <text class="val ink" x="462" y="117">10,000 token</text>
+
+  <!-- 行 2：三 Agent 29,000 token -->
+  <text class="name ink" x="330" y="207" text-anchor="end">三 Agent Pipeline</text>
+  <text class="sub muted" x="330" y="230" text-anchor="end">协调开销在每次交接时叠加</text>
+  <path d="M360,200 H617 Q621,200 621,204 V220 Q621,224 617,224 H360 Z" fill="#2a78d6"/>
+  <text class="val ink" x="633" y="217">29,000 token · ×2.9</text>
+
+  <!-- 行 3：多 Agent（无隔离）85,000 token -->
+  <text class="name ink" x="330" y="307" text-anchor="end">多 Agent（无上下文隔离）</text>
+  <text class="sub muted" x="330" y="330" text-anchor="end">执行相同任务的典型放大倍数</text>
+  <path d="M360,300 H1121 Q1125,300 1125,304 V320 Q1125,324 1121,324 H360 Z" fill="#1c5cab"/>
+  <text class="val ink" x="1125" y="290" text-anchor="end">≈85,000 token · ×8.5</text>
+
+  <!-- 横轴刻度 -->
+  <g class="tick muted" text-anchor="middle">
+    <text x="360" y="388">0</text>
+    <text x="540" y="388">20,000</text>
+    <text x="720" y="388">40,000</text>
+    <text x="900" y="388">60,000</text>
+    <text x="1080" y="388">80,000</text>
+  </g>
+  <text class="tick muted" x="1180" y="388" text-anchor="end">token / 任务</text>
+
+  <!-- 底注 -->
+  <text class="foot ink2" x="640" y="436" text-anchor="middle">最危险的经济陷阱：无显式上下文纪律时，成本随 Agent 数量近二次增长</text>
+</svg>

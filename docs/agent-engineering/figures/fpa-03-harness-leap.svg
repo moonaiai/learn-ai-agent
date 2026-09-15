@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 400" width="1280" height="400" role="img" aria-label="仅修改 Harness：基准成功率从 42% 跃升至 78%">
+  <title>Harness 的决定性作用：42% → 78%</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .name{font-size:17px;font-weight:600}
+    .sub{font-size:13.5px}
+    .val{font-size:20px;font-weight:650}
+    .tick{font-size:13.5px}
+    .grid{stroke:#e1e0d9;stroke-width:1}
+  </style>
+  <rect width="1280" height="400" fill="#fdf5eb"/>
+
+  <g>
+    <line class="grid" x1="420" y1="60" x2="420" y2="300"/>
+    <line class="grid" x1="580" y1="60" x2="580" y2="300"/>
+    <line class="grid" x1="740" y1="60" x2="740" y2="300"/>
+    <line class="grid" x1="900" y1="60" x2="900" y2="300"/>
+    <line class="grid" x1="1060" y1="60" x2="1060" y2="300"/>
+  </g>
+  <line x1="420" y1="56" x2="420" y2="300" stroke="#c3c2b7" stroke-width="1.5"/>
+
+  <text class="name ink" x="390" y="117" text-anchor="end">原运行时环境</text>
+  <text class="sub muted" x="390" y="144" text-anchor="end">相同的模型 · 数据 · prompt</text>
+  <path d="M420,94 H756 Q760,94 760,98 V126 Q760,130 756,130 H420 Z" fill="#6da7ec"/>
+  <text class="val" x="776" y="119" fill="#52514e">42%</text>
+
+  <text class="name ink" x="390" y="247" text-anchor="end">仅修改 Harness</text>
+  <text class="sub muted" x="390" y="274" text-anchor="end">运行时环境的系统级改造</text>
+  <path d="M420,224 H1044 Q1048,224 1048,228 V256 Q1048,260 1044,260 H420 Z" fill="#1c5cab"/>
+  <text class="val ink" x="1064" y="249">78%</text>
+
+  <g class="tick muted" text-anchor="middle">
+    <text x="420" y="330">0</text>
+    <text x="580" y="330">20%</text>
+    <text x="740" y="330">40%</text>
+    <text x="900" y="330">60%</text>
+    <text x="1060" y="330">80%</text>
+  </g>
+  <text class="ink2" x="640" y="376" text-anchor="middle" font-size="15.5" font-weight="600">基准测试对照实验：+36 个百分点全部来自 Harness，而非模型能力</text>
+</svg>

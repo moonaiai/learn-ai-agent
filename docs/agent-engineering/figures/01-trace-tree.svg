@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-label="传统线性调用链与 Agent 树状 trace 对比">
+  <title>传统微服务线性调用链 vs Agent 树状决策图</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .mono{font-family:'SFMono-Regular',Menlo,Consolas,'Liberation Mono',monospace}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .h{font-size:20px;font-weight:650}
+    .lbl{font-size:17px;font-weight:600}
+    .note{font-size:14.5px}
+    .leg{font-size:15px}
+    .edge{stroke:#c3c2b7;stroke-width:2;fill:none}
+    .node{fill:#ffffff;stroke-width:2;rx:8}
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c3c2b7"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="640" fill="#fdf5eb"/>
+
+  <!-- ===== 左：传统线性调用链 ===== -->
+  <text class="h ink" x="320" y="52" text-anchor="middle">传统微服务：线性调用链</text>
+  <g>
+    <rect x="200" y="100" width="240" height="56" rx="8" fill="#ffffff" stroke="#c3c2b7" stroke-width="1.5"/>
+    <text class="lbl ink" x="320" y="135" text-anchor="middle">API 网关</text>
+    <rect x="200" y="220" width="240" height="56" rx="8" fill="#ffffff" stroke="#c3c2b7" stroke-width="1.5"/>
+    <text class="lbl ink" x="320" y="255" text-anchor="middle">服务 A</text>
+    <rect x="200" y="340" width="240" height="56" rx="8" fill="#ffffff" stroke="#c3c2b7" stroke-width="1.5"/>
+    <text class="lbl ink" x="320" y="375" text-anchor="middle">服务 B</text>
+    <rect x="200" y="460" width="240" height="56" rx="8" fill="#ffffff" stroke="#c3c2b7" stroke-width="1.5"/>
+    <text class="lbl ink" x="320" y="495" text-anchor="middle">数据库</text>
+    <line class="edge" x1="320" y1="156" x2="320" y2="214" marker-end="url(#ah)"/>
+    <line class="edge" x1="320" y1="276" x2="320" y2="334" marker-end="url(#ah)"/>
+    <line class="edge" x1="320" y1="396" x2="320" y2="454" marker-end="url(#ah)"/>
+  </g>
+  <text class="note muted" x="320" y="568" text-anchor="middle">一条请求链 · 同一输入预期相同输出，偏差即缺陷</text>
+
+  <!-- ===== 右：Agent 树状 trace ===== -->
+  <text class="h ink" x="960" y="52" text-anchor="middle">Agent 运行：树状决策图</text>
+  <!-- 根节点 -->
+  <rect x="860" y="96" width="200" height="50" rx="8" fill="#ffffff" stroke="#2a78d6" stroke-width="2"/>
+  <text class="lbl ink" x="960" y="128" text-anchor="middle"><tspan class="mono">invoke_agent</tspan></text>
+  <!-- L2：chat / execute_tool / execute_tool -->
+  <rect x="744" y="236" width="136" height="46" rx="8" fill="#ffffff" stroke="#2a78d6" stroke-width="2"/>
+  <text class="lbl ink" x="812" y="266" text-anchor="middle"><tspan class="mono">chat</tspan></text>
+  <rect x="892" y="236" width="136" height="46" rx="8" fill="#ffffff" stroke="#eb6834" stroke-width="2"/>
+  <text class="lbl ink" x="960" y="266" text-anchor="middle"><tspan class="mono">execute_tool</tspan></text>
+  <rect x="1040" y="236" width="136" height="46" rx="8" fill="#ffffff" stroke="#eb6834" stroke-width="2"/>
+  <text class="lbl ink" x="1108" y="266" text-anchor="middle"><tspan class="mono">execute_tool</tspan></text>
+  <!-- L3：子 Agent -->
+  <rect x="860" y="376" width="200" height="50" rx="8" fill="#ffffff" stroke="#1baf7a" stroke-width="2"/>
+  <text class="lbl ink" x="960" y="408" text-anchor="middle"><tspan class="mono">invoke_agent</tspan></text>
+  <text class="note ink2" x="1082" y="407">子 Agent</text>
+  <!-- L4：子 Agent 的孩子 -->
+  <rect x="775" y="500" width="150" height="46" rx="8" fill="#ffffff" stroke="#2a78d6" stroke-width="2"/>
+  <text class="lbl ink" x="850" y="530" text-anchor="middle"><tspan class="mono">chat</tspan></text>
+  <rect x="995" y="500" width="150" height="46" rx="8" fill="#ffffff" stroke="#eb6834" stroke-width="2"/>
+  <text class="lbl ink" x="1070" y="530" text-anchor="middle"><tspan class="mono">execute_tool</tspan></text>
+  <!-- 连线：根 → L2 -->
+  <path class="edge" d="M935,146 V196 Q935,201 930,201 H817 Q812,201 812,206 V230" marker-end="url(#ah)"/>
+  <line class="edge" x1="960" y1="146" x2="960" y2="230" marker-end="url(#ah)"/>
+  <path class="edge" d="M985,146 V196 Q985,201 990,201 H1103 Q1108,201 1108,206 V230" marker-end="url(#ah)"/>
+  <!-- 连线：execute_tool → 子 Agent -->
+  <line class="edge" x1="960" y1="282" x2="960" y2="370" marker-end="url(#ah)"/>
+  <!-- 连线：子 Agent → L4 -->
+  <path class="edge" d="M935,426 V456 Q935,461 930,461 H855 Q850,461 850,466 V494" marker-end="url(#ah)"/>
+  <path class="edge" d="M985,426 V456 Q985,461 990,461 H1065 Q1070,461 1070,466 V494" marker-end="url(#ah)"/>
+
+  <!-- 图例 -->
+  <g>
+    <circle cx="380" cy="602" r="6" fill="#2a78d6"/>
+    <text class="leg ink2" x="394" y="607"><tspan class="mono">chat</tspan> · 模型调用</text>
+    <circle cx="580" cy="602" r="6" fill="#eb6834"/>
+    <text class="leg ink2" x="594" y="607"><tspan class="mono">execute_tool</tspan> · 工具执行</text>
+    <circle cx="830" cy="602" r="6" fill="#1baf7a"/>
+    <text class="leg ink2" x="844" y="607"><tspan class="mono">invoke_agent</tspan> · 子 Agent（递归嵌套）</text>
+  </g>
+</svg>

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 400" width="1280" height="400" role="img" aria-label="安全防御准备度缺口：97% 预期重大事件 vs 34% 受注入影响 vs 14.4% 有完整控制">
+  <title>安全防御准备度缺口</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .name{font-size:17.5px;font-weight:600}
+    .sub{font-size:13.5px}
+    .val{font-size:17px;font-weight:600}
+    .tick{font-size:13.5px}
+    .grid{stroke:#e1e0d9;stroke-width:1}
+  </style>
+  <rect width="1280" height="400" fill="#fdf5eb"/>
+
+  <g>
+    <line class="grid" x1="420" y1="60" x2="420" y2="300"/>
+    <line class="grid" x1="645" y1="60" x2="645" y2="300"/>
+    <line class="grid" x1="870" y1="60" x2="870" y2="300"/>
+    <line class="grid" x1="1095" y1="60" x2="1095" y2="300"/>
+  </g>
+  <line x1="420" y1="56" x2="420" y2="300" stroke="#c3c2b7" stroke-width="1.5"/>
+
+  <!-- 97% -->
+  <text class="name ink" x="390" y="107" text-anchor="end">预期发生重大 AI 安全事件</text>
+  <text class="sub muted" x="390" y="130" text-anchor="end">全球安全调查 · 安全负责人</text>
+  <path d="M420,92 H1127 Q1131,92 1131,96 V112 Q1131,116 1127,116 H420 Z" fill="#1c5cab"/>
+  <text class="val ink" x="1143" y="109">97%</text>
+
+  <!-- 34% -->
+  <text class="name ink" x="390" y="197" text-anchor="end">已部署 Agent 受 Prompt 注入影响</text>
+  <text class="sub muted" x="390" y="220" text-anchor="end">OWASP LLM Top 10 (2025) 榜首</text>
+  <path d="M420,182 H697 Q701,182 701,186 V202 Q701,206 697,206 H420 Z" fill="#2a78d6"/>
+  <text class="val ink" x="713" y="199">34%</text>
+
+  <!-- 14.4% -->
+  <text class="name ink" x="390" y="287" text-anchor="end">部署前实施完整安全控制</text>
+  <text class="sub muted" x="390" y="310" text-anchor="end">组织占比</text>
+  <path d="M420,272 H534 Q538,272 538,276 V292 Q538,296 534,296 H420 Z" fill="#6da7ec"/>
+  <text class="val ink" x="550" y="289">14.4%</text>
+
+  <g class="tick muted" text-anchor="middle">
+    <text x="420" y="330">0</text>
+    <text x="645" y="330">25%</text>
+    <text x="870" y="330">50%</text>
+    <text x="1095" y="330">75%</text>
+  </g>
+  <text class="ink2" x="640" y="376" text-anchor="middle" font-size="15.5" font-weight="600">防御准备度缺口：风险预期与安全投入之间的鸿沟</text>
+</svg>

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 520" width="1280" height="520" role="img" aria-label="MCP 与 A2A 双轨互补：Agent-to-Tool 与 Agent-to-Agent">
+  <title>通信协议双轨制：MCP + A2A</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .t{font-size:18px;font-weight:650}
+    .sub{font-size:13.5px}
+    .tag{font-size:12.5px;font-weight:700}
+    .n{fill:#ffffff;stroke-width:2}
+    .e{stroke:#c3c2b7;stroke-width:1.8;fill:none}
+    .cell{fill:#ffffff;stroke:#e1e0d9;stroke-width:1}
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#898781"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="520" fill="#fdf5eb"/>
+
+  <!-- 左：MCP -->
+  <rect class="cell" x="50" y="50" width="540" height="380" rx="12"/>
+  <text class="tag" x="80" y="86" fill="#2a78d6">Agent → Tool</text>
+  <text class="t ink" x="80" y="122">MCP · Model Context Protocol</text>
+  <circle class="n" cx="200" cy="230" r="16" stroke="#2a78d6"/>
+  <text class="sub ink2" x="200" y="235" text-anchor="middle" font-weight="700">Agent</text>
+  <circle class="n" cx="90" cy="340" r="13" stroke="#6da7ec"/>
+  <circle class="n" cx="200" cy="360" r="13" stroke="#6da7ec"/>
+  <circle class="n" cx="310" cy="340" r="13" stroke="#6da7ec"/>
+  <line class="e" x1="190" y1="244" x2="96" y2="329"/>
+  <line class="e" x1="200" y1="246" x2="200" y2="345"/>
+  <line class="e" x1="210" y1="244" x2="304" y2="329"/>
+  <text class="s muted" x="90" y="378" text-anchor="middle">工具</text>
+  <text class="s muted" x="200" y="398" text-anchor="middle">上下文</text>
+  <text class="s muted" x="310" y="378" text-anchor="middle">数据源</text>
+  <text class="sub ink2" x="470" y="180" text-anchor="middle">Anthropic · 2024 年底</text>
+  <text class="sub muted" x="470" y="210" text-anchor="middle">客户端-服务器 · hub-and-spoke 架构</text>
+  <text class="sub muted" x="470" y="240" text-anchor="middle">标准化代理访问工具与上下文的方式</text>
+  <text class="sub ink2" x="470" y="270" text-anchor="middle">2026 年已成为将工具暴露给 LLM 的主导标准</text>
+
+  <!-- 右：A2A -->
+  <rect class="cell" x="690" y="50" width="540" height="380" rx="12"/>
+  <text class="tag" x="720" y="86" fill="#eb6834">Agent ↔ Agent</text>
+  <text class="t ink" x="720" y="122">A2A · Agent-to-Agent Protocol</text>
+  <rect x="740" y="200" width="120" height="60" rx="10" fill="#ffffff" stroke="#eb6834" stroke-width="2"/>
+  <text class="sub ink2" x="800" y="235" text-anchor="middle" font-weight="700">Agent A</text>
+  <rect x="960" y="200" width="120" height="60" rx="10" fill="#ffffff" stroke="#eb6834" stroke-width="2"/>
+  <text class="sub ink2" x="1020" y="235" text-anchor="middle" font-weight="700">Agent B</text>
+  <line x1="866" y1="222" x2="954" y2="222" stroke="#eb6834" stroke-width="2.5" marker-end="url(#ah)" marker-start="url(#ah)"/>
+  <text class="s muted" x="910" y="208" text-anchor="middle">发现 · 委派 · 协调</text>
+  <text class="sub ink2" x="960" y="300" text-anchor="middle">Agent Card（能力发现）· Task 生命周期 · Message &amp; Parts</text>
+  <text class="sub muted" x="960" y="330" text-anchor="middle">基于 HTTP · SSE · JSON-RPC 等现有标准</text>
+  <text class="sub ink2" x="960" y="372" text-anchor="middle">Google · 2025 年 4 月 · Linux Foundation 治理</text>
+  <text class="sub muted" x="960" y="400" text-anchor="middle">AWS / Cisco / Google / IBM / Microsoft / Salesforce 等组成指导委员会</text>
+
+  <!-- 中央关系 -->
+  <text class="t" x="640" y="480" text-anchor="middle" fill="#1c5cab">互补而非竞争——MCP 管工具，A2A 管协作 · 支持组织 50+ → 150+（2026.4）</text>
+</svg>

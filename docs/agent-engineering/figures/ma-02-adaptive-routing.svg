@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 340" width="1280" height="340" role="img" aria-label="自适应拓扑的路由选择分布：混合 62%、并行 24%、层级 14%">
+  <title>自适应拓扑的路由选择分布</title>
+  <style>
+    text{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif}
+    .ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}
+    .name{font-size:17px;font-weight:600}
+    .val{font-size:16.5px;font-weight:600}
+    .res{font-size:26px;font-weight:650}
+  </style>
+  <rect width="1280" height="340" fill="#fdf5eb"/>
+
+  <text class="name ink" x="240" y="100" text-anchor="end">混合模式</text>
+  <path d="M270,72 H756 Q760,72 760,76 V104 Q760,108 756,108 H270 Z" fill="#1c5cab"/>
+  <text class="val ink" x="776" y="95">62%</text>
+
+  <text class="name ink" x="240" y="180" text-anchor="end">并行模式</text>
+  <path d="M270,152 H491 Q495,152 495,156 V184 Q495,188 491,188 H270 Z" fill="#2a78d6"/>
+  <text class="val ink" x="511" y="175">24%</text>
+
+  <text class="name ink" x="240" y="260" text-anchor="end">层级模式</text>
+  <path d="M270,232 H329 Q333,232 333,236 V264 Q333,268 329,268 H270 Z" fill="#6da7ec"/>
+  <text class="val ink" x="349" y="255">14%</text>
+
+  <!-- 结果面板 -->
+  <rect x="920" y="80" width="300" height="180" rx="12" fill="#1c5cab"/>
+  <text class="res" x="1070" y="155" text-anchor="middle" fill="#ffffff">+22.9%</text>
+  <text x="1070" y="195" text-anchor="middle" font-size="14.5" fill="rgba(255,255,255,0.85)">自适应拓扑选择相对</text>
+  <text x="1070" y="219" text-anchor="middle" font-size="14.5" fill="rgba(255,255,255,0.85)">固定最优拓扑的提升</text>
+
+  <text class="ink2" x="600" y="320" text-anchor="middle" font-size="15" font-weight="600">没有"一种拓扑打遍天下"的银弹——不同子任务适合不同拓扑，动态路由是最优解</text>
+</svg>
