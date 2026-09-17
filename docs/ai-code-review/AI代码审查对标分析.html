@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI代码审查对标分析</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #5d687a;
+      --paper: #f4f7fb;
+      --surface: #ffffff;
+      --line: #d7dfeb;
+      --primary: #176b87;
+      --primary-soft: #dff3f7;
+      --accent: #d97941;
+      --accent-soft: #fff0e5;
+      --success: #2f7d5b;
+      --success-soft: #e6f5ee;
+      --warn: #c57d20;
+      --warn-soft: #fef3e0;
+      --shadow: 0 18px 50px rgba(35, 51, 75, 0.10);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(23, 107, 135, 0.07), transparent 32rem),
+        var(--paper);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.6;
+    }
+
+    button, input, select { font: inherit; }
+
+    .artifact {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 44px 0 56px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(240px, 0.7fr);
+      gap: 32px;
+      align-items: end;
+      margin-bottom: 24px;
+    }
+
+    .eyebrow, .kicker {
+      margin: 0 0 8px;
+      color: var(--primary);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 12px;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.08;
+      letter-spacing: -0.045em;
+    }
+
+    .lede {
+      max-width: 760px;
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: clamp(1.05rem, 2vw, 1.3rem);
+    }
+
+    .hero-note {
+      border-left: 3px solid var(--accent);
+      padding: 8px 0 8px 18px;
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .visual-card {
+      overflow: hidden;
+      border: 1px solid rgba(215, 223, 235, 0.9);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: center;
+      padding: 24px 28px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-heading h2 {
+      max-width: 760px;
+      margin-bottom: 0;
+      font-size: clamp(1.3rem, 2.4vw, 1.8rem);
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .visual-stage {
+      min-height: 420px;
+      padding: clamp(24px, 4vw, 40px);
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(rgba(23, 107, 135, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(23, 107, 135, 0.035) 1px, transparent 1px),
+        #fbfdff;
+      background-size: 28px 28px;
+    }
+
+    .label-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 4px 11px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      color: var(--primary);
+      background: var(--primary-soft);
+      font-size: 0.8rem;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      padding: 18px 28px;
+      border-top: 1px solid var(--line);
+      background: #f7fafc;
+    }
+
+    .controls[hidden] { display: none; }
+
+    .nav-btn {
+      min-height: 42px;
+      padding: 8px 22px;
+      border: 2px solid var(--primary);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) { background: var(--primary); color: #fff; }
+    .nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .step-dots {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin: 0 auto;
+    }
+    .step-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--line);
+      transition: all 0.2s;
+    }
+    .step-dot.active { background: var(--primary); transform: scale(1.3); }
+
+    .interpretation {
+      width: 100%;
+      margin: 12px 0 0;
+      padding: 14px 16px;
+      border-radius: 12px;
+      color: var(--ink);
+      background: var(--primary-soft);
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    .explanation-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.7fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .explanation, .takeaway {
+      padding: 24px 26px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.88);
+    }
+
+    .explanation h2, .takeaway h2 { margin-bottom: 8px; font-size: 1.05rem; }
+    .explanation p, .takeaway p { margin-bottom: 0; }
+    .explanation p { color: var(--muted); }
+
+    .takeaway { border-color: #f0cbb2; background: var(--accent-soft); }
+    .takeaway h2 { color: #9a4b20; }
+
+    .gap-list { list-style: none; padding: 0; margin: 8px 0 0; }
+    .gap-list li { padding: 4px 0; font-size: 0.95rem; }
+    .gap-list .have::before { content: "✅ "; }
+    .gap-list .need::before { content: "⚠️ "; }
+
+    @media (max-width: 760px) {
+      .artifact { width: min(100% - 20px, 680px); padding-top: 28px; }
+      .hero, .explanation-grid { grid-template-columns: 1fr; gap: 18px; }
+      .section-heading { align-items: start; flex-direction: column; }
+      .visual-stage { min-height: 320px; padding: 16px 12px; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .artifact { width: 100%; padding: 0; }
+      .visual-card, .explanation, .takeaway { box-shadow: none; break-inside: avoid; }
+      .controls { display: none !important; }
+    }
+  </style>
+</head>
+<body class="mode-interactive">
+  <div class="artifact">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">2026年9月 · 深度对标</p>
+        <h1>AI代码审查对标分析</h1>
+        <p class="lede">三大方向 × 自建 AICR 系统：Copilot 多 Agent 审查、审查左移趋势、ASD Harness 合规框架——逐层拆解架构差异与可落地的补齐路径。</p>
+      </div>
+      <p class="hero-note">用下方 ← → 按钮在三个研究主题间切换，每个主题包含架构图 + 差距分析 + 落地建议。</p>
+    </header>
+
+    <main>
+      <section class="visual-card" aria-labelledby="visual-title">
+        <div class="section-heading">
+          <div>
+            <p class="kicker" id="step-kicker">研究主题 1 / 3</p>
+            <h2 id="visual-title">Copilot Code Review 多 Agent 审查架构</h2>
+          </div>
+          <span class="label-chip" id="step-chip">已确认发布</span>
+        </div>
+
+        <div id="concept-visual" class="visual-stage">
+
+          <!-- ===== DIAGRAM 1: Copilot Multi-Agent ===== -->
+          <svg id="diagram-1" data-primary-visual viewBox="0 0 1000 520" width="100%" style="width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arr" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0 0L10 4L0 8z" fill="#176b87"/></marker>
+              <marker id="arr-a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0 0L10 4L0 8z" fill="#d97941"/></marker>
+              <filter id="ds"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#23334b" flood-opacity="0.08"/></filter>
+            </defs>
+            <rect width="1000" height="520" fill="#fbfdff" rx="8"/>
+
+            <!-- Title -->
+            <text x="500" y="32" text-anchor="middle" fill="#176b87" font-size="13" font-weight="800" letter-spacing="2">COPILOT CODE REVIEW 架构</text>
+
+            <!-- Flow: PR → Multi-Agent → Aggregate → Fix → Auto-Resolve -->
+            <!-- PR Box -->
+            <rect x="20" y="90" width="120" height="64" rx="14" fill="#dff3f7" stroke="#176b87" stroke-width="2" filter="url(#ds)"/>
+            <text x="80" y="118" text-anchor="middle" fill="#172033" font-size="15" font-weight="700">PR 提交</text>
+            <text x="80" y="136" text-anchor="middle" fill="#5d687a" font-size="12">触发审查</text>
+
+            <!-- Arrow 1 -->
+            <line x1="140" y1="122" x2="182" y2="122" stroke="#176b87" stroke-width="3" marker-end="url(#arr)"/>
+
+            <!-- Multi-Agent Ensemble Box -->
+            <rect x="188" y="56" width="260" height="132" rx="16" fill="#fff" stroke="#176b87" stroke-width="2.5" filter="url(#ds)"/>
+            <text x="318" y="80" text-anchor="middle" fill="#176b87" font-size="13" font-weight="800">多 Agent 合奏</text>
+
+            <!-- 3 parallel agents -->
+            <rect x="202" y="92" width="72" height="40" rx="8" fill="#e6f4f7" stroke="#176b87" stroke-width="1.5"/>
+            <text x="238" y="110" text-anchor="middle" fill="#172033" font-size="11" font-weight="600">安全</text>
+            <text x="238" y="124" text-anchor="middle" fill="#5d687a" font-size="10">Agent</text>
+
+            <rect x="282" y="92" width="72" height="40" rx="8" fill="#e6f4f7" stroke="#176b87" stroke-width="1.5"/>
+            <text x="318" y="110" text-anchor="middle" fill="#172033" font-size="11" font-weight="600">逻辑</text>
+            <text x="318" y="124" text-anchor="middle" fill="#5d687a" font-size="10">Agent</text>
+
+            <rect x="362" y="92" width="72" height="40" rx="8" fill="#e6f4f7" stroke="#176b87" stroke-width="1.5"/>
+            <text x="398" y="110" text-anchor="middle" fill="#172033" font-size="11" font-weight="600">风格</text>
+            <text x="398" y="124" text-anchor="middle" fill="#5d687a" font-size="10">Agent</text>
+
+            <!-- Metric annotation -->
+            <rect x="202" y="142" width="232" height="36" rx="8" fill="#fff0e5" stroke="#d97941" stroke-width="1"/>
+            <text x="318" y="163" text-anchor="middle" fill="#9a4b20" font-size="12" font-weight="700">高严重度采纳率 +47%，成本 -8%</text>
+
+            <!-- Arrow 2 -->
+            <line x1="448" y1="122" x2="490" y2="122" stroke="#176b87" stroke-width="3" marker-end="url(#arr)"/>
+
+            <!-- Issues Aggregated -->
+            <rect x="496" y="90" width="120" height="64" rx="14" fill="#fff" stroke="#d7dfeb" stroke-width="2" filter="url(#ds)"/>
+            <text x="556" y="118" text-anchor="middle" fill="#172033" font-size="15" font-weight="700">问题汇总</text>
+            <text x="556" y="136" text-anchor="middle" fill="#5d687a" font-size="12">去重 + 排序</text>
+
+            <!-- Arrow 3 -->
+            <line x1="616" y1="122" x2="658" y2="122" stroke="#176b87" stroke-width="3" marker-end="url(#arr)"/>
+
+            <!-- Developer Fix -->
+            <rect x="664" y="90" width="120" height="64" rx="14" fill="#fff" stroke="#d7dfeb" stroke-width="2" filter="url(#ds)"/>
+            <text x="724" y="118" text-anchor="middle" fill="#172033" font-size="15" font-weight="700">开发者修复</text>
+            <text x="724" y="136" text-anchor="middle" fill="#5d687a" font-size="12">push commit</text>
+
+            <!-- Arrow 4 -->
+            <line x1="784" y1="122" x2="826" y2="122" stroke="#176b87" stroke-width="3" marker-end="url(#arr)"/>
+
+            <!-- Auto-Resolve -->
+            <rect x="832" y="90" width="150" height="64" rx="14" fill="#e6f5ee" stroke="#2f7d5b" stroke-width="2" filter="url(#ds)"/>
+            <text x="907" y="114" text-anchor="middle" fill="#172033" font-size="14" font-weight="700">Auto-Resolve</text>
+            <text x="907" y="134" text-anchor="middle" fill="#2f7d5b" font-size="11" font-weight="600">自动关闭评论</text>
+
+            <!-- Feedback loop arrow from Auto-Resolve back to Issues -->
+            <path d="M 907 154 L 907 196 L 556 196 L 556 154" fill="none" stroke="#d97941" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#arr-a)"/>
+            <text x="730" y="192" text-anchor="middle" fill="#d97941" font-size="11" font-weight="700">未解决 → 重新标记</text>
+
+            <!-- Enterprise Permission Model -->
+            <rect x="40" y="240" width="920" height="260" rx="18" fill="#fff" stroke="#176b87" stroke-width="2" filter="url(#ds)"/>
+            <text x="500" y="272" text-anchor="middle" fill="#176b87" font-size="15" font-weight="800">企业权限管控模型（Deny / Ask / Allow）</text>
+            <text x="500" y="294" text-anchor="middle" fill="#5d687a" font-size="12">企业管理员集中设定，用户与工作区不可降低限制 · Allow 采用交集语义</text>
+
+            <!-- 4 permission categories -->
+            <rect x="70" y="316" width="200" height="80" rx="12" fill="#dff3f7" stroke="#176b87" stroke-width="1.5"/>
+            <text x="170" y="342" text-anchor="middle" fill="#172033" font-size="14" font-weight="700">Shell 命令</text>
+            <text x="170" y="362" text-anchor="middle" fill="#5d687a" font-size="12">可禁止执行任何命令</text>
+            <text x="170" y="380" text-anchor="middle" fill="#176b87" font-size="11" font-weight="600">Deny | Ask | Allow</text>
+
+            <rect x="290" y="316" width="200" height="80" rx="12" fill="#dff3f7" stroke="#176b87" stroke-width="1.5"/>
+            <text x="390" y="342" text-anchor="middle" fill="#172033" font-size="14" font-weight="700">文件读取</text>
+            <text x="390" y="362" text-anchor="middle" fill="#5d687a" font-size="12">控制代码库访问范围</text>
+            <text x="390" y="380" text-anchor="middle" fill="#176b87" font-size="11" font-weight="600">Deny | Ask | Allow</text>
+
+            <rect x="510" y="316" width="200" height="80" rx="12" fill="#dff3f7" stroke="#176b87" stroke-width="1.5"/>
+            <text x="610" y="342" text-anchor="middle" fill="#172033" font-size="14" font-weight="700">文件编辑</text>
+            <text x="610" y="362" text-anchor="middle" fill="#5d687a" font-size="12">限制自动修改能力</text>
+            <text x="610" y="380" text-anchor="middle" fill="#176b87" font-size="11" font-weight="600">Deny | Ask | Allow</text>
+
+            <rect x="730" y="316" width="200" height="80" rx="12" fill="#dff3f7" stroke="#176b87" stroke-width="1.5"/>
+            <text x="830" y="342" text-anchor="middle" fill="#172033" font-size="14" font-weight="700">网络域名</text>
+            <text x="830" y="362" text-anchor="middle" fill="#5d687a" font-size="12">白名单控制出站</text>
+            <text x="830" y="380" text-anchor="middle" fill="#176b87" font-size="11" font-weight="600">Deny | Ask | Allow</text>
+
+            <!-- Key insight box -->
+            <rect x="70" y="414" width="880" height="68" rx="12" fill="#fff0e5" stroke="#d97941" stroke-width="1.5"/>
+            <text x="100" y="440" fill="#9a4b20" font-size="13" font-weight="800">🔑 核心设计</text>
+            <text x="100" y="462" fill="#172033" font-size="13">Allow = 企业 ∩ 组织 ∩ 工作区 ∩ 用户（交集语义） · Deny 不可被任何下级覆盖 · HydraFusion Cascade 模式：廉价模型先行 → 质量门控升级</text>
+          </svg>
+
+          <!-- ===== DIAGRAM 2: Shift-Left Landscape ===== -->
+          <svg id="diagram-2" viewBox="0 0 1000 520" width="100%" style="width:100%;height:auto;display:none;" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arr2" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0 0L10 4L0 8z" fill="#176b87"/></marker>
+              <marker id="arr2-a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0 0L10 4L0 8z" fill="#d97941"/></marker>
+              <filter id="ds2"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#23334b" flood-opacity="0.08"/></filter>
+            </defs>
+            <rect width="1000" height="520" fill="#fbfdff" rx="8"/>
+
+            <text x="500" y="32" text-anchor="middle" fill="#176b87" font-size="13" font-weight="800" letter-spacing="2">审查左移：开发生命周期拦截点</text>
+
+            <!-- Timeline bar -->
+            <rect x="40" y="80" width="920" height="56" rx="28" fill="#e6f4f7" stroke="#176b87" stroke-width="2"/>
+
+            <!-- Timeline stages -->
+            <circle cx="130" cy="108" r="22" fill="#176b87"/>
+            <text x="130" y="113" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">规格</text>
+
+            <line x1="152" y1="108" x2="283" y2="108" stroke="#176b87" stroke-width="2.5" marker-end="url(#arr2)"/>
+
+            <circle cx="310" cy="108" r="22" fill="#176b87"/>
+            <text x="310" y="113" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">编码</text>
+
+            <line x1="332" y1="108" x2="463" y2="108" stroke="#176b87" stroke-width="2.5" marker-end="url(#arr2)"/>
+
+            <circle cx="490" cy="108" r="22" fill="#176b87"/>
+            <text x="490" y="113" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">提交</text>
+
+            <line x1="512" y1="108" x2="643" y2="108" stroke="#176b87" stroke-width="2.5" marker-end="url(#arr2)"/>
+
+            <circle cx="670" cy="108" r="22" fill="#176b87"/>
+            <text x="670" y="113" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">PR</text>
+
+            <line x1="692" y1="108" x2="823" y2="108" stroke="#176b87" stroke-width="2.5" marker-end="url(#arr2)"/>
+
+            <circle cx="850" cy="108" r="22" fill="#2f7d5b"/>
+            <text x="850" y="113" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">合并</text>
+
+            <!-- Tool cards positioned at intercept points -->
+
+            <!-- EasySpecs at Spec -->
+            <line x1="130" y1="130" x2="130" y2="162" stroke="#d97941" stroke-width="2"/>
+            <rect x="50" y="164" width="160" height="100" rx="14" fill="#fff" stroke="#d97941" stroke-width="2" filter="url(#ds2)"/>
+            <text x="130" y="188" text-anchor="middle" fill="#d97941" font-size="13" font-weight="800">EasySpecs.ai</text>
+            <text x="130" y="206" text-anchor="middle" fill="#172033" font-size="11" font-weight="600">规格审查</text>
+            <text x="130" y="224" text-anchor="middle" fill="#5d687a" font-size="10">变更请求 → 可执行规范</text>
+            <text x="130" y="242" text-anchor="middle" fill="#5d687a" font-size="10">⚠ 极早期，样本太小</text>
+            <rect x="56" y="250" width="148" height="3" rx="1.5" fill="#d97941" opacity="0.4"/>
+
+            <!-- Qodo at Code -->
+            <line x1="310" y1="130" x2="310" y2="162" stroke="#176b87" stroke-width="2"/>
+            <rect x="220" y="164" width="180" height="120" rx="14" fill="#fff" stroke="#176b87" stroke-width="2.5" filter="url(#ds2)"/>
+            <text x="310" y="188" text-anchor="middle" fill="#176b87" font-size="13" font-weight="800">Qodo Toolbox</text>
+            <text x="310" y="206" text-anchor="middle" fill="#172033" font-size="11" font-weight="600">编码阶段独立质量层</text>
+            <text x="310" y="224" text-anchor="middle" fill="#5d687a" font-size="10">4 MCP Skill · 迭代闭环</text>
+            <text x="310" y="242" text-anchor="middle" fill="#5d687a" font-size="10">K8s 自托管 · 零数据留存</text>
+            <text x="310" y="260" text-anchor="middle" fill="#2f7d5b" font-size="10" font-weight="700">✓ 最成熟的双 Agent 协议</text>
+            <rect x="226" y="270" width="168" height="3" rx="1.5" fill="#176b87" opacity="0.5"/>
+
+            <!-- GitWarren at Commit -->
+            <line x1="490" y1="130" x2="490" y2="162" stroke="#5d687a" stroke-width="2"/>
+            <rect x="410" y="164" width="160" height="100" rx="14" fill="#fff" stroke="#d7dfeb" stroke-width="2" filter="url(#ds2)"/>
+            <text x="490" y="188" text-anchor="middle" fill="#5d687a" font-size="13" font-weight="800">GitWarren</text>
+            <text x="490" y="206" text-anchor="middle" fill="#172033" font-size="11" font-weight="600">本地 pre-PR 审查</text>
+            <text x="490" y="224" text-anchor="middle" fill="#5d687a" font-size="10">GPLv3 开源 · 纯界面</text>
+            <text x="490" y="242" text-anchor="middle" fill="#5d687a" font-size="10">代码不出站 · 非审查引擎</text>
+
+            <!-- Copilot + Atlassian + AICR at PR -->
+            <line x1="670" y1="130" x2="670" y2="162" stroke="#176b87" stroke-width="2"/>
+            <rect x="580" y="164" width="180" height="135" rx="14" fill="#fff" stroke="#176b87" stroke-width="2" filter="url(#ds2)"/>
+            <text x="670" y="188" text-anchor="middle" fill="#176b87" font-size="13" font-weight="800">PR 阶段（密集区）</text>
+
+            <rect x="592" y="198" width="156" height="28" rx="6" fill="#e6f4f7" stroke="#176b87" stroke-width="1"/>
+            <text x="670" y="217" text-anchor="middle" fill="#172033" font-size="11" font-weight="600">Copilot Code Review</text>
+
+            <rect x="592" y="232" width="156" height="28" rx="6" fill="#e6f4f7" stroke="#176b87" stroke-width="1"/>
+            <text x="670" y="251" text-anchor="middle" fill="#172033" font-size="11" font-weight="600">Atlassian AI Review</text>
+
+            <rect x="592" y="266" width="156" height="28" rx="6" fill="#fff0e5" stroke="#d97941" stroke-width="1.5"/>
+            <text x="670" y="285" text-anchor="middle" fill="#d97941" font-size="11" font-weight="700">你的 AICR ← 在这里</text>
+
+            <!-- Shift-left arrow -->
+            <path d="M 630 320 C 500 350, 400 340, 340 300" fill="none" stroke="#d97941" stroke-width="3" stroke-dasharray="8 5" marker-end="url(#arr2-a)"/>
+            <text x="460" y="352" text-anchor="middle" fill="#d97941" font-size="13" font-weight="800">← 审查左移方向</text>
+
+            <!-- Summary section -->
+            <rect x="40" y="384" width="920" height="120" rx="16" fill="#fff" stroke="#d7dfeb" stroke-width="1.5" filter="url(#ds2)"/>
+            <text x="500" y="412" text-anchor="middle" fill="#176b87" font-size="14" font-weight="800">产品形态对比</text>
+
+            <!-- Table-like comparison -->
+            <text x="80" y="440" fill="#172033" font-size="12" font-weight="700">工具</text>
+            <text x="240" y="440" fill="#172033" font-size="12" font-weight="700">拦截位点</text>
+            <text x="400" y="440" fill="#172033" font-size="12" font-weight="700">交互协议</text>
+            <text x="600" y="440" fill="#172033" font-size="12" font-weight="700">部署</text>
+            <text x="800" y="440" fill="#172033" font-size="12" font-weight="700">成熟度</text>
+
+            <line x1="60" y1="448" x2="940" y2="448" stroke="#d7dfeb" stroke-width="1"/>
+
+            <text x="80" y="468" fill="#5d687a" font-size="11">Qodo</text>
+            <text x="240" y="468" fill="#5d687a" font-size="11">编码 / Pre-PR</text>
+            <text x="400" y="468" fill="#5d687a" font-size="11">4 MCP Skill 迭代闭环</text>
+            <text x="600" y="468" fill="#5d687a" font-size="11">K8s 自托管 / SaaS</text>
+            <text x="800" y="468" fill="#2f7d5b" font-size="11" font-weight="700">★★★★</text>
+
+            <text x="80" y="488" fill="#5d687a" font-size="11">Atlassian</text>
+            <text x="240" y="488" fill="#5d687a" font-size="11">PR 阶段</text>
+            <text x="400" y="488" fill="#5d687a" font-size="11">单次门控（非迭代）</text>
+            <text x="600" y="488" fill="#5d687a" font-size="11">SaaS（early access）</text>
+            <text x="800" y="488" fill="#d97941" font-size="11" font-weight="700">★★</text>
+          </svg>
+
+          <!-- ===== DIAGRAM 3: ASD Harness + Gap ===== -->
+          <svg id="diagram-3" viewBox="0 0 1000 520" width="100%" style="width:100%;height:auto;display:none;" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arr3" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0 0L10 4L0 8z" fill="#176b87"/></marker>
+              <filter id="ds3"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#23334b" flood-opacity="0.08"/></filter>
+            </defs>
+            <rect width="1000" height="520" fill="#fbfdff" rx="8"/>
+
+            <text x="500" y="32" text-anchor="middle" fill="#176b87" font-size="13" font-weight="800" letter-spacing="2">ASD HARNESS 架构 × 自建 AICR 差距分析</text>
+
+            <!-- Central Harness box -->
+            <rect x="350" y="100" width="300" height="100" rx="18" fill="#176b87" filter="url(#ds3)"/>
+            <text x="500" y="138" text-anchor="middle" fill="#fff" font-size="18" font-weight="800">Harness 编排层</text>
+            <text x="500" y="162" text-anchor="middle" fill="#dff3f7" font-size="12">权限控制 · 循环编排 · 指标记录</text>
+            <text x="500" y="180" text-anchor="middle" fill="#dff3f7" font-size="11">= 你的 server-side harness</text>
+
+            <!-- LLM (top) -->
+            <rect x="410" y="16" width="180" height="56" rx="14" fill="#fff0e5" stroke="#d97941" stroke-width="2" filter="url(#ds3)"/>
+            <text x="500" y="42" text-anchor="middle" fill="#d97941" font-size="14" font-weight="700">LLM（判断层）</text>
+            <text x="500" y="60" text-anchor="middle" fill="#5d687a" font-size="11">仅委托判断，不驱动流程</text>
+            <!-- Arrow LLM <-> Harness -->
+            <line x1="500" y1="72" x2="500" y2="100" stroke="#d97941" stroke-width="2.5" marker-end="url(#arr3)"/>
+
+            <!-- Tools (left) -->
+            <rect x="80" y="118" width="200" height="64" rx="14" fill="#dff3f7" stroke="#176b87" stroke-width="2" filter="url(#ds3)"/>
+            <text x="180" y="146" text-anchor="middle" fill="#172033" font-size="14" font-weight="700">工具（Code Analysis）</text>
+            <text x="180" y="162" text-anchor="middle" fill="#5d687a" font-size="11">ESLint · AST · Git Diff</text>
+            <!-- Arrow -->
+            <line x1="280" y1="150" x2="350" y2="150" stroke="#176b87" stroke-width="2.5" marker-end="url(#arr3)"/>
+
+            <!-- Data (right) -->
+            <rect x="720" y="118" width="200" height="64" rx="14" fill="#dff3f7" stroke="#176b87" stroke-width="2" filter="url(#ds3)"/>
+            <text x="820" y="146" text-anchor="middle" fill="#172033" font-size="14" font-weight="700">数据 / 记忆</text>
+            <text x="820" y="162" text-anchor="middle" fill="#5d687a" font-size="11">规则库 · 历史审查 · 上下文</text>
+            <!-- Arrow -->
+            <line x1="720" y1="150" x2="650" y2="150" stroke="#176b87" stroke-width="2.5" marker-end="url(#arr3)"/>
+
+            <!-- Execution Env (bottom) -->
+            <rect x="370" y="228" width="260" height="48" rx="14" fill="#e6f5ee" stroke="#2f7d5b" stroke-width="2" filter="url(#ds3)"/>
+            <text x="500" y="258" text-anchor="middle" fill="#2f7d5b" font-size="14" font-weight="700">隔离执行环境（K8s Pod）</text>
+            <!-- Arrow -->
+            <line x1="500" y1="200" x2="500" y2="228" stroke="#2f7d5b" stroke-width="2.5" marker-end="url(#arr3)"/>
+
+            <!-- Gap Analysis Section -->
+            <rect x="40" y="300" width="920" height="200" rx="18" fill="#fff" stroke="#d7dfeb" stroke-width="1.5" filter="url(#ds3)"/>
+            <text x="500" y="330" text-anchor="middle" fill="#176b87" font-size="15" font-weight="800">ASD 控制项 × 自建 AICR 状态</text>
+
+            <!-- Already have (green) -->
+            <rect x="60" y="346" width="420" height="140" rx="14" fill="#e6f5ee" stroke="#2f7d5b" stroke-width="1.5"/>
+            <text x="270" y="370" text-anchor="middle" fill="#2f7d5b" font-size="13" font-weight="800">✅ 已具备</text>
+
+            <text x="80" y="394" fill="#172033" font-size="12">✅ 最小权限：harness 不暴露不必要工具</text>
+            <text x="80" y="416" fill="#172033" font-size="12">✅ 隔离执行：K8s Pod 级别隔离</text>
+            <text x="80" y="438" fill="#172033" font-size="12">✅ 判断与流程分离：LLM 仅做判断</text>
+            <text x="80" y="460" fill="#172033" font-size="12">✅ 编排层控制循环：server-side harness</text>
+
+            <!-- Need to build (orange) -->
+            <rect x="520" y="346" width="420" height="140" rx="14" fill="#fff0e5" stroke="#d97941" stroke-width="1.5"/>
+            <text x="730" y="370" text-anchor="middle" fill="#9a4b20" font-size="13" font-weight="800">⚠️ 需补齐</text>
+
+            <text x="540" y="394" fill="#172033" font-size="12">⚠️ 全量审计日志（prompt/response/tool call）</text>
+            <text x="540" y="416" fill="#172033" font-size="12">⚠️ 日志防篡改 + 会话回放（replay/audit）</text>
+            <text x="540" y="438" fill="#172033" font-size="12">⚠️ K8s 安全加固（NetworkPolicy/seccomp）</text>
+            <text x="540" y="460" fill="#172033" font-size="12">⚠️ 人工审批节点（高风险操作 human-in-loop）</text>
+          </svg>
+
+        </div>
+
+        <div class="controls">
+          <button class="nav-btn" id="btn-prev" data-concept-control disabled>← 上一步</button>
+          <div class="step-dots">
+            <div class="step-dot active" id="dot-0"></div>
+            <div class="step-dot" id="dot-1"></div>
+            <div class="step-dot" id="dot-2"></div>
+          </div>
+          <button class="nav-btn" id="btn-next" data-concept-control>下一步 →</button>
+          <p class="interpretation" id="interp" aria-live="polite"><strong>Copilot Code Review</strong> 的多 Agent 合奏架构是目前最直接的对标对象。Lite 档位引入多个并行 Agent 后，高严重度问题采纳率提升 47%，而成本反降 8%——证明并行多角度审查比单一 prompt 更优。企业三档权限模型（Deny/Ask/Allow 覆盖 Shell、文件读写、网络四类）的交集语义设计值得你的 AICR 直接借鉴。Auto-resolve 在后续 commit 解决问题后自动关闭评论，减少人工清理负担。</p>
+        </div>
+      </section>
+
+      <section class="explanation-grid" aria-label="Explanation">
+        <article class="explanation" id="explanation-text">
+          <h2 id="exp-heading">对标差距：多角度并行审查</h2>
+          <p id="exp-body">你的 AICR 目前是单一 LLM 调用（即使 harness 编排了 10 步工具链，判断环节仍是一次调用）。Copilot 将审查拆分为多个专注角色的 Agent 并行执行，各自只关注一个维度（安全、逻辑、风格），最后汇总去重。这种方式在相同成本下显著提高了召回率。你的 harness 架构天然支持这种并行调用——只需在判断环节分拆为多个并行 LLM 请求，用不同的 system prompt 分别聚焦安全规则、逻辑缺陷、风格规范，然后在 harness 层做结果合并与去重。</p>
+        </article>
+        <aside class="takeaway" id="takeaway-box">
+          <h2 id="tk-heading">P0 落地建议</h2>
+          <p id="tk-body"><strong>多角度并行审查（2-3 周）</strong>：在 harness 判断环节增加 2-3 个并行 LLM 请求，各用不同 system prompt 聚焦一个维度。合并层做去重 + 严重等级排序。预期效果：高严重度问题采纳率提升 30-50%。依赖：无外部依赖，纯内部改造。</p>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function() {
+      var step = 0;
+      var total = 3;
+      var diagrams = [
+        document.getElementById('diagram-1'),
+        document.getElementById('diagram-2'),
+        document.getElementById('diagram-3')
+      ];
+      var btnPrev = document.getElementById('btn-prev');
+      var btnNext = document.getElementById('btn-next');
+      var interp = document.getElementById('interp');
+      var kicker = document.getElementById('step-kicker');
+      var title = document.getElementById('visual-title');
+      var chip = document.getElementById('step-chip');
+      var expH = document.getElementById('exp-heading');
+      var expB = document.getElementById('exp-body');
+      var tkH = document.getElementById('tk-heading');
+      var tkB = document.getElementById('tk-body');
+
+      var data = [
+        {
+          kicker: '研究主题 1 / 3',
+          title: 'Copilot Code Review 多 Agent 审查架构',
+          chip: '已确认发布',
+          interp: '<strong>Copilot Code Review</strong> 的多 Agent 合奏架构是目前最直接的对标对象。Lite 档位引入多个并行 Agent 后，高严重度问题采纳率提升 47%，而成本反降 8%\u2014\u2014证明并行多角度审查比单一 prompt 更优。企业三档权限模型（Deny/Ask/Allow 覆盖 Shell、文件读写、网络四类）的交集语义设计值得你的 AICR 直接借鉴。Auto-resolve 在后续 commit 解决问题后自动关闭评论，减少人工清理负担。',
+          expH: '对标差距：多角度并行审查',
+          expB: '你的 AICR 目前是单一 LLM 调用（即使 harness 编排了 10 步工具链，判断环节仍是一次调用）。Copilot 将审查拆分为多个专注角色的 Agent 并行执行，各自只关注一个维度（安全、逻辑、风格），最后汇总去重。这种方式在相同成本下显著提高了召回率。你的 harness 架构天然支持这种并行调用\u2014\u2014只需在判断环节分拆为多个并行 LLM 请求，用不同的 system prompt 分别聚焦安全规则、逻辑缺陷、风格规范，然后在 harness 层做结果合并与去重。',
+          tkH: 'P0 落地建议',
+          tkB: '<strong>多角度并行审查（2-3 周）</strong>：在 harness 判断环节增加 2-3 个并行 LLM 请求，各用不同 system prompt 聚焦一个维度。合并层做去重 + 严重等级排序。预期效果：高严重度问题采纳率提升 30-50%。依赖：无外部依赖，纯内部改造。'
+        },
+        {
+          kicker: '研究主题 2 / 3',
+          title: '审查左移：从 PR 末端到编码过程',
+          chip: '趋势分析',
+          interp: '行业审查位点正从 PR 末端前移到编码过程。<strong>Qodo Agentic Toolbox</strong> 是目前最成熟的实现\u2014\u2014四个 MCP Skill 提供「编码 Agent + 独立质量 Agent」的双 Agent 协议，支持 pre-PR 审查和发现\u2192修复\u2192重新审查的迭代闭环。重要的是它支持 K8s 自托管和零数据留存，符合你的合规约束。Atlassian 三件套（Agent Loops / Standards / AI Review）全在 early access，闭环是单次门控非迭代。',
+          expH: '对标差距：审查位点前移',
+          expB: '你的 AICR 当前拦截在 PR 阶段\u2014\u2014这是行业最成熟的位点，但也是最末端的。Qodo 的模式证明：在开发者本地编码阶段就启动独立审查，可以在问题进入 PR 之前就修复它们。双 Agent 分层（编码 Agent 负责写代码，质量 Agent 独立审查）天然避免了「自我审查偏差」。不过，你无需立即左移\u2014\u2014PR 阶段的审查仍然是价值密度最高的拦截点。更实际的做法是：先在 PR 阶段做深做透（多 Agent + 闭环），然后在成熟后考虑向 pre-commit hook 扩展。',
+          tkH: '中期方向',
+          tkB: '<strong>PR 阶段做深做透为先</strong>：不急于左移，先落地多 Agent 并行审查 + auto-resolve 闭环。然后评估 Qodo 的 MCP Skill 协议，看是否可以复用其 4 个 Skill 定义（assess-quality / review-code / improve-code / apply-standards）到你的 harness 里。需验证：Qodo 的 MCP Skill schema 是否公开。'
+        },
+        {
+          kicker: '研究主题 3 / 3',
+          title: 'ASD Harness 合规框架 × AICR 差距',
+          chip: '合规指南',
+          interp: '澳大利亚 ASD 发布的 <strong>Agentic AI Harnesses</strong> 指南，将 harness 定义为连接 LLM、工具、数据、记忆与执行环境的软件层\u2014\u2014这和你的 server-side harness 架构天然一致。指南要求：最小权限、隔离执行环境、记录 prompt / response / tool call / 审批 / 安全事件。你已具备前两项（K8s Pod 隔离 + harness 不暴露不必要工具），但全量审计日志、防篡改与会话回放、K8s 网络策略加固是需要补齐的。',
+          expH: '对标差距：可审计与可回放',
+          expB: '你目前记录了审查结果（采纳率、召回率、token 成本），但 ASD 要求的是过程级审计\u2014\u2014每次 LLM 调用的完整 prompt 和 response、每个工具调用的输入输出、人工审批的决策点和时间戳、所有安全事件。这些日志需要防篡改（append-only 或写入不可变存储），并支持会话级回放（给定一个审查 ID，能完整重现整个审查过程）。K8s 层面，需要补齐 NetworkPolicy（限制 Pod 出站到 LLM API 的白名单）和 seccomp profile（限制系统调用）。',
+          tkH: 'P0 落地建议',
+          tkB: '<strong>全量审计日志（1-2 周）</strong>：在 harness 每个环节的入口和出口记录结构化日志（JSON Lines），字段包括 request_id / step / input / output / latency / model / token_count。写入 append-only 存储（如 S3 + Object Lock 或 Loki）。依赖：需要选定日志存储方案。<br/><br/><strong>Effort 档位路由（1 周）</strong>：借鉴 Cascade 模式，廉价模型（如 DeepSeek Flash）先跑快速扫描，质量门控不过再升级到 Claude/GPT。可直接压缩 AICR 的 token 成本。'
+        }
+      ];
+
+      function show(idx) {
+        step = idx;
+        diagrams.forEach(function(d, i) {
+          d.style.display = i === idx ? 'block' : 'none';
+          if (i === idx) {
+            d.setAttribute('data-primary-visual', '');
+          } else {
+            d.removeAttribute('data-primary-visual');
+          }
+        });
+        for (var i = 0; i < total; i++) {
+          var dot = document.getElementById('dot-' + i);
+          dot.className = i === idx ? 'step-dot active' : 'step-dot';
+        }
+        btnPrev.disabled = idx === 0;
+        btnNext.disabled = idx === total - 1;
+        var d = data[idx];
+        kicker.textContent = d.kicker;
+        title.textContent = d.title;
+        chip.textContent = d.chip;
+        interp.innerHTML = d.interp;
+        expH.textContent = d.expH;
+        expB.innerHTML = d.expB;
+        tkH.textContent = d.tkH;
+        tkB.innerHTML = d.tkB;
+      }
+
+      btnPrev.addEventListener('click', function() { if (step > 0) show(step - 1); });
+      btnNext.addEventListener('click', function() { if (step < total - 1) show(step + 1); });
+
+      show(0);
+    })();
+  </script>
+</body>
+</html>
